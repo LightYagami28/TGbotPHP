@@ -32,4 +32,9 @@ class Config
         $this->secretToken = $secretToken;
         $this->enforceHttps = $enforceHttps;
     }
+
+    public function getToken(): string
+    {
+        return $this->token;
+    }
 }

@@ -24,26 +24,34 @@ class MessageParser
 
     public static function extractMentions(string $text): array
     {
-        preg_match_all('/@(\w+)/', $text, $matches);
-        return $matches[1] ?? [];
+        if (preg_match_all('/@(\w+)/', $text, $matches) > 0) {
+            return $matches[1];
+        }
+        return [];
     }
 
     public static function extractHashtags(string $text): array
     {
-        preg_match_all('/#(\w+)/', $text, $matches);
-        return $matches[1] ?? [];
+        if (preg_match_all('/#(\w+)/', $text, $matches) > 0) {
+            return $matches[1];
+        }
+        return [];
     }
 
     public static function extractUrls(string $text): array
     {
-        preg_match_all('/https?:\/\/[^\s]+/', $text, $matches);
-        return $matches[0] ?? [];
+        if (preg_match_all('/https?:\/\/[^\s]+/', $text, $matches) > 0) {
+            return $matches[0];
+        }
+        return [];
     }
 
     public static function extractEmails(string $text): array
     {
-        preg_match_all('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $text, $matches);
-        return $matches[0] ?? [];
+        if (preg_match_all('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $text, $matches) > 0) {
+            return $matches[0];
+        }
+        return [];
     }
 
     public static function stripMarkdown(string $text): string

@@ -60,14 +60,6 @@ class ApiClient
     }
 
     /**
-     * Get bot token for HTTP requests
-     */
-    protected function getToken(): string
-    {
-        return $this->config->getToken();
-    }
-
-    /**
      * Call any API method directly
      *
      * Supports methods not yet implemented as specific functions.
@@ -91,7 +83,15 @@ class ApiClient
      */
     public function getToken(): string
     {
-        return $this->config->token;
+        return $this->config->getToken();
+    }
+
+    /**
+     * Get bot token for HTTP requests (protected access)
+     */
+    protected function getBotToken(): string
+    {
+        return $this->config->getToken();
     }
 
     /**
