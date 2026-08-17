@@ -1,0 +1,17 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * TGbotPHP CLI Tool
+ *
+ * Manage Telegram bots with ease
+ */
+
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
+use TGbotPHP\CLI\Console;
+
+$console = new Console();
+$console->run($argv);

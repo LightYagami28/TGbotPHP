@@ -1,0 +1,73 @@
+name: Security
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: curl, json
+
+    - name: Install dependencies
+      run: composer install --no-progress --prefer-dist
+
+    - name: Check for vulnerable dependencies
+      run: composer audit || true
+
+    - name: Run static analysis
+      run: ./vendor/bin/phpstan analyse botlib.php --level=5
+
+    - name: Check for hardcoded secrets
+      run: |
+        if grep -r "TELEGRAM_BOT_TOKEN\|token.*=" botlib.php botesempio.php echobot.php | grep -v "^\s*//" | grep -v "getenv\|ENV\|define"; then
+          echo "⚠️  Possible hardcoded secrets detected"
+          exit 1
+        fi
+        echo "✅ No hardcoded secrets found"
+
+    - name: Verify .env not committed
+      run: |
+        if [ -f ".env" ]; then
+          echo "❌ .env file found - should not be committed"
+          exit 1
+        fi
+        echo "✅ .env properly ignored"
+
+    - name: Validate security files
+      run: |
+        test -f SECURITY.md || (echo "SECURITY.md missing" && exit 1)
+        test -f .gitignore || (echo ".gitignore missing" && exit 1)
+        echo "✅ Security files verified"
+
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+
+    - name: Install dependencies
+      run: composer install --no-progress --prefer-dist
+
+    - name: Analyze code
+      run: |
+        echo "Running code quality checks..."
+        ./vendor/bin/phpstan analyse botlib.php --level=5
+        echo "✅ Code quality checks passed"

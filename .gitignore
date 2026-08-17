@@ -1,0 +1,72 @@
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# PHP
+.php_cs
+.php_cs.cache
+vendor/
+composer.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+config.local.php
+
+# Logs
+*.log
+logs/
+errors.txt
+
+# Testing (security: excluded from production)
+tests/
+examples/
+.phpunit.result.cache
+coverage/
+.coverage
+run-unit-tests.sh
+
+# Temporary
+tmp/
+temp/
+cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (never commit)
+.telegram.php
+secrets.php
+tokens/
+api_keys/
+
+# Build artifacts
+build/
+dist/
+
+# CI/CD & Development
+# Keep only workflows, exclude security scan files and templates
+.github/ISSUE_TEMPLATE/
+.github/SECURITY.md
+.github/dependabot.yml
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Development files
+# DEVELOPMENT.md - kept (development guide)
+# docker-compose.yml - kept (docker configuration)
+# SECURITY.md - kept (security policy)
+
+# Node (if using node scripts)
+node_modules/
+npm-debug.log
+yarn-error.log

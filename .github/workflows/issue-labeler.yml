@@ -1,0 +1,59 @@
+name: Issue Labeler
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Assign labels based on title
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = context.payload.issue;
+          const labels = [];
+
+          if (issue.title.includes('[BUG]') || issue.title.toLowerCase().includes('bug')) {
+            labels.push('bug');
+          }
+
+          if (issue.title.includes('[FEATURE]') || issue.title.toLowerCase().includes('feature')) {
+            labels.push('enhancement');
+          }
+
+          if (issue.title.includes('[SECURITY]') || issue.title.toLowerCase().includes('security')) {
+            labels.push('security');
+          }
+
+          if (issue.title.includes('[DOCS]') || issue.title.toLowerCase().includes('doc')) {
+            labels.push('documentation');
+          }
+
+          if (issue.title.includes('[QUESTION]') || issue.title.toLowerCase().includes('question')) {
+            labels.push('question');
+          }
+
+          if (labels.length > 0) {
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: labels
+            });
+            console.log('Applied labels:', labels);
+          }
+
+    - name: Comment on new issues
+      uses: actions/github-script@v7
+      if: github.event.action == 'opened'
+      with:
+        script: |
+          github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: '👋 Thanks for opening this issue! Please make sure to:\n\n- [ ] Provide a clear title and description\n- [ ] Include PHP version (`php -v`)\n- [ ] For bugs: steps to reproduce\n- [ ] For features: use case and rationale\n- [ ] Check existing issues first\n\nSee [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.'
+          });

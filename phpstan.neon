@@ -1,0 +1,15 @@
+parameters:
+    level: 5
+    paths:
+        - botlib.php
+        - botesempio.php
+        - echobot.php
+    excludePaths:
+        - vendor/
+        - tests/
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # Ignore dynamic property access
+        - identifier: dynamicReturnTypesExtension.returnsConditional

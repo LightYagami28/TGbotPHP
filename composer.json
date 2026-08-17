@@ -1,0 +1,42 @@
+{
+    "name": "lightyagami28/tgbotphp",
+    "description": "Production-ready PHP library for Telegram Bot API with 100+ methods",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "LightYagami28",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/LightYagami28/TGbotPHP",
+    "keywords": [
+        "telegram",
+        "bot",
+        "telegram-bot",
+        "php",
+        "webhook",
+        "polling",
+        "api"
+    ],
+    "require": {
+        "php": ">=7.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "TGbotPHP\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TGbotPHP\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse src/ --level=5",
+        "analyze": "@phpstan"
+    }
+}

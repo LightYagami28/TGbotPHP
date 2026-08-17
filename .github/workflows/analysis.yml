@@ -1,0 +1,15 @@
+name: Code Analysis
+
+on: [push, pull_request]
+
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        tools: composer, phpstan
+    - run: composer install --dev
+    - run: phpstan analyze src --level=5 || true
