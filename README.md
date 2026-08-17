@@ -1,26 +1,26 @@
-# 🤖 TGbotPHP - Professional Telegram Bot Framework
+# TGbotPHP - Professional Telegram Bot Framework
 
-> A **production-ready**, **feature-complete** Telegram Bot Framework for PHP 8.2+
+> A production-ready, feature-complete Telegram Bot Framework for PHP 8.2+
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
 [![License](https://img.shields.io/badge/License-MIT-green)]()
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)]()
 
-## 🚀 Features
+## Features
 
-### ✅ Complete API Coverage
+### Complete API Coverage
 - **120+ Telegram Bot API Methods** fully implemented
-- Message, Chat, User, Media, Admin, Webhook management
-- Sticker, Payment, Game, Forum, Custom, Reaction, Location methods
+- Message, Chat, User, Media, Admin, and Webhook management
+- Sticker, Payment, Game, Forum, Custom, Reaction, and Location methods
 
-### ✅ Professional Architecture
+### Professional Architecture
 - **PSR-4** autoloading with modular design
 - **Trait-based composition** for 120+ API methods
 - **Event-driven architecture** with lifecycle hooks
 - **Middleware pipeline** for request processing
 - **Router-based** command and callback handling
 
-### ✅ Security First
+### Security First
 - **HTTPS enforcement** for webhooks
 - **Token validation** with secret tokens
 - **Input sanitization** and XSS protection
@@ -28,7 +28,7 @@
 - **Session management** for multi-step flows
 - **Webhook signature validation**
 
-### ✅ Developer Experience
+### Developer Experience
 - **CLI tool** for webhook and bot management
 - **BotBuilder** pattern for fluent configuration
 - **Keyboard helpers** for inline buttons
@@ -36,7 +36,7 @@
 - **Comprehensive logging** system
 - **Plugin system** for extensibility
 
-### ✅ Performance & Reliability
+### Performance & Reliability
 - **In-memory caching** system
 - **Request rate limiting**
 - **Session persistence**
@@ -44,14 +44,14 @@
 - **Long polling fallback**
 - **Error handling** with custom exceptions
 
-### ✅ Production Ready
-- **Docker support** with Dockerfile & docker-compose
+### Production Ready
+- **Docker support** with Dockerfile and docker-compose
 - **CI/CD pipelines** with GitHub Actions
-- **Unit tests** with comprehensive coverage
+- **Comprehensive testing**
 - **PHPStan** static analysis
 - **Complete documentation** for all features
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Quick Start](#quick-start)
 - [Installation](#installation)
@@ -63,7 +63,7 @@
 - [Security](#security)
 - [Contributing](#contributing)
 
-## 🔥 Quick Start
+## Quick Start
 
 ```php
 <?php
@@ -77,13 +77,13 @@ $bot = (new BotBuilder('YOUR_BOT_TOKEN'))
     ->addCommand('start', function($bot, $message) {
         $bot->sendMessage(
             chatId: $message['chat']['id'],
-            text: 'Welcome! 👋'
+            text: 'Welcome to TGbotPHP'
         );
     })
     ->addCallback('action', function($bot, $callback) {
         $bot->answerCallbackQuery(
             callbackQueryId: $callback['id'],
-            text: 'Button pressed!'
+            text: 'Action processed'
         );
     })
     ->build();
@@ -91,7 +91,7 @@ $bot = (new BotBuilder('YOUR_BOT_TOKEN'))
 $bot->handle();
 ```
 
-## 📦 Installation
+## Installation
 
 ### Via Composer
 
@@ -116,7 +116,7 @@ docker run -d \
   maule/tgbotphp:latest
 ```
 
-## 🎯 Core Concepts
+## Core Concepts
 
 ### Bot Initialization
 
@@ -175,14 +175,14 @@ $bot->on('error', function($error) {
 });
 ```
 
-## 💡 Usage Examples
+## Usage Examples
 
 ### Send Message
 
 ```php
 $bot->sendMessage(
     chatId: 123456789,
-    text: 'Hello *World*',
+    text: 'Hello World',
     parseMode: 'Markdown'
 );
 ```
@@ -193,13 +193,13 @@ $bot->sendMessage(
 $bot->sendPhoto(
     chatId: 123456789,
     photo: 'photo_file_id',
-    caption: 'Beautiful photo'
+    caption: 'Photo caption'
 );
 
 $bot->sendDocument(
     chatId: 123456789,
     document: 'document_file_id',
-    caption: 'Important document'
+    caption: 'Document caption'
 );
 ```
 
@@ -209,8 +209,8 @@ $bot->sendDocument(
 use TGbotPHP\Utilities\Keyboard;
 
 $markup = Keyboard::inline([
-    '✅ Yes' => 'yes',
-    '❌ No' => 'no',
+    'Yes' => 'yes',
+    'No' => 'no',
 ]);
 
 $bot->sendMessage(
@@ -224,9 +224,9 @@ $bot->sendMessage(
 
 ```php
 $markup = Keyboard::grid([
-    '1️⃣' => 'one',
-    '2️⃣' => 'two',
-    '3️⃣' => 'three',
+    '1' => 'one',
+    '2' => 'two',
+    '3' => 'three',
 ], cols: 3);
 ```
 
@@ -270,7 +270,7 @@ $info = $bot->getWebhookInfo();
 $bot->deleteWebhook();
 ```
 
-## 📚 API Reference
+## API Reference
 
 ### Message Methods
 - `sendMessage()` - Send text message
@@ -320,7 +320,7 @@ $bot->deleteWebhook();
 
 [See Full API Reference](API_REFERENCE.md)
 
-## 🔐 Advanced Features
+## Advanced Features
 
 ### Rate Limiting
 
@@ -376,7 +376,7 @@ $logger->error('API error', ['code' => 400]);
 
 [See Advanced Features](ADVANCED_FEATURES.md)
 
-## 🚀 Deployment
+## Deployment
 
 ### Shared Hosting
 
@@ -404,17 +404,17 @@ sudo systemctl enable tgbot
 sudo systemctl start tgbot
 ```
 
-## 🔒 Security
+## Security
 
 ### Best Practices
 
-1. ✅ Always use HTTPS for webhooks
-2. ✅ Validate webhook tokens/signatures
-3. ✅ Implement rate limiting
-4. ✅ Sanitize user input
-5. ✅ Use environment variables for tokens
-6. ✅ Enable logging for audit trails
-7. ✅ Regular security updates
+1. Always use HTTPS for webhooks
+2. Validate webhook tokens and signatures
+3. Implement rate limiting
+4. Sanitize user input
+5. Use environment variables for tokens
+6. Enable logging for audit trails
+7. Keep dependencies updated
 
 ### Webhook Validation
 
@@ -431,7 +431,7 @@ if (WebhookValidator::validate($body, $token, $xToken)) {
 
 [See Security Guide](SECURITY.md)
 
-## 🧪 Testing
+## Testing
 
 Run unit tests:
 
@@ -445,7 +445,7 @@ Run specific test:
 php tests/BotTest.php
 ```
 
-## 🛠 Development
+## Development
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for:
 - Project structure
@@ -454,43 +454,43 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for:
 - Testing guidelines
 - Code standards
 
-## 📖 Documentation
+## Documentation
 
-- [README.md](README.md) - Project overview
 - [INSTALLATION.md](INSTALLATION.md) - Installation guide
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Architecture details
-- [API_REFERENCE.md](API_REFERENCE.md) - Complete API docs
+- [API_REFERENCE.md](API_REFERENCE.md) - Complete API documentation
 - [ADVANCED_FEATURES.md](ADVANCED_FEATURES.md) - Advanced usage
-- [SECURITY.md](SECURITY.md) - Security practices
+- [SECURITY.md](SECURITY.md) - Security best practices
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Development guide
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide
 - [TESTING.md](TESTING.md) - Testing guide
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contributing guidelines
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 
-## 📊 Project Statistics
+## Project Statistics
 
 - **Lines of Code**: 8,000+
 - **API Methods**: 120+
 - **Trait Modules**: 13+
 - **Test Coverage**: Comprehensive
 - **Documentation**: Complete
-- **PHP Version**: 8.2-8.4+
+- **PHP Version**: 8.2 - 8.4+
 - **PSR Standards**: PSR-1, PSR-2, PSR-4, PSR-12
 - **License**: MIT
 
-## 🎯 Use Cases
+## Use Cases
 
-✅ Customer support bots  
-✅ Notification systems  
-✅ Inline search bots  
-✅ Game bots  
-✅ Administrative bots  
-✅ Marketing bots  
-✅ Payment bots  
-✅ Analytics dashboards  
-✅ Content delivery bots  
+- Customer support bots
+- Notification systems
+- Inline search bots
+- Game bots
+- Administrative bots
+- Marketing bots
+- Payment bots
+- Analytics dashboards
+- Content delivery bots
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please:
 
@@ -502,17 +502,15 @@ Contributions welcome! Please:
 
 [See Contributing Guide](CONTRIBUTING.md)
 
-## 📝 License
+## License
 
 MIT License - see LICENSE file for details
 
-## 👨‍💻 Author
+## Author
 
-**maule** - [GitHub](https://github.com/LightYagami28)
+**maule** (maule2703@gmail.com) - [GitHub](https://github.com/LightYagami28)
 
-Created with ❤️ for the PHP and Telegram Bot communities
-
-## 🔗 Links
+## Resources
 
 - [GitHub Repository](https://github.com/LightYagami28/TGbotPHP)
 - [Telegram Bot API](https://core.telegram.org/bots/api)
@@ -521,4 +519,4 @@ Created with ❤️ for the PHP and Telegram Bot communities
 
 ---
 
-**TGbotPHP** - Built for production. Designed for developers. Powered by PHP.
+TGbotPHP - Built for production. Designed for developers. Powered by PHP.
