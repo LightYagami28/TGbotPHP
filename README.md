@@ -508,7 +508,7 @@ MIT License - see LICENSE file for details
 
 ## Author
 
-**maule** (maule2703@gmail.com) - [GitHub](https://github.com/LightYagami28)
+**LightYagami28** (ceo@retechrevive.it) - [GitHub](https://github.com/LightYagami28)
 
 ## Resources
 
