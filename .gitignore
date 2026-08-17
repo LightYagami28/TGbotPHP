@@ -53,18 +53,19 @@ build/
 dist/
 
 # CI/CD & Development
-# Keep only workflows, exclude security scan files and templates
-.github/ISSUE_TEMPLATE/
+# Excluded workflows: security, dependency-check, release, lint, pr-check, issue-labeler, stale, test
+# Kept workflows: tests, analysis
 .github/SECURITY.md
 .github/dependabot.yml
 .gitlab-ci.yml
 .travis.yml
 Jenkinsfile
 
-# Development files
-# DEVELOPMENT.md - kept (development guide)
-# docker-compose.yml - kept (docker configuration)
-# SECURITY.md - kept (security policy)
+# Old/Removed files (no longer in repo)
+# botlib.php, botesempio.php, echobot.php, bot-complete.php
+# example-webhook.php, webhook-secure.php
+# README_COMPLETE.md, PROJECT_STATUS.md, PROJECT_SUMMARY.md
+# SECURITY_SCAN_REPORT.md, phpstan.neon
 
 # Node (if using node scripts)
 node_modules/
