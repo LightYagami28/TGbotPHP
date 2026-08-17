@@ -55,8 +55,8 @@ dist/
 # CI/CD & Development
 # Excluded workflows: security, dependency-check, release, lint, pr-check, issue-labeler, stale, test
 # Kept workflows: tests, analysis
+# Kept: dependabot.yml for automatic updates
 .github/SECURITY.md
-.github/dependabot.yml
 .gitlab-ci.yml
 .travis.yml
 Jenkinsfile
