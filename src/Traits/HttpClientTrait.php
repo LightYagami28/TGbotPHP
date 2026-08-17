@@ -19,7 +19,7 @@ trait HttpClientTrait
         array $data = [],
         bool $returnResponse = false
     ): array|null {
-        $url = "https://api.telegram.org/bot{$this->token}/" . urlencode($method);
+        $url = "https://api.telegram.org/bot" . $this->getToken() . "/" . urlencode($method);
 
         $curl = curl_init($url);
         if (!$curl) {

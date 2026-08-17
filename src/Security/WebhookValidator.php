@@ -8,15 +8,15 @@ class WebhookValidator
 {
     public static function validate(string $body, string $secretToken, ?string $xTelegramBotApiSecretToken = null): bool
     {
-        if ($secretToken && !$xTelegramBotApiSecretToken) {
+        if (!$secretToken) {
+            return true;
+        }
+
+        if (!$xTelegramBotApiSecretToken) {
             return false;
         }
 
-        if ($secretToken && $xTelegramBotApiSecretToken) {
-            return hash_equals($secretToken, $xTelegramBotApiSecretToken);
-        }
-
-        return true;
+        return hash_equals($secretToken, $xTelegramBotApiSecretToken);
     }
 
     public static function validateSignature(string $body, string $signature, string $secret): bool

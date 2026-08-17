@@ -36,6 +36,7 @@
         }
     },
     "scripts": {
+        "test": "bash run-unit-tests.sh",
         "phpstan": "phpstan analyse src/ --level=5",
         "analyze": "@phpstan"
     }
