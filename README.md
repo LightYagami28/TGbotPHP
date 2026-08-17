@@ -2,6 +2,12 @@
 
 Professional Telegram Bot Framework for PHP 8.2+
 
+[![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)]()
+[![Version](https://img.shields.io/badge/Version-2.0.0-blue)]()
+[![Maintenance](https://img.shields.io/badge/Maintenance-Active-green)]()
+
 > Production-ready. Feature-complete. Security-first.
 
 ## Quick Overview
