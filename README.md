@@ -8,6 +8,8 @@ Professional Telegram Bot Framework for PHP 8.2+
 [![Version](https://img.shields.io/badge/Version-2.0.0-blue)]()
 [![Maintenance](https://img.shields.io/badge/Maintenance-Active-green)]()
 
+Fork of a (https://github.com/OpenTelegramFiles/TGbotPHP)
+
 > Production-ready. Feature-complete. Security-first.
 
 ## Quick Overview
