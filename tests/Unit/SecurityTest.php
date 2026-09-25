@@ -81,4 +81,48 @@ final class SecurityTest extends TestCase
         self::assertNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, 3600));
         self::assertNotNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, 0));
     }
+
+    public function testWebAppSignatureForThirdParties(): void
+    {
+        $keyPair = sodium_crypto_sign_keypair();
+        $publicKey = bin2hex(sodium_crypto_sign_publickey($keyPair));
+        $fields = ['auth_date' => (string) time(), 'query_id' => 'AAH', 'user' => '{"id":7,"first_name":"Ada"}'];
+
+        $signature = sodium_bin2base64(
+            sodium_crypto_sign_detached("12345678:WebAppData\nauth_date={$fields['auth_date']}\nquery_id=AAH\nuser={$fields['user']}", sodium_crypto_sign_secretkey($keyPair)),
+            SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING,
+        );
+        $initData = http_build_query($fields + ['signature' => $signature, 'hash' => 'ignored']);
+
+        self::assertSame($fields, WebhookValidator::validateWebAppSignature($initData, 12345678, publicKey: $publicKey));
+
+        self::assertNull(WebhookValidator::validateWebAppSignature($initData, 87654321, publicKey: $publicKey), 'Other bot');
+        self::assertNull(WebhookValidator::validateWebAppSignature($initData, 12345678), 'Not signed by Telegram');
+        self::assertNull(WebhookValidator::validateWebAppSignature(str_replace('Ada', 'Eve', $initData), 12345678, publicKey: $publicKey), 'Tampered');
+        self::assertNull(WebhookValidator::validateWebAppSignature(http_build_query($fields), 12345678, publicKey: $publicKey), 'No signature');
+        self::assertNull(WebhookValidator::validateWebAppSignature(http_build_query($fields + ['signature' => '!!']), 12345678, publicKey: $publicKey), 'Invalid base64');
+        self::assertNull(WebhookValidator::validateWebAppSignature($initData, 12345678, publicKey: 'abcd'), 'Invalid key');
+    }
+
+    public function testExpiredWebAppSignatureIsRejected(): void
+    {
+        $keyPair = sodium_crypto_sign_keypair();
+        $authDate = (string) (time() - 7200);
+        $signature = sodium_bin2base64(
+            sodium_crypto_sign_detached("1:WebAppData\nauth_date=$authDate", sodium_crypto_sign_secretkey($keyPair)),
+            SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING,
+        );
+        $initData = "auth_date=$authDate&signature=$signature";
+        $publicKey = bin2hex(sodium_crypto_sign_publickey($keyPair));
+
+        self::assertNull(WebhookValidator::validateWebAppSignature($initData, 1, 3600, $publicKey));
+        self::assertSame(['auth_date' => $authDate], WebhookValidator::validateWebAppSignature($initData, 1, 0, $publicKey));
+    }
+
+    public function testTelegramPublicKeysAreWellFormed(): void
+    {
+        foreach ([WebhookValidator::WEB_APP_PUBLIC_KEY, WebhookValidator::WEB_APP_TEST_PUBLIC_KEY] as $key) {
+            self::assertSame(SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES, strlen((string) hex2bin($key)));
+        }
+    }
 }

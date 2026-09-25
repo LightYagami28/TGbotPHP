@@ -31,6 +31,9 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^13.3"
     },
+    "suggest": {
+        "ext-sodium": "To validate Mini App data without the bot token (WebhookValidator::validateWebAppSignature)"
+    },
     "autoload": {
         "psr-4": {
             "TGbotPHP\\": "src/"

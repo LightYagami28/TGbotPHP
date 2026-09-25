@@ -27,15 +27,22 @@ use stdClass;
  */
 final class MiddlewarePipeline
 {
-    /** @var callable[] */
+    /** @var list<Closure> */
     private array $middleware = [];
+
+    /** @var list<int|null> Parameter count of each middleware, null when variadic */
+    private array $parameterCounts = [];
 
     /**
      * Add middleware to pipeline
      */
     public function add(callable $middleware): void
     {
-        $this->middleware[] = $middleware;
+        $closure = Closure::fromCallable($middleware);
+        $reflection = new ReflectionFunction($closure);
+
+        $this->middleware[] = $closure;
+        $this->parameterCounts[] = $reflection->isVariadic() ? null : $reflection->getNumberOfParameters();
     }
 
     /**
@@ -59,7 +66,8 @@ final class MiddlewarePipeline
             $middleware = $this->middleware[$index];
             $proceed = static fn() => $next($index + 1);
 
-            if (self::acceptsNext($middleware, count($arguments))) {
+            // A parameter after the update and the arguments receives $next
+            if (($this->parameterCounts[$index] ?? 0) > count($arguments) + 1) {
                 $middleware($update, ...[...$arguments, $proceed]);
                 return;
             }
@@ -87,17 +95,10 @@ final class MiddlewarePipeline
     }
 
     /**
-     * @return callable[]
+     * @return list<Closure>
      */
     public function getMiddleware(): array
     {
         return $this->middleware;
-    }
-
-    private static function acceptsNext(callable $middleware, int $argumentCount): bool
-    {
-        $reflection = new ReflectionFunction(Closure::fromCallable($middleware));
-
-        return $reflection->getNumberOfParameters() > $argumentCount + 1 && !$reflection->isVariadic();
     }
 }

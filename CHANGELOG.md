@@ -29,16 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Routing: `hears()`, `inlineQuery()`, `onUpdate()` for any update type, `fallback()`, `onUnknownCommand()`, and exact, `prefix:*` or regex patterns for callbacks and inline queries. Handlers receive the `Bot` and the route data.
 - Middleware can stop processing (`return false`) or wrap it (`$next`).
 - Conversations: `useConversations()`, `state()`, `setState()`, `updateStateData()`, `clearState()`.
-- `Bot::reply()`, `edit()` (returns `false` when the content did not change), `answer()`, `chatId()`, `onError()`, and plugins with `BotPluginInterface::boot()`.
+- `Bot::reply()` answers in the same forum topic, business connection or channel direct messages topic, `edit()` (returns `false` when the content did not change), `answer()`, `chatId()`, `onError()`, and plugins with `BotPluginInterface::boot()`.
 - `InputFile` for uploads, with automatic `attach://` references for albums and sticker sets. `downloadFile()` and `getFileUrl()`.
 - Every method of Bot API 10.3: business accounts, gifts, stories, checklists, rich messages and drafts, ephemeral messages, paid media, live photos, suggested posts, managed bots, verification and more, including `answerCallbackQuery`, `editMessageCaption`, `editMessageMedia`, `deleteMessages`, `copyMessages`, invite links, join requests, bot profile methods, Telegram Stars payments and the current sticker set methods.
 - API results are checked against the declared return type; a mismatch throws `ApiException`.
 - `TooManyRequestsException`, `NetworkException`, `StorageException` and `PluginException`. `ApiException` gains `getApiMethod()`, `getParameters()`, `getMigrateToChatId()` and `isMessageNotModified()`.
 - `Http\TransportInterface`, to use another HTTP client or a fake one in tests. Support for a local Bot API server.
 - `FileCache`, a persistent cache for webhooks that never unserializes objects. `RateLimiter::middleware()`.
-- `WebhookValidator::isTelegramIp()` and `validateWebAppData()` (Mini Apps).
+- `WebhookValidator::isTelegramIp()`, `validateWebAppData()` (Mini Apps) and `validateWebAppSignature()`, which checks Telegram's Ed25519 signature without the bot token.
 - `Formatter` (HTML and MarkdownV2 escaping), the `InlineKeyboard` builder, `Keyboard::reply()`, `remove()`, `forceReply()` and `pagination()`.
 - `Support\Value` and `Support\Payload` to read update payloads with types.
+- `MessageParser::entities()`, the text of the entities Telegram detected, with UTF-16 offsets handled.
 - CLI commands `commands:list` and `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
 - `tools/bot-api.json`, the methods and parameters of the Bot API extracted from the official documentation by `tools/bot-api-spec.php`. A test checks every method against it, and a weekly workflow reports new API versions.
 - `CacheInterface::update()`, an atomic read-change-write; `FileCache` locks the entry meanwhile.
@@ -54,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `editMessageReplyMarkup()` without a markup removes the inline keyboard.
 - `downloadFile()` streams to the destination file, which only appears once complete. Without a destination it refuses files over 20 MB.
 - The CLI writes errors to stderr, and finds the autoloader through Composer's `$_composer_autoload_path`.
+- Middleware signatures are inspected once, when added, instead of on every update.
+- `MessageParser::parseArguments()` only unescapes `\"` and `\\` inside quotes.
 - `Logger` writes to stderr by default instead of `/tmp/bot.log`.
 - `CurlTransport` keeps its connection open between requests. `TransportInterface` gains `download()`.
 - The debug log escapes line breaks and redacts `secret_token` and `provider_token`.

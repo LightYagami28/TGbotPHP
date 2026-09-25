@@ -242,9 +242,12 @@ UpdateParser::getUser($update);    // user who triggered the update, or null
 
 MessageParser::parseCommand('/start@bot payload'); // ['command' => 'start', 'args' => 'payload', 'username' => 'bot']
 MessageParser::parseArguments('add "buy milk" 2'); // ['add', 'buy milk', '2']
+MessageParser::entities($message, 'mention');        // ['@alice']: the entities Telegram detected
 MessageParser::extractMentions($text); MessageParser::extractHashtags($text);
 MessageParser::extractUrls($text); MessageParser::extractEmails($text);
 ```
+
+`entities()` reads `entities` (or `caption_entities`) and handles their UTF-16 offsets, so emoji before an entity do not shift it. Prefer it to the `extract*()` regexes, which only approximate Telegram's rules.
 
 ### Reading payloads
 
@@ -258,6 +261,8 @@ $userId = Value::id(Value::path($message, 'from', 'id'));   // int|string|null
 $page   = Value::int($matches[1] ?? null, default: 1);
 $token  = Value::env('TELEGRAM_BOT_TOKEN');                 // null if unset or empty
 ```
+
+`Support\Payload` reads the fields shared by messages and callback queries: `chatId()`, `userId()`, `topicId()`, `businessConnectionId()`, `directMessagesTopicId()`, and `replyTarget()`, the parameters `reply()` uses to answer in the same place.
 
 ### Security
 

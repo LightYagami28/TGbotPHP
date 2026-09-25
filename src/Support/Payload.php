@@ -60,6 +60,39 @@ final class Payload
             : null;
     }
 
+    /**
+     * Business connection a message was received through, when it came from a business account
+     */
+    public static function businessConnectionId(stdClass $payload): ?string
+    {
+        $id = Value::nullableString(Value::path(self::sourceMessage($payload), 'business_connection_id'));
+
+        return $id !== '' ? $id : null;
+    }
+
+    /**
+     * Topic of the direct messages chat of a channel a message was sent in
+     */
+    public static function directMessagesTopicId(stdClass $payload): ?int
+    {
+        return Value::nullableInt(Value::path(self::sourceMessage($payload), 'direct_messages_topic', 'topic_id'));
+    }
+
+    /**
+     * sendMessage parameters that send a reply to the same place as the payload:
+     * forum topic, business connection and direct messages topic
+     *
+     * @return array<string, int|string>
+     */
+    public static function replyTarget(stdClass $payload): array
+    {
+        return array_filter([
+            'message_thread_id' => self::topicId($payload),
+            'business_connection_id' => self::businessConnectionId($payload),
+            'direct_messages_topic_id' => self::directMessagesTopicId($payload),
+        ], static fn(int|string|null $value): bool => $value !== null);
+    }
+
     public static function requireChatId(stdClass $payload): int|string
     {
         return self::chatId($payload) ?? throw new \InvalidArgumentException('The payload has no chat');

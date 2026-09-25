@@ -377,6 +377,32 @@ final class BotTest extends TestCase
         self::assertSame('{"remove_keyboard":true}', $fields['reply_markup']);
     }
 
+    public function testReplyToBusinessMessageUsesTheConnection(): void
+    {
+        $this->bot->onUpdate('business_message', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi'));
+
+        $message = Value::map(Updates::message('hello', chatId: 55)['message']);
+        $this->bot->handleUpdate(['update_id' => 3, 'business_message' => ['business_connection_id' => 'bc-1'] + $message]);
+
+        $fields = $this->transport->lastRequest()['fields'];
+        self::assertSame('55', $fields['chat_id']);
+        self::assertSame('bc-1', $fields['business_connection_id']);
+        self::assertArrayNotHasKey('message_thread_id', $fields);
+    }
+
+    public function testReplyInChannelDirectMessagesUsesTheTopic(): void
+    {
+        $this->bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi', ['direct_messages_topic_id' => 1]));
+        $this->bot->hears('topic', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi'));
+
+        $this->bot->handleUpdate(Updates::message('topic', chatId: -100600, extra: ['direct_messages_topic' => ['topic_id' => 9]]));
+        self::assertSame('9', $this->transport->lastRequest()['fields']['direct_messages_topic_id']);
+
+        // Explicit options win
+        $this->bot->handleUpdate(Updates::message('other', chatId: -100600, extra: ['direct_messages_topic' => ['topic_id' => 9]]));
+        self::assertSame('1', $this->transport->lastRequest()['fields']['direct_messages_topic_id']);
+    }
+
     public function testReplyAndAnswerFromCallbackQuery(): void
     {
         $this->bot->callback('ok', function (stdClass $cb, Bot $bot): void {

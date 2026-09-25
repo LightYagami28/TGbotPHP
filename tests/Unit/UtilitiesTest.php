@@ -97,6 +97,7 @@ final class UtilitiesTest extends TestCase
         self::assertSame(['command' => 'start', 'args' => 'payload', 'username' => 'my_bot'], MessageParser::parseCommand('/start@my_bot payload'));
         self::assertNull(MessageParser::parseCommand('hello'));
         self::assertSame(['add', 'buy milk', 'x'], MessageParser::parseArguments('add "buy milk" x'));
+        self::assertSame(['say "hi"', 'C:\\dir', '\\x41'], MessageParser::parseArguments('"say \\"hi\\"" "C:\\\\dir" "\\x41"'));
         self::assertSame(['alice', 'bob_1'], MessageParser::extractMentions('hi @alice and @bob_1, mail me at a@b.com'));
         self::assertSame(['php', 'bots'], MessageParser::extractHashtags('#php and #bots'));
         self::assertSame(['https://example.com/a'], MessageParser::extractUrls('see https://example.com/a.'));
@@ -264,5 +265,30 @@ final class UtilitiesTest extends TestCase
         $dispatcher->clear();
         self::assertFalse($dispatcher->hasListeners('b'));
         self::assertSame([], $dispatcher->getListeners('b'));
+    }
+
+    public function testEntitiesUseUtf16Offsets(): void
+    {
+        // 👋 and 🇮🇹 take 2 and 4 UTF-16 units: offsets computed on bytes or characters would be wrong
+        $message = UpdateParser::fromArray(Updates::message('👋 @alice 🇮🇹 #php', extra: [
+            'entities' => [
+                ['type' => 'mention', 'offset' => 3, 'length' => 6],
+                ['type' => 'hashtag', 'offset' => 15, 'length' => 4],
+            ],
+        ]))->message;
+        self::assertInstanceOf(\stdClass::class, $message);
+
+        self::assertSame(['@alice'], MessageParser::entities($message, 'mention'));
+        self::assertSame(['#php'], MessageParser::entities($message, 'hashtag'));
+        self::assertSame([], MessageParser::entities($message, 'url'));
+
+        $photo = UpdateParser::fromArray(Updates::message('', extra: [
+            'caption' => 'é https://x.y',
+            'caption_entities' => [['type' => 'url', 'offset' => 2, 'length' => 11]],
+        ]))->message;
+        self::assertInstanceOf(\stdClass::class, $photo);
+        unset($photo->text);
+
+        self::assertSame(['https://x.y'], MessageParser::entities($photo, 'url'));
     }
 }

@@ -17,20 +17,17 @@ use TGbotPHP\Support\Value;
 trait RespondsToUpdates
 {
     /**
-     * Send a message to the chat, and forum topic, a message or callback query came from
+     * Send a message where a message or callback query came from
+     *
+     * The reply goes to the same chat and, when there is one, the same forum
+     * topic, business connection or direct messages topic.
      *
      * @param array<string, mixed> $options sendMessage parameters; they override the defaults (parse_mode HTML)
      * @return array<string, mixed>
      */
     public function reply(stdClass $payload, string $text, array $options = []): array
     {
-        $topicId = Payload::topicId($payload);
-
-        if ($topicId !== null) {
-            $options += ['message_thread_id' => $topicId];
-        }
-
-        return $this->sendMessage(Payload::requireChatId($payload), $text, options: $options);
+        return $this->sendMessage(Payload::requireChatId($payload), $text, options: $options + Payload::replyTarget($payload));
     }
 
     /**

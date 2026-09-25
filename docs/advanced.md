@@ -183,6 +183,14 @@ if ($data === null) {
 $user = json_decode($data['user'], true);
 ```
 
+A service that receives the data of a bot it does not own can check Telegram's Ed25519 signature instead, with only the bot id (requires the sodium extension):
+
+```php
+$data = WebhookValidator::validateWebAppSignature($initData, botId: 123456789, maxAge: 3600);
+```
+
+Pass `publicKey: WebhookValidator::WEB_APP_TEST_PUBLIC_KEY` for the test environment.
+
 ## Logging
 
 ```php
