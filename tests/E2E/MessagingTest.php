@@ -118,6 +118,15 @@ final class MessagingTest extends TelegramTestCase
         // Round trip: the downloaded bytes are exactly what was uploaded
         self::assertSame($contents, $this->bot->downloadFile($fileId));
 
+        // Streamed to disk, through the same connection
+        $destination = sys_get_temp_dir() . '/tgbotphp-e2e-' . bin2hex(random_bytes(4)) . '.csv';
+        try {
+            self::assertSame($destination, $this->bot->downloadFile($fileId, $destination));
+            self::assertSame($contents, file_get_contents($destination));
+        } finally {
+            @unlink($destination);
+        }
+
         // Re-send by file_id: no upload
         $resent = $this->track($this->bot->sendDocument($chatId, $fileId, 'Re-sent by file_id'));
         self::assertSame(Value::path($message, 'document', 'file_unique_id'), Value::path($resent, 'document', 'file_unique_id'));
