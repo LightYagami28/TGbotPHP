@@ -57,6 +57,7 @@ $bot->poll();      // long polling
 - **API client:** every method of Bot API 10.3 (checked against the official documentation by the tests), `call()` for methods Telegram adds later, and an `$options` array on sending methods for optional parameters. Results are checked against the type each method declares.
 - **Files:** `InputFile` uploads local files or in-memory contents, including albums and sticker sets. `downloadFile()` fetches them back.
 - **Routing:** commands (including `/cmd@bot` and deep-link payloads), text patterns, callback and inline query patterns (exact, `prefix:*` or a regex), and handlers for any update type.
+- **Testing:** `TGbotPHP\Testing\BotTester` and `FakeUpdate` test your handlers without network access.
 - **Updates:** `handle()` for webhooks, with secret token check. `poll()` for long polling, with backoff on errors.
 - **Middleware, events and conversations:** multi-step dialogs with state per user.
 - **Errors:** typed exceptions (`ApiException`, `TooManyRequestsException`, `NetworkException`), automatic retries after 429 responses, and an `onError()` hook.

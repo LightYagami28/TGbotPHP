@@ -13,7 +13,7 @@ use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Framework\Runner\LongPolling;
 use TGbotPHP\Support\Value;
-use TGbotPHP\Tests\Support\FakeTransport;
+use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
 
 final class LongPollingTest extends TestCase

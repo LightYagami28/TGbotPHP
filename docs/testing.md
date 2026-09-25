@@ -15,56 +15,58 @@ CI runs the test suite on PHP 8.4 and 8.5 (plus 8.6, still in development, as a 
 
 | File | Covers |
 |---|---|
-| `tests/Unit/ApiClientTest.php` | Request encoding, uploads, errors, 429 retries, method wrappers |
-| `tests/Unit/BotTest.php` | Routing, middleware, events, conversations, webhook handling, long polling, plugins, builder |
-| `tests/Unit/CacheTest.php` | `ArrayCache`, `FileCache`, rate limiter, conversations, sessions |
-| `tests/Unit/SecurityTest.php` | Secret token, signatures, Telegram IPs, Mini App data |
-| `tests/Unit/UtilitiesTest.php` | Keyboards, formatter, parsers, pattern matching |
-| `tests/Unit/ValueTest.php` | Type-safe readers for untyped data |
+| `tests/Unit/BotApiCoverageTest.php` | Every Bot API method and update type against `tools/bot-api.json`, extracted from the official documentation |
+| `tests/Unit/ApiClientTest.php` | Request encoding, uploads, downloads, errors, 429 retries |
+| `tests/Unit/BotTest.php` | Routing, middleware, events, conversations, replies, webhook handling, plugins |
+| `tests/Unit/LongPollingTest.php` | Long polling: backoff, 429 waits, fatal errors |
+| `tests/Unit/CurlTransportTest.php` | The cURL transport, against PHP's built-in web server |
+| `tests/Unit/CacheTest.php` | `ArrayCache`, `FileCache` (including concurrent updates from several processes), rate limiter, conversations, sessions |
+| `tests/Unit/SecurityTest.php` | Secret token, Telegram IPs, Mini App data and signatures |
+| `tests/Unit/UtilitiesTest.php` | Keyboards, formatter, parsers, entities, pattern matching |
 | `tests/Unit/ConsoleTest.php` | `tgbot` CLI |
 
-No test talks to Telegram: `tests/Support/FakeTransport.php` records requests and replays queued responses.
+CI requires at least 95% of the lines to be covered.
 
 ## Testing your own bot
 
-The same fake transport works for your handlers:
+`TGbotPHP\Testing` ships with the library. `BotTester` gives you a bot whose requests never leave the process, and `FakeUpdate` builds the updates Telegram would send:
 
 ```php
 use PHPUnit\Framework\TestCase;
-use TGbotPHP\Framework\Bot;
-use TGbotPHP\Tests\Support\FakeTransport;
+use TGbotPHP\Testing\BotTester;
+use TGbotPHP\Testing\FakeUpdate;
 
 final class StartCommandTest extends TestCase
 {
     public function testStartGreetsTheUser(): void
     {
-        $transport = new FakeTransport();
-        $bot = new Bot('123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw', transport: $transport);
-        registerHandlers($bot); // your code
+        $tester = new BotTester();
+        registerHandlers($tester->bot); // your code
 
-        $bot->handleUpdate([
-            'update_id' => 1,
-            'message' => [
-                'message_id' => 1,
-                'date' => time(),
-                'chat' => ['id' => 42, 'type' => 'private'],
-                'from' => ['id' => 42, 'is_bot' => false, 'first_name' => 'Ada'],
-                'text' => '/start',
-            ],
-        ]);
+        $tester->receive(FakeUpdate::message('/start', chatId: 42));
 
-        $request = $transport->lastRequest();
-        self::assertSame('sendMessage', $request['method']);
-        self::assertStringContainsString('Ada', $request['fields']['text']);
+        self::assertSame(['sendMessage'], $tester->methods());
+        self::assertStringContainsString('Welcome', $tester->lastSent('sendMessage')['text']);
+    }
+
+    public function testBlockedUsersAreHandled(): void
+    {
+        $tester = new BotTester();
+        registerHandlers($tester->bot);
+
+        $tester->transport->queueError(403, 'Forbidden: bot was blocked by the user');
+        $tester->receive(FakeUpdate::callbackQuery('subscribe'));
+
+        // ... assert what your error handler did
     }
 }
 ```
 
-Useful `FakeTransport` helpers:
+- `FakeUpdate::message()`, `callbackQuery()`, `inlineQuery()`, and `of($type, $payload)` for any other update type
+- `$tester->sent('sendMessage')`, `lastSent()`, `methods()` and `reset()` show what the bot sent. Parameters are encoded as Telegram receives them: numbers are strings, arrays are JSON.
+- `$tester->transport` is a `FakeTransport`: `queueResult($result)`, `queueError($code, $description, $parameters)` and `queueException($e)` choose the next answers. Without them, `send*`, `get*`, `edit*`... receive a message and other methods receive `true`.
 
-- `queueResult($result)` queues a successful response
-- `queueError(400, 'Bad Request: ...', $parameters)` queues an API error
-- `requests`, `lastRequest()` and `methods()` show what was sent
+`BotTester` does not depend on PHPUnit: use it with any test framework.
 
 ## Manual testing with a real bot
 

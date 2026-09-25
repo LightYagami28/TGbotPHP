@@ -2,18 +2,30 @@
 
 declare(strict_types=1);
 
-namespace TGbotPHP\Tests\Support;
+namespace TGbotPHP\Testing;
 
 use TGbotPHP\Http\HttpResponse;
 use TGbotPHP\Http\TransportInterface;
 
 /**
- * In-memory transport recording requests and replaying queued responses
+ * In-memory transport: records requests and answers with queued responses
+ *
+ * Lets you test a bot without network access:
+ *
+ *     $transport = new FakeTransport();
+ *     $bot = new Bot($token, $transport);
+ *
+ *     $transport->queueResult(['message_id' => 1, 'date' => 0, 'chat' => ['id' => 1, 'type' => 'private']]);
+ *     $transport->queueError(403, 'Forbidden: bot was blocked by the user');
+ *
+ * Without queued responses, methods starting with send, get, edit... receive
+ * a message-like object and the others receive true. See BotTester for a
+ * ready-made bot.
  */
 final class FakeTransport implements TransportInterface
 {
-    /** @var array<int, array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}> */
-    public array $requests = [];
+    /** @var list<array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}> Every request, oldest first */
+    public private(set) array $requests = [];
 
     /** @var list<HttpResponse|\Throwable> */
     private array $queue = [];
@@ -131,6 +143,15 @@ final class FakeTransport implements TransportInterface
         }
 
         return $this->requests[array_key_last($this->requests)];
+    }
+
+    /**
+     * Forget the recorded requests and the queued responses
+     */
+    public function reset(): void
+    {
+        $this->requests = [];
+        $this->queue = [];
     }
 
     /**

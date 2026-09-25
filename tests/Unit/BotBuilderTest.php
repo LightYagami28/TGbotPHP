@@ -10,7 +10,7 @@ use TGbotPHP\Cache\ArrayCache;
 use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Plugin\BotPluginInterface;
-use TGbotPHP\Tests\Support\FakeTransport;
+use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Utilities\BotBuilder;
 

@@ -18,7 +18,7 @@
 
 - **`Core\ApiClient`** is a plain API client. Use it without the framework when you only need to send messages.
 - **`Framework\Bot`** extends it with update handling. It is a thin facade: the work is done by `Kernel` (processing one update), `Router`, the runners and three traits in `Framework\Concerns` (handler registration, replies, conversations).
-- **`Http\TransportInterface`** is the only I/O boundary. Tests swap it for `tests/Support/FakeTransport.php`.
+- **`Http\TransportInterface`** is the only I/O boundary. Tests swap it for `Testing\FakeTransport`.
 
 ## Directory Structure
 
@@ -41,6 +41,7 @@ src/
 ├── Security/     WebhookValidator (secret token, IP ranges, Mini App data)
 ├── Session/      SessionManager, ConversationManager
 ├── Support/      Value (typed reads of mixed data), Payload (chat, user, topic of an update)
+├── Testing/      BotTester, FakeUpdate, FakeTransport: test bots without network access
 ├── Traits/       HttpClientTrait
 ├── Types/        InputFile
 └── Utilities/    Keyboard, InlineKeyboard, Formatter, MessageParser, Logger, BotBuilder

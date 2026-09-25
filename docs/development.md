@@ -20,6 +20,7 @@ TGbotPHP/
 │   ├── Security/     # WebhookValidator
 │   ├── Session/      # SessionManager, ConversationManager
 │   ├── Support/      # Value and Payload: typed reads of mixed data and update payloads
+│   ├── Testing/      # BotTester, FakeUpdate, FakeTransport
 │   ├── Traits/       # HttpClientTrait (request encoding, errors, retries)
 │   ├── Types/        # InputFile
 │   └── Utilities/    # Keyboard, InlineKeyboard, Formatter, MessageParser, Logger, BotBuilder
@@ -30,7 +31,7 @@ TGbotPHP/
 └── tests/
     ├── Unit/         # Fast tests with a fake transport
     ├── E2E/          # Real Telegram API (needs a token)
-    └── Support/      # FakeTransport, update fixtures
+    └── Support/      # Update fixtures, test HTTP server
 ```
 
 ## Setup

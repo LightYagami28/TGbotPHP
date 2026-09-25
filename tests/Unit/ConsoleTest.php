@@ -7,7 +7,7 @@ namespace TGbotPHP\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use TGbotPHP\CLI\Console;
 use TGbotPHP\Framework\Bot;
-use TGbotPHP\Tests\Support\FakeTransport;
+use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
 
 final class ConsoleTest extends TestCase

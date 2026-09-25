@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every method of Bot API 10.3: business accounts, gifts, stories, checklists, rich messages and drafts, ephemeral messages, paid media, live photos, suggested posts, managed bots, verification and more, including `answerCallbackQuery`, `editMessageCaption`, `editMessageMedia`, `deleteMessages`, `copyMessages`, invite links, join requests, bot profile methods, Telegram Stars payments and the current sticker set methods.
 - API results are checked against the declared return type; a mismatch throws `ApiException`.
 - `TooManyRequestsException`, `NetworkException`, `StorageException` and `PluginException`. `ApiException` gains `getApiMethod()`, `getParameters()`, `getMigrateToChatId()` and `isMessageNotModified()`.
-- `Http\TransportInterface`, to use another HTTP client or a fake one in tests. Support for a local Bot API server.
+- `Http\TransportInterface`, to use another HTTP client or a fake one in tests. `Testing\BotTester`, `FakeUpdate` and `FakeTransport` test bots without network access. Support for a local Bot API server.
 - `FileCache`, a persistent cache for webhooks that never unserializes objects. `RateLimiter::middleware()`.
 - `WebhookValidator::isTelegramIp()`, `validateWebAppData()` (Mini Apps) and `validateWebAppSignature()`, which checks Telegram's Ed25519 signature without the bot token.
 - `Formatter` (HTML and MarkdownV2 escaping), the `InlineKeyboard` builder, `Keyboard::reply()`, `remove()`, `forceReply()` and `pagination()`.

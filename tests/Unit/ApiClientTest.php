@@ -12,7 +12,7 @@ use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
-use TGbotPHP\Tests\Support\FakeTransport;
+use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Types\InputFile;
 use TGbotPHP\Utilities\Keyboard;

@@ -13,7 +13,7 @@ use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Core\Config;
 use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Support\Value;
-use TGbotPHP\Tests\Support\FakeTransport;
+use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Types\InputFile;
 
