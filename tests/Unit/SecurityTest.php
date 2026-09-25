@@ -125,4 +125,39 @@ final class SecurityTest extends TestCase
             self::assertSame(SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES, strlen((string) hex2bin($key)));
         }
     }
+
+    public function testWebAppDataInTelegramsOrderAndCase(): void
+    {
+        // Telegram does not sort the fields: the check string must be sorted by the validator
+        $fields = ['user' => '{"id":1}', 'query_id' => 'Q', 'auth_date' => (string) time()];
+        $secret = hash_hmac('sha256', Updates::TOKEN, 'WebAppData', true);
+        $hash = hash_hmac('sha256', "auth_date={$fields['auth_date']}\nquery_id=Q\nuser={\"id\":1}", $secret);
+
+        self::assertNotNull(WebhookValidator::validateWebAppData(http_build_query($fields + ['hash' => $hash]), Updates::TOKEN));
+        self::assertNotNull(WebhookValidator::validateWebAppData(http_build_query($fields + ['hash' => strtoupper($hash)]), Updates::TOKEN));
+        self::assertNull(WebhookValidator::validateWebAppData(http_build_query($fields + ['hash' => '']), Updates::TOKEN));
+    }
+
+    public function testSignatureValidationIgnoresHexCase(): void
+    {
+        self::assertTrue(WebhookValidator::validateSignature('body', strtoupper(hash_hmac('sha256', 'body', 'key')), 'key'));
+    }
+
+    public function testIpRangesWithoutPrefixMatchOneAddress(): void
+    {
+        self::assertTrue(WebhookValidator::isTelegramIp('10.0.0.1', ['10.0.0.1']));
+        self::assertFalse(WebhookValidator::isTelegramIp('10.0.0.2', ['10.0.0.1']));
+        self::assertTrue(WebhookValidator::isTelegramIp('10.0.0.200', ['10.0.0.0/24']));
+        self::assertFalse(WebhookValidator::isTelegramIp('10.0.0.1', ['not-a-range/24']));
+    }
+
+    public function testWebAppDataAgeLimitIsInclusive(): void
+    {
+        $authDate = (string) (time() - 60);
+        $secret = hash_hmac('sha256', Updates::TOKEN, 'WebAppData', true);
+        $initData = "auth_date=$authDate&hash=" . hash_hmac('sha256', "auth_date=$authDate", $secret);
+
+        self::assertNotNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, maxAge: 60));
+        self::assertNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, maxAge: 30));
+    }
 }

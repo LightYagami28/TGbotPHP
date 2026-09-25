@@ -114,7 +114,7 @@ final class Bot extends ApiClient
 
     public function isRunning(): bool
     {
-        return $this->polling !== null && $this->polling->running;
+        return $this->polling?->isRunning() ?? false;
     }
 
     /**
@@ -155,7 +155,7 @@ final class Bot extends ApiClient
      */
     public function getUpdate(): ?stdClass
     {
-        return $this->kernel->update;
+        return $this->kernel->currentUpdate();
     }
 
     public function getRouter(): Router

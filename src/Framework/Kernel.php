@@ -19,10 +19,10 @@ final class Kernel
     public readonly MiddlewarePipeline $middleware;
     public readonly EventDispatcher $events;
 
-    public private(set) ?ConversationManager $conversations = null;
+    private ?ConversationManager $conversations = null;
 
     /** The update being processed, or the last one */
-    public private(set) ?stdClass $update = null;
+    private ?stdClass $update = null;
 
     public function __construct()
     {
@@ -34,6 +34,19 @@ final class Kernel
     public function useConversations(ConversationManager $conversations): void
     {
         $this->conversations = $conversations;
+    }
+
+    public function conversations(): ?ConversationManager
+    {
+        return $this->conversations;
+    }
+
+    /**
+     * The update being processed, or the last one
+     */
+    public function currentUpdate(): ?stdClass
+    {
+        return $this->update;
     }
 
     /**

@@ -21,6 +21,9 @@ use TGbotPHP\Types\InputFile;
  */
 trait HttpClientTrait
 {
+    /** Expected result of the methods returning arrays of objects */
+    private const string ARRAY_OF_OBJECTS = 'an array of objects';
+
     /** Parameters never written to the debug log */
     private const array SECRET_FIELDS = ['secret_token', 'provider_token'];
 
@@ -135,7 +138,7 @@ trait HttpClientTrait
         $result = $this->apiCall($method, $params, $options);
 
         if (!Value::isListOfMaps($result)) {
-            throw self::unexpectedResult($method, 'an array of objects', $result);
+            throw self::unexpectedResult($method, self::ARRAY_OF_OBJECTS, $result);
         }
 
         return $result;
@@ -227,13 +230,13 @@ trait HttpClientTrait
         $result = $this->httpRequest($method, $params, returnResponse: true, objects: true);
 
         if (!is_array($result) || !array_is_list($result)) {
-            throw self::unexpectedResult($method, 'an array of objects', $result);
+            throw self::unexpectedResult($method, self::ARRAY_OF_OBJECTS, $result);
         }
 
         $objects = [];
         foreach ($result as $item) {
             if (!$item instanceof \stdClass) {
-                throw self::unexpectedResult($method, 'an array of objects', $result);
+                throw self::unexpectedResult($method, self::ARRAY_OF_OBJECTS, $result);
             }
             $objects[] = $item;
         }
@@ -258,15 +261,39 @@ trait HttpClientTrait
      */
     private function parseResponse(string $method, int $statusCode, string $body, bool $returnResponse, bool $objects = false): mixed
     {
-        if ($objects) {
-            $response = $body !== '' ? json_decode($body) : null;
+        $result = $objects ? self::successfulResultAsObjects($body) : null;
 
-            if ($response instanceof \stdClass && ($response->ok ?? false) === true) {
-                return $returnResponse ? ($response->result ?? null) : null;
-            }
-            // Errors are read as arrays below
+        if ($result === null) {
+            $response = self::decodeResponse($method, $statusCode, $body);
+            $result = ['value' => $response['result'] ?? null];
         }
 
+        return $returnResponse ? $result['value'] : null;
+    }
+
+    /**
+     * The result of a successful response decoded as objects, or null for an error response
+     *
+     * @return array{value: mixed}|null
+     */
+    private static function successfulResultAsObjects(string $body): ?array
+    {
+        $response = $body !== '' ? json_decode($body) : null;
+
+        return $response instanceof \stdClass && ($response->ok ?? false) === true
+            ? ['value' => $response->result ?? null]
+            : null;
+    }
+
+    /**
+     * Decode a response as arrays and throw when it is not successful
+     *
+     * @return array<string, mixed>
+     *
+     * @throws ApiException
+     */
+    private static function decodeResponse(string $method, int $statusCode, string $body): array
+    {
         $decoded = $body !== '' ? json_decode($body, true) : null;
 
         if (!is_array($decoded)) {
@@ -280,17 +307,23 @@ trait HttpClientTrait
         $decoded = Value::map($decoded);
 
         if (($decoded['ok'] ?? false) !== true) {
-            $code = Value::int($decoded['error_code'] ?? null, $statusCode);
-            $description = Value::string($decoded['description'] ?? null, "HTTP $statusCode from Telegram API");
-
-            if ($code === 429) {
-                throw new TooManyRequestsException($description, $code, $decoded, $method);
-            }
-
-            throw new ApiException($description, $code, $decoded, $method);
+            throw self::errorFromResponse($method, $statusCode, $decoded);
         }
 
-        return $returnResponse ? ($decoded['result'] ?? null) : null;
+        return $decoded;
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private static function errorFromResponse(string $method, int $statusCode, array $response): ApiException
+    {
+        $code = Value::int($response['error_code'] ?? null, $statusCode);
+        $description = Value::string($response['description'] ?? null, "HTTP $statusCode from Telegram API");
+
+        return $code === 429
+            ? new TooManyRequestsException($description, $code, $response, $method)
+            : new ApiException($description, $code, $response, $method);
     }
 
     /**

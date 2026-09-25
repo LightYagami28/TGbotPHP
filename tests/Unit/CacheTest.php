@@ -174,6 +174,7 @@ final class CacheTest extends TestCase
 
         try {
             $this->expectException(StorageException::class);
+            $this->expectExceptionMessage('Unable to create cache directory');
             $cache = new FileCache($file . '/cache');
             self::fail('Created a cache under a file: ' . $cache::class);
         } finally {
@@ -183,9 +184,9 @@ final class CacheTest extends TestCase
 
     public function testFileCacheFilesAreOnlyReadableByTheOwner(): void
     {
+        // A directory created by someone else, with the default permissions
         $directory = self::$directory . '-perm';
-        @mkdir($directory, 0755);
-        chmod($directory, 0755);
+        @mkdir($directory);
         $cache = new FileCache($directory);
 
         $cache->put('secret', 'value');
@@ -219,6 +220,9 @@ final class CacheTest extends TestCase
         self::assertFalse($limiter->limit('k', 2, 60));
         self::assertSame(0, $limiter->remaining('k', 2));
         self::assertGreaterThan(0, $limiter->availableIn('k'));
+
+        self::assertSame(0, $limiter->availableIn('unused'));
+        self::assertSame(2, $limiter->remaining('unused', 2));
 
         $limiter->reset('k');
         self::assertSame(2, $limiter->remaining('k', 2));
@@ -271,6 +275,9 @@ final class CacheTest extends TestCase
 
         self::assertSame(7, $sessions->getSession($id)['user_id'] ?? null);
         self::assertSame('it', $sessions->getSessionData($id, 'lang'));
+
+        self::assertSame('it', $sessions->getSessionData($id, 'lang', default: 'en'));
+        self::assertSame('en', $sessions->getSessionData($id, 'missing', default: 'en'));
 
         $sessions->setSessionData('missing', 'lang', 'it');
         self::assertNull($sessions->getSession('missing'));

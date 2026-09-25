@@ -80,4 +80,29 @@ final class LoggerTest extends TestCase
 
         return array_values(array_map(static fn(string $line): string => substr($line, 22), $lines));
     }
+
+    public function testLevelsAreCaseInsensitive(): void
+    {
+        $logger = new Logger($this->file, minLevel: 'unknown');
+
+        $logger->log('warning', 'lowercase level');
+        $logger->debug('debug is the minimum for unknown levels');
+
+        self::assertSame(['[WARNING] lowercase level', '[DEBUG] debug is the minimum for unknown levels'], $this->entries());
+    }
+
+    public function testCarriageReturnsAndStringableContext(): void
+    {
+        $name = new class implements \Stringable {
+            #[\Override]
+            public function __toString(): string
+            {
+                return 'Ada';
+            }
+        };
+
+        new Logger($this->file)->info("Hello {name}\r[ERROR] forged", ['name' => $name]);
+
+        self::assertSame(['[INFO] Hello Ada\\r[ERROR] forged {"name":{}}'], $this->entries());
+    }
 }

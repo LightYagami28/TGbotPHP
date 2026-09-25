@@ -59,7 +59,7 @@ final class BotTester
     public function sent(?string $method = null): array
     {
         $requests = array_filter(
-            $this->transport->requests,
+            $this->transport->requests(),
             static fn(array $request): bool => $method === null || $request['method'] === $method,
         );
 
@@ -85,7 +85,7 @@ final class BotTester
      */
     public function methods(): array
     {
-        return array_column($this->transport->requests, 'method');
+        return array_column($this->transport->requests(), 'method');
     }
 
     /**

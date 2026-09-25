@@ -90,7 +90,7 @@ final class LongPollingTest extends TestCase
             self::assertSame(401, $e->getCode());
         }
 
-        self::assertFalse($this->polling->running);
+        self::assertFalse($this->polling->isRunning());
         self::assertSame([], $this->waits);
     }
 
@@ -138,9 +138,38 @@ final class LongPollingTest extends TestCase
 
         $this->polling->run(timeout: 25, allowedUpdates: ['message'], limit: 10, maxIterations: 1);
 
-        $request = $this->transport->requests[0];
+        $request = $this->transport->requests()[0];
         self::assertSame('getUpdates', $request['method']);
         self::assertSame(['limit' => '10', 'timeout' => '25', 'allowed_updates' => '["message"]'], $request['fields']);
         self::assertSame(35, $request['timeout']);
+    }
+
+    public function testConfirmsProcessedUpdatesWithoutWaiting(): void
+    {
+        $this->transport->queueResult([Updates::message('a'), ['update_id' => 900] + Updates::message('b')]);
+
+        $this->polling->run(timeout: 25, maxIterations: 1);
+
+        self::assertSame(['getUpdates', 'getUpdates'], $this->transport->methods());
+        // Stopping must not hold the process for another long poll
+        self::assertSame(['offset' => '901', 'limit' => '1', 'timeout' => '0'], $this->transport->lastRequest()['fields']);
+    }
+
+    public function testNothingToConfirmWithoutUpdates(): void
+    {
+        $this->transport->queueResult([]);
+
+        $this->polling->run(timeout: 0, maxIterations: 1);
+
+        self::assertSame(['getUpdates'], $this->transport->methods());
+    }
+
+    public function testWaitsAtLeastOneSecondOnTooManyRequests(): void
+    {
+        $this->transport->queueError(429, 'Too Many Requests', ['retry_after' => 0])->queueResult([]);
+
+        $this->polling->run(timeout: 0, maxIterations: 2);
+
+        self::assertSame([1], $this->waits);
     }
 }

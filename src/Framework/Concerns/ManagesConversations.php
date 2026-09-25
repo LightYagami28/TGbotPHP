@@ -27,7 +27,7 @@ trait ManagesConversations
 
     public function conversations(): ConversationManager
     {
-        return $this->kernel()->conversations
+        return $this->kernel()->conversations()
             ?? throw new \LogicException('Conversations are disabled: call useConversations() first');
     }
 

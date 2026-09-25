@@ -36,6 +36,8 @@ final class ValueTest extends TestCase
         self::assertNull(Value::nullableInt('9223372036854775808'));
         self::assertNull(Value::nullableInt('-9223372036854775809'));
         self::assertNull(Value::nullableInt(' 5'));
+        self::assertNull(Value::nullableInt(9.2233720368547758E18), '2^63 does not fit');
+        self::assertSame(-(2 ** 53), Value::nullableInt((float) -(2 ** 53)));
     }
 
     public function testString(): void

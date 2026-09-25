@@ -25,7 +25,7 @@ use TGbotPHP\Http\TransportInterface;
 final class FakeTransport implements TransportInterface
 {
     /** @var list<array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}> Every request, oldest first */
-    public private(set) array $requests = [];
+    private array $requests = [];
 
     /** @var list<HttpResponse|\Throwable> */
     private array $queue = [];
@@ -143,6 +143,16 @@ final class FakeTransport implements TransportInterface
         }
 
         return $this->requests[array_key_last($this->requests)];
+    }
+
+    /**
+     * Every request, oldest first
+     *
+     * @return list<array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}>
+     */
+    public function requests(): array
+    {
+        return $this->requests;
     }
 
     /**

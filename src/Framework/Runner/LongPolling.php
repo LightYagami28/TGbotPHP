@@ -25,7 +25,7 @@ final class LongPolling
 
     private const int MAX_BACKOFF = 30;
 
-    public private(set) bool $running = false;
+    private bool $running = false;
 
     /** Next update_id to request */
     private ?int $offset = null;
@@ -63,6 +63,11 @@ final class LongPolling
             $this->acknowledge($allowedUpdates);
             $this->bot->getEvents()->dispatch('polling.stopped', $this->bot);
         }
+    }
+
+    public function isRunning(): bool
+    {
+        return $this->running;
     }
 
     /**

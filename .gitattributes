@@ -14,5 +14,5 @@
 /docker-compose.yml export-ignore
 /phpstan.neon.dist export-ignore
 /phpunit.xml.dist export-ignore
-/sonar-project.properties export-ignore
+/.sonarcloud.properties export-ignore
 /start2.png export-ignore

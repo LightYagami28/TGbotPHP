@@ -166,7 +166,7 @@ final class ConsoleTest extends TestCase
     {
         self::assertSame(1, $this->runWithToken('webhook:set'));
         self::assertStringContainsString('--url is required', $this->readErrors());
-        self::assertSame([], $this->transport->requests);
+        self::assertSame([], $this->transport->requests());
     }
 
     public function testDeleteWebhook(): void

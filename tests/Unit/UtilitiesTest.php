@@ -46,7 +46,23 @@ final class UtilitiesTest extends TestCase
             Keyboard::reply([['Yes', 'No'], [['text' => 'Location', 'request_location' => true]]]),
         );
         self::assertSame(['remove_keyboard' => true], Keyboard::remove());
+        self::assertSame(['remove_keyboard' => true, 'selective' => true], Keyboard::remove(selective: true));
         self::assertSame(['force_reply' => true, 'input_field_placeholder' => 'Name'], Keyboard::forceReply('Name'));
+        self::assertSame(['force_reply' => true, 'selective' => true], Keyboard::forceReply(selective: true));
+        self::assertSame(
+            ['keyboard' => [[['text' => 'A']]], 'one_time_keyboard' => true, 'input_field_placeholder' => 'Pick', 'selective' => true],
+            Keyboard::reply([5 => [3 => 'A']], resize: false, oneTime: true, placeholder: 'Pick', selective: true),
+        );
+    }
+
+    public function testGridKeyboards(): void
+    {
+        $buttons = ['A' => 'a', 'B' => 'b', 'C' => 'c'];
+
+        self::assertSame([2, 1], array_map(count(...), Keyboard::grid($buttons)['inline_keyboard']));
+        self::assertSame([1, 1, 1], array_map(count(...), Keyboard::grid($buttons, 0)['inline_keyboard']), 'At least one per row');
+        self::assertSame([1, 1, 1], array_map(count(...), Keyboard::menu($buttons)['inline_keyboard']));
+        self::assertSame(['text' => 'Docs', 'url' => 'https://x.y'], Keyboard::links(['Docs' => 'https://x.y'])['inline_keyboard'][0][0]);
     }
 
     public function testPaginationKeyboard(): void
@@ -54,7 +70,15 @@ final class UtilitiesTest extends TestCase
         $row = Keyboard::pagination(2, 3)['inline_keyboard'][0];
 
         self::assertSame(['page:1', 'page:2', 'page:3'], array_column($row, 'callback_data'));
+        self::assertSame(['« 1', '2 / 3', '3 »'], array_column($row, 'text'));
         self::assertCount(2, Keyboard::pagination(1, 3)['inline_keyboard'][0]);
+        self::assertSame(['« 2', '3 / 3'], array_column(Keyboard::pagination(3, 3)['inline_keyboard'][0], 'text'));
+        self::assertSame(['1 / 1'], array_column(Keyboard::pagination(1, 1)['inline_keyboard'][0], 'text'));
+    }
+
+    public function testCallbackDataUpTo64BytesIsAccepted(): void
+    {
+        self::assertSame(str_repeat('é', 32), Keyboard::button('x', str_repeat('é', 32))['callback_data']);
     }
 
     public function testCallbackDataLengthIsValidated(): void
@@ -116,6 +140,20 @@ final class UtilitiesTest extends TestCase
         self::assertSame(['/[a/'], new Pattern('/[a/')->match('/[a/'), 'Invalid regexes are matched literally');
         self::assertTrue(new Pattern('menu')->isExact());
         self::assertFalse(new Pattern('page:*')->isExact());
+
+        // Paths and commands look like regexes but are matched literally
+        self::assertTrue(new Pattern('/start')->isExact());
+        self::assertTrue(new Pattern('//')->isExact());
+        self::assertTrue(new Pattern('/usr/bin')->isExact(), 'Unknown flags');
+        self::assertFalse(new Pattern('/a/')->isExact());
+        self::assertFalse(new Pattern('#^a$#i')->isExact());
+        self::assertSame(['A'], new Pattern('~^a$~i')->match('A'));
+    }
+
+    public function testCommandArgumentsAreTrimmed(): void
+    {
+        self::assertSame('a b', Command::parse("/cmd   a b  \n")?->args);
+        self::assertSame('', Command::parse('/cmd ')?->args);
     }
 
     public function testCommandParsing(): void
@@ -265,6 +303,21 @@ final class UtilitiesTest extends TestCase
         $dispatcher->clear();
         self::assertFalse($dispatcher->hasListeners('b'));
         self::assertSame([], $dispatcher->getListeners('b'));
+    }
+
+    public function testEntitiesReturnEveryMatchInOrder(): void
+    {
+        $message = UpdateParser::fromArray(Updates::message('👋 bold 🇮🇹 text', extra: [
+            'entities' => [
+                ['type' => 'bold', 'offset' => 3, 'length' => 4],
+                ['type' => 'italic', 'offset' => 0, 'length' => 2],
+                ['type' => 'bold', 'offset' => 8, 'length' => 4],
+            ],
+        ]))->message;
+        self::assertInstanceOf(\stdClass::class, $message);
+
+        self::assertSame(['bold', '🇮🇹'], MessageParser::entities($message, 'bold'));
+        self::assertSame(['👋'], MessageParser::entities($message, 'italic'));
     }
 
     public function testEntitiesUseUtf16Offsets(): void

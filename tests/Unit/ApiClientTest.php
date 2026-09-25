@@ -108,6 +108,41 @@ final class ApiClientTest extends TestCase
         self::fail('Accepted malformed token: ' . $config->token);
     }
 
+    public function testTokenAndSecretValidation(): void
+    {
+        self::assertTrue(Config::isValidToken('123456:ABC-def_1'));
+        self::assertFalse(Config::isValidToken('x123456:ABC-def_1'), 'Garbage before the bot id');
+        self::assertFalse(Config::isValidToken('123456:ABC def'), 'Space');
+        self::assertFalse(Config::isValidToken("123456:ABC\n"), 'Trailing newline');
+        self::assertFalse(Config::isValidToken('1:abcdefg'), 'Shorter than 10 characters');
+        self::assertTrue(Config::isValidToken('1:abcdefgh'), 'Exactly 10 characters');
+
+        foreach (['bad secret!', "secret\n", '!!!' . str_repeat('a', 10), str_repeat('a', 257)] as $secret) {
+            try {
+                new Config(Updates::TOKEN, secretToken: $secret);
+                self::fail('Accepted secret token: ' . json_encode($secret));
+            } catch (\InvalidArgumentException) {
+                // expected
+            }
+        }
+
+        self::assertSame(str_repeat('a', 256), new Config(Updates::TOKEN, secretToken: str_repeat('a', 256))->secretToken);
+    }
+
+    public function testConfigDefaults(): void
+    {
+        $config = new Config(Updates::TOKEN, timeout: 0, debug: '');
+
+        self::assertSame(1, $config->timeout, 'At least one second');
+        self::assertFalse($config->debug);
+        self::assertFalse($config->debugFile);
+        self::assertFalse(new Config(Updates::TOKEN)->debug);
+        self::assertTrue(new Config(Updates::TOKEN, debug: true)->debug);
+        self::assertFalse(new Config(Updates::TOKEN, debug: true)->debugFile);
+        self::assertSame(1, new Config(Updates::TOKEN)->retry->maxRetries);
+        self::assertSame(30, new Config(Updates::TOKEN)->retry->maxDelay);
+    }
+
     public function testPreparesFields(): void
     {
         $this->transport->queueResult(['message_id' => 10]);
@@ -248,7 +283,7 @@ final class ApiClientTest extends TestCase
         $result = $this->client->sendMessage(1, 'x');
 
         self::assertSame(3, $result['message_id']);
-        self::assertCount(2, $this->transport->requests);
+        self::assertCount(2, $this->transport->requests());
     }
 
     public function testGivesUpAfterMaxRetries(): void
@@ -262,7 +297,7 @@ final class ApiClientTest extends TestCase
             self::fail('Expected TooManyRequestsException');
         } catch (TooManyRequestsException $e) {
             self::assertSame(0, $e->getRetryAfter());
-            self::assertCount(3, $this->transport->requests);
+            self::assertCount(3, $this->transport->requests());
         }
     }
 
@@ -419,9 +454,9 @@ final class ApiClientTest extends TestCase
 
         self::assertSame(
             '{"inline_keyboard":[[{"text":"A","callback_data":"a"},{"text":"C","callback_data":"c"}]]}',
-            $this->transport->requests[0]['fields']['reply_markup'],
+            $this->transport->requests()[0]['fields']['reply_markup'],
         );
-        self::assertSame('[{"text":"Yes"},{"text":"No"}]', $this->transport->requests[1]['fields']['options']);
+        self::assertSame('[{"text":"Yes"},{"text":"No"}]', $this->transport->requests()[1]['fields']['options']);
 
         [$fields] = ApiClient::prepareFields(['object' => ['a' => 1, 5 => 2]]);
         self::assertSame('{"a":1,"5":2}', $fields['object']);
@@ -468,5 +503,82 @@ final class ApiClientTest extends TestCase
             '[{"command":"start","description":"Start"},{"command":"2024","description":"Numeric"},{"command":"raw","description":"Raw"}]',
             $this->transport->lastRequest()['fields']['commands'],
         );
+    }
+
+    public function testResponsesWithoutOkAreErrors(): void
+    {
+        $this->transport->queueJson(['result' => true]);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->deleteMessage(1, 2);
+    }
+
+    public function testFetchUpdatesTreatsResponsesWithoutOkAsErrors(): void
+    {
+        $this->transport->queueJson(['result' => []]);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->fetchUpdates();
+    }
+
+    public function testInvalidJsonResponsesAreReported(): void
+    {
+        $this->transport->queueRaw('<html>Bad Gateway</html>', 502);
+
+        try {
+            $this->client->getMe();
+            self::fail('Expected an ApiException');
+        } catch (ApiException $e) {
+            self::assertSame('Invalid JSON response from Telegram API (HTTP 502)', $e->getMessage());
+            self::assertSame(502, $e->getCode());
+        }
+
+        $this->transport->queueRaw('', 504);
+        $this->expectExceptionMessage('Empty response from Telegram API (HTTP 504)');
+        $this->client->getMe();
+    }
+
+    public function testFetchUpdatesRejectsObjectResults(): void
+    {
+        $this->transport->queueResult(['update_id' => 1]);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->fetchUpdates();
+    }
+
+    public function testListResultsKeepEveryItem(): void
+    {
+        $this->transport->queueResult([['command' => 'a', 'description' => 'A'], ['command' => 'b', 'description' => 'B']]);
+
+        self::assertCount(2, $this->client->getMyCommands());
+    }
+
+    public function testDebugLogKeepsOneEntryPerLine(): void
+    {
+        $log = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($log);
+
+        try {
+            $client = new ApiClient(new Config(Updates::TOKEN, debug: $log, retry: RetryPolicy::none()), $this->transport);
+            // A proxy error page: real line breaks that could forge log entries
+            $this->transport->queueRaw("<html>\n[2030-01-01 00:00:00] forged\n</html>", 502);
+
+            try {
+                $client->sendDocument(1, InputFile::fromContents('data', 'notes.txt'), 'caption');
+            } catch (ApiException) {
+                // expected: the body is not JSON
+            }
+
+            $lines = explode("\n", trim((string) file_get_contents($log)));
+            self::assertCount(2, $lines);
+            self::assertMatchesRegularExpression('/^\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] → sendDocument \{/', $lines[0]);
+            self::assertStringContainsString('"document":"<file notes.txt>"', $lines[0]);
+            self::assertStringEndsWith('← sendDocument [502] <html>\\n[2030-01-01 00:00:00] forged\\n</html>', $lines[1]);
+        } finally {
+            unlink($log);
+        }
     }
 }

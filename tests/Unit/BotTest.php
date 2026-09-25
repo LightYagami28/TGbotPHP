@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use stdClass;
 use TGbotPHP\Cache\ArrayCache;
 use TGbotPHP\Core\Config;
+use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\InvalidTokenException;
 use TGbotPHP\Framework\Bot;
@@ -90,9 +91,17 @@ final class BotTest extends TestCase
             $unknown = $message->text;
         });
 
-        $this->bot->handleUpdate(Updates::message('/nope'));
+        $known = 0;
+        $this->bot->command('known', function () use (&$known): void {
+            $known++;
+        });
 
+        $this->bot->handleUpdate(Updates::message('/nope'));
         self::assertSame('/nope', $unknown);
+
+        // Registered commands never reach the unknown command handler
+        $this->bot->handleUpdate(Updates::message('/known'));
+        self::assertSame(1, $known);
     }
 
     public function testHearsWithRegexAndFallback(): void
@@ -413,8 +422,8 @@ final class BotTest extends TestCase
         $this->bot->handleUpdate(Updates::callback('ok', chatId: 77));
 
         self::assertSame(['answerCallbackQuery', 'sendMessage'], $this->transport->methods());
-        self::assertSame('cbq-1', $this->transport->requests[0]['fields']['callback_query_id']);
-        self::assertSame('77', $this->transport->requests[1]['fields']['chat_id']);
+        self::assertSame('cbq-1', $this->transport->requests()[0]['fields']['callback_query_id']);
+        self::assertSame('77', $this->transport->requests()[1]['fields']['chat_id']);
     }
 
     public function testConversationStates(): void
@@ -650,5 +659,94 @@ final class BotTest extends TestCase
             ['middleware', 'start', 'processed', 'middleware', 'callback', 'processed', 'middleware', 'text', 'processed'],
             $log,
         );
+    }
+
+    public function testConversationStatesArePerChatAndUser(): void
+    {
+        $this->bot->useConversations(new ArrayCache());
+
+        $message = Value::object(UpdateParser::fromArray(Updates::message('x', chatId: 1, userId: 23))->message ?? null);
+        self::assertNotNull($message);
+        $this->bot->setState($message, 'first');
+
+        $manager = $this->bot->conversations();
+        self::assertSame('first', $manager->getState(1, 23));
+        self::assertNull($manager->getState(12, 3), 'chat 1 + user 23 is not chat 12 + user 3');
+        self::assertNull($manager->getState(2, 23), 'Same user in another chat');
+    }
+
+    public function testConversationsMustBeEnabled(): void
+    {
+        $this->expectException(\LogicException::class);
+
+        $this->bot->conversations();
+    }
+
+    public function testEditNeedsAMessage(): void
+    {
+        $callback = UpdateParser::fromArray(['update_id' => 1, 'callback_query' => ['id' => 'q', 'from' => ['id' => 1], 'data' => 'x']])->callback_query;
+        self::assertInstanceOf(stdClass::class, $callback);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->bot->edit($callback, 'text');
+    }
+
+    public function testStopAndIsRunningBeforePolling(): void
+    {
+        $this->bot->stop();
+
+        self::assertFalse($this->bot->isRunning());
+    }
+
+    public function testHandleUpdateAcceptsObjectsArraysAndJson(): void
+    {
+        $received = [];
+        $this->bot->on('update.received', function (stdClass $update) use (&$received): void {
+            $received[] = $update->update_id;
+        });
+
+        $this->bot->handleUpdate(UpdateParser::fromArray(['update_id' => 1] + Updates::message('a')));
+        $this->bot->handleUpdate(['update_id' => 2] + Updates::message('b'));
+        $this->bot->handleUpdate(Updates::json(['update_id' => 3] + Updates::message('c')));
+
+        self::assertSame([1, 2, 3], $received);
+    }
+
+    public function testMalformedPayloadsAreIgnored(): void
+    {
+        $this->bot->fallback(fn() => self::fail('A malformed message reached a handler'));
+
+        $this->bot->handleUpdate(['update_id' => 1, 'message' => 'not an object']);
+        $this->bot->handleUpdate(['update_id' => 2]);
+
+        self::assertSame([], $this->transport->requests());
+    }
+
+    public function testExactCallbackPatternsReceiveTheData(): void
+    {
+        $matches = null;
+        $this->bot->callback('menu', function (stdClass $callback, Bot $bot, array $m) use (&$matches): void {
+            $matches = $m;
+        });
+
+        $this->bot->handleUpdate(Updates::callback('menu'));
+
+        self::assertSame(['menu'], $matches);
+    }
+
+    public function testHandleReadsTheSecretFromTheRequest(): void
+    {
+        $bot = new Bot(new Config(Updates::TOKEN, secretToken: 'top-secret'), transport: $this->transport);
+        $body = Updates::json(Updates::message('/start'));
+
+        $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] = 'top-secret';
+        try {
+            self::assertTrue($bot->handle($body));
+            $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] = 'wrong';
+            self::assertFalse($bot->handle($body));
+        } finally {
+            unset($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN']);
+        }
     }
 }
