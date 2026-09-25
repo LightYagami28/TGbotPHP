@@ -4,9 +4,18 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Cache;
 
+/**
+ * In-memory cache, lost at the end of the PHP process
+ *
+ * Suitable for long polling bots and tests. Use FileCache (or your own
+ * CacheInterface implementation) for webhooks.
+ */
 class ArrayCache implements CacheInterface
 {
+    /** @var array<string, mixed> */
     private array $store = [];
+
+    /** @var array<string, int> */
     private array $expiration = [];
 
     public function get(string $key, mixed $default = null): mixed
@@ -24,6 +33,8 @@ class ArrayCache implements CacheInterface
 
         if ($ttl !== null) {
             $this->expiration[$key] = time() + $ttl;
+        } else {
+            unset($this->expiration[$key]);
         }
     }
 
@@ -40,11 +51,11 @@ class ArrayCache implements CacheInterface
 
     public function has(string $key): bool
     {
-        if (!isset($this->store[$key])) {
+        if (!array_key_exists($key, $this->store)) {
             return false;
         }
 
-        if (isset($this->expiration[$key]) && time() > $this->expiration[$key]) {
+        if (isset($this->expiration[$key]) && time() >= $this->expiration[$key]) {
             $this->forget($key);
             return false;
         }

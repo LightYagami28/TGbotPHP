@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Core;
 
+use TGbotPHP\Http\TransportInterface;
 use TGbotPHP\Methods\AdminMethods;
 use TGbotPHP\Methods\ChatMethods;
 use TGbotPHP\Methods\CustomCommandMethods;
@@ -23,8 +24,8 @@ use TGbotPHP\Traits\HttpClientTrait;
 /**
  * Complete Telegram Bot API client
  *
- * Composes all method traits to provide complete 120+ method coverage.
- * Supports webhook and long polling modes.
+ * Composes all method traits. Any method without a dedicated wrapper can be
+ * invoked with call().
  */
 class ApiClient
 {
@@ -44,11 +45,17 @@ class ApiClient
     use UserMethods;
     use HttpClientTrait;
 
+    public const VERSION = '2.1.0';
+
     protected readonly Config $config;
 
-    public function __construct(Config $config)
+    public function __construct(Config $config, ?TransportInterface $transport = null)
     {
         $this->config = $config;
+
+        if ($transport !== null) {
+            $this->setTransport($transport);
+        }
     }
 
     /**
@@ -63,19 +70,21 @@ class ApiClient
      * Call any API method directly
      *
      * Supports methods not yet implemented as specific functions.
+     *
+     * @param array<string, mixed> $parameters
      * @see https://core.telegram.org/bots/api
      */
-    public function call(string $method, array $parameters = []): array|null
+    public function call(string $method, array $parameters = []): mixed
     {
-        return $this->httpRequest($method, $parameters, returnResponse: true);
+        return $this->apiCall($method, $parameters);
     }
 
     /**
-     * Get Telegram API base URL
+     * Get Telegram API base URL (contains the token: keep it private)
      */
     public function getApiUrl(): string
     {
-        return "https://api.telegram.org/bot{$this->config->token}";
+        return $this->config->apiBaseUrl . '/bot' . $this->config->token;
     }
 
     /**
@@ -99,6 +108,6 @@ class ApiClient
      */
     public function isValid(): bool
     {
-        return !empty($this->config->token) && strlen($this->config->token) >= 10;
+        return Config::isValidToken($this->config->token);
     }
 }

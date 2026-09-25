@@ -4,83 +4,146 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
-use TGbotPHP\Traits\HttpClientTrait;
-
 /**
  * Payment methods from Telegram Bot API
+ *
+ * For payments in Telegram Stars use currency "XTR" and omit the provider token.
  *
  * @see https://core.telegram.org/bots/api#payments
  */
 trait PaymentMethods
 {
-    use HttpClientTrait;
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
 
     /**
      * Send invoice
      *
+     * @param array<int, array{label: string, amount: int}> $prices
+     * @param int[]|null $suggestedTipAmounts
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
      * @see https://core.telegram.org/bots/api#sendinvoice
      */
     public function sendInvoice(
-        int $chatId,
+        int|string $chatId,
         string $title,
         string $description,
         string $payload,
         string $currency,
         array $prices,
-        string|null $providerToken = null,
-        int|null $maxTipAmount = null,
-        array|null $suggestedTipAmounts = null
-    ): array|null {
-        return $this->httpRequest('sendInvoice', [
+        ?string $providerToken = null,
+        ?int $maxTipAmount = null,
+        ?array $suggestedTipAmounts = null,
+        array $options = []
+    ): array {
+        return $this->apiCall('sendInvoice', [
             'chat_id' => $chatId,
             'title' => $title,
             'description' => $description,
             'payload' => $payload,
             'currency' => $currency,
-            'prices' => json_encode($prices),
+            'prices' => array_values($prices),
             'provider_token' => $providerToken,
             'max_tip_amount' => $maxTipAmount,
-            'suggested_tip_amounts' => $suggestedTipAmounts ? json_encode($suggestedTipAmounts) : null,
-        ], returnResponse: true);
+            'suggested_tip_amounts' => $suggestedTipAmounts ?: null,
+        ], $options);
+    }
+
+    /**
+     * Create a link for an invoice
+     *
+     * @param array<int, array{label: string, amount: int}> $prices
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#createinvoicelink
+     */
+    public function createInvoiceLink(
+        string $title,
+        string $description,
+        string $payload,
+        string $currency,
+        array $prices,
+        ?string $providerToken = null,
+        array $options = []
+    ): string {
+        return (string) $this->apiCall('createInvoiceLink', [
+            'title' => $title,
+            'description' => $description,
+            'payload' => $payload,
+            'currency' => $currency,
+            'prices' => array_values($prices),
+            'provider_token' => $providerToken,
+        ], $options);
     }
 
     /**
      * Answer shipping query
+     *
+     * @param array<int, array<string, mixed>>|null $shippingOptions
      *
      * @see https://core.telegram.org/bots/api#answershippingquery
      */
     public function answerShippingQuery(
         string $shippingQueryId,
         bool $ok,
-        array|null $shippingOptions = null,
-        string|null $errorMessage = null
+        ?array $shippingOptions = null,
+        ?string $errorMessage = null
     ): bool {
-        $result = $this->httpRequest('answerShippingQuery', [
+        return (bool) $this->apiCall('answerShippingQuery', [
             'shipping_query_id' => $shippingQueryId,
-            'ok' => $ok ? 'true' : 'false',
-            'shipping_options' => $shippingOptions ? json_encode($shippingOptions) : null,
+            'ok' => $ok,
+            'shipping_options' => $shippingOptions,
             'error_message' => $errorMessage,
-        ], returnResponse: true);
-
-        return $result !== null;
+        ]);
     }
 
     /**
-     * Answer pre-checkout query
+     * Answer pre-checkout query (must be answered within 10 seconds)
      *
      * @see https://core.telegram.org/bots/api#answerprecheckoutquery
      */
     public function answerPreCheckoutQuery(
         string $preCheckoutQueryId,
         bool $ok,
-        string|null $errorMessage = null
+        ?string $errorMessage = null
     ): bool {
-        $result = $this->httpRequest('answerPreCheckoutQuery', [
+        return (bool) $this->apiCall('answerPreCheckoutQuery', [
             'pre_checkout_query_id' => $preCheckoutQueryId,
-            'ok' => $ok ? 'true' : 'false',
+            'ok' => $ok,
             'error_message' => $errorMessage,
-        ], returnResponse: true);
+        ]);
+    }
 
-        return $result !== null;
+    /**
+     * Refund a successful payment in Telegram Stars
+     *
+     * @see https://core.telegram.org/bots/api#refundstarpayment
+     */
+    public function refundStarPayment(int $userId, string $telegramPaymentChargeId): bool
+    {
+        return (bool) $this->apiCall('refundStarPayment', [
+            'user_id' => $userId,
+            'telegram_payment_charge_id' => $telegramPaymentChargeId,
+        ]);
+    }
+
+    /**
+     * Get the bot's Telegram Star transactions
+     *
+     * @return array<string, mixed> StarTransactions
+     *
+     * @see https://core.telegram.org/bots/api#getstartransactions
+     */
+    public function getStarTransactions(?int $offset = null, ?int $limit = null): array
+    {
+        return $this->apiCall('getStarTransactions', [
+            'offset' => $offset,
+            'limit' => $limit,
+        ]);
     }
 }

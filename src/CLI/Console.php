@@ -4,161 +4,226 @@ declare(strict_types=1);
 
 namespace TGbotPHP\CLI;
 
+use Throwable;
+use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Framework\Bot;
 
+/**
+ * Command line tool
+ *
+ * The token is read from --token or the TELEGRAM_BOT_TOKEN environment
+ * variable (preferred: command line arguments end up in shell history).
+ */
 class Console
 {
-    public function run(array $argv): void
+    /** @var callable(string): Bot */
+    private $botFactory;
+
+    /** @var resource */
+    private $output;
+
+    /**
+     * @param (callable(string): Bot)|null $botFactory
+     * @param resource|null $output
+     */
+    public function __construct(?callable $botFactory = null, $output = null)
+    {
+        $this->botFactory = $botFactory ?? static fn(string $token): Bot => new Bot($token);
+        $this->output = $output ?? STDOUT;
+    }
+
+    /**
+     * @param string[] $argv
+     * @return int Exit code
+     */
+    public function run(array $argv): int
     {
         $command = $argv[1] ?? 'help';
 
-        match ($command) {
-            'help' => $this->showHelp(),
-            'version' => $this->showVersion(),
-            'webhook:info' => $this->webhookInfo($argv),
-            'webhook:set' => $this->setWebhook($argv),
-            'webhook:delete' => $this->deleteWebhook($argv),
-            'bot:info' => $this->botInfo($argv),
-            'bot:test' => $this->testBot($argv),
-            default => $this->showHelp(),
-        };
+        try {
+            return match ($command) {
+                'help', '--help', '-h' => $this->showHelp(),
+                'version', '--version', '-V' => $this->showVersion(),
+                'webhook:info' => $this->webhookInfo($argv),
+                'webhook:set' => $this->setWebhook($argv),
+                'webhook:delete' => $this->deleteWebhook($argv),
+                'bot:info', 'bot:test' => $this->botInfo($argv),
+                'commands:list' => $this->listCommands($argv),
+                'commands:delete' => $this->deleteCommands($argv),
+                default => $this->unknown($command),
+            };
+        } catch (Throwable $e) {
+            $this->write('❌ Error: ' . $e->getMessage());
+            return 1;
+        }
     }
 
-    private function showHelp(): void
+    private function showHelp(): int
     {
-        echo <<<'EOF'
+        $this->write(<<<'EOF'
 🤖 TGbotPHP CLI Tool
 
 Usage: tgbot <command> [options]
 
 Commands:
-  help              Show this help message
-  version           Show version
+  help                Show this help message
+  version             Show version
 
 Webhook Management:
-  webhook:info      Get webhook info
-  webhook:set       Set webhook URL
-  webhook:delete    Delete webhook
+  webhook:info        Get webhook info
+  webhook:set         Set webhook URL (--url, optional --secret, --drop-pending)
+  webhook:delete      Delete webhook (optional --drop-pending)
 
 Bot Management:
-  bot:info          Get bot information
-  bot:test          Test bot with /start command
+  bot:info            Get bot information (alias: bot:test)
+  commands:list       List the bot commands (optional --scope, --lang)
+  commands:delete     Delete the bot commands (optional --scope, --lang)
+
+Options:
+  --token=TOKEN       Bot token (default: TELEGRAM_BOT_TOKEN environment variable)
 
 Examples:
-  tgbot webhook:info --token=YOUR_TOKEN
-  tgbot webhook:set --token=YOUR_TOKEN --url=https://example.com/webhook.php
-  tgbot bot:info --token=YOUR_TOKEN
+  TELEGRAM_BOT_TOKEN=<token> tgbot bot:info
+  tgbot webhook:set --url=https://example.com/webhook.php --secret="$TELEGRAM_SECRET_TOKEN"
+EOF);
 
-EOF;
+        return 0;
     }
 
-    private function showVersion(): void
+    private function showVersion(): int
     {
-        echo "TGbotPHP v2.0.0\n";
+        $this->write('TGbotPHP v' . ApiClient::VERSION);
+        return 0;
     }
 
-    private function webhookInfo(array $argv): void
+    /**
+     * @param string[] $argv
+     */
+    private function webhookInfo(array $argv): int
     {
-        $token = $this->getOption($argv, 'token');
-        if (!$token) {
-            echo "❌ Error: --token is required\n";
-            return;
+        $info = $this->bot($argv)->getWebhookInfo();
+
+        $this->write('✅ Webhook Info:');
+        $this->write('  URL: ' . (($info['url'] ?? '') !== '' ? $info['url'] : 'Not set'));
+        $this->write('  Pending updates: ' . ($info['pending_update_count'] ?? 0));
+
+        if (isset($info['max_connections'])) {
+            $this->write('  Max connections: ' . $info['max_connections']);
         }
 
-        $bot = new Bot($token);
-        $info = $bot->getWebhookInfo();
-
-        if ($info) {
-            echo "✅ Webhook Info:\n";
-            echo "  URL: " . ($info['url'] ? $info['url'] : 'Not set') . "\n";
-            echo "  Pending: " . ($info['pending_update_count'] ?? 0) . "\n";
-        } else {
-            echo "❌ Failed to get webhook info\n";
+        if (isset($info['last_error_message'])) {
+            $date = isset($info['last_error_date']) ? date('Y-m-d H:i:s', (int) $info['last_error_date']) : 'unknown';
+            $this->write("  Last error ($date): " . $info['last_error_message']);
         }
+
+        return 0;
     }
 
-    private function setWebhook(array $argv): void
+    /**
+     * @param string[] $argv
+     */
+    private function setWebhook(array $argv): int
     {
-        $token = $this->getOption($argv, 'token');
         $url = $this->getOption($argv, 'url');
 
-        if (!$token || !$url) {
-            echo "❌ Error: --token and --url are required\n";
-            return;
+        if ($url === null || $url === '') {
+            $this->write('❌ Error: --url is required');
+            return 1;
         }
 
-        $bot = new Bot($token);
-        $result = $bot->setWebhook($url);
+        $this->bot($argv)->setWebhook(
+            url: $url,
+            dropPendingUpdates: $this->hasFlag($argv, 'drop-pending'),
+            secretToken: $this->getOption($argv, 'secret')
+        );
 
-        if ($result) {
-            echo "✅ Webhook set successfully\n";
-        } else {
-            echo "❌ Failed to set webhook\n";
-        }
+        $this->write('✅ Webhook set successfully');
+        return 0;
     }
 
-    private function deleteWebhook(array $argv): void
+    /**
+     * @param string[] $argv
+     */
+    private function deleteWebhook(array $argv): int
     {
-        $token = $this->getOption($argv, 'token');
-        if (!$token) {
-            echo "❌ Error: --token is required\n";
-            return;
-        }
+        $this->bot($argv)->deleteWebhook($this->hasFlag($argv, 'drop-pending'));
 
-        $bot = new Bot($token);
-        $result = $bot->deleteWebhook();
-
-        if ($result) {
-            echo "✅ Webhook deleted successfully\n";
-        } else {
-            echo "❌ Failed to delete webhook\n";
-        }
+        $this->write('✅ Webhook deleted successfully');
+        return 0;
     }
 
-    private function botInfo(array $argv): void
+    /**
+     * @param string[] $argv
+     */
+    private function botInfo(array $argv): int
     {
-        $token = $this->getOption($argv, 'token');
-        if (!$token) {
-            echo "❌ Error: --token is required\n";
-            return;
-        }
+        $me = $this->bot($argv)->getMe();
 
-        $bot = new Bot($token);
-        $me = $bot->getMe();
+        $this->write('✅ Bot Info:');
+        $this->write('  ID: ' . ($me['id'] ?? '?'));
+        $this->write('  Username: @' . ($me['username'] ?? '?'));
+        $this->write('  Name: ' . ($me['first_name'] ?? '?'));
+        $this->write('  Can join groups: ' . (!empty($me['can_join_groups']) ? 'Yes' : 'No'));
+        $this->write('  Reads all group messages: ' . (!empty($me['can_read_all_group_messages']) ? 'Yes' : 'No'));
+        $this->write('  Supports inline queries: ' . (!empty($me['supports_inline_queries']) ? 'Yes' : 'No'));
 
-        if ($me) {
-            echo "✅ Bot Info:\n";
-            echo "  ID: {$me['id']}\n";
-            echo "  Username: @{$me['username']}\n";
-            echo "  Name: {$me['first_name']}\n";
-            echo "  Bot: " . ($me['is_bot'] ? 'Yes' : 'No') . "\n";
-        } else {
-            echo "❌ Failed to get bot info\n";
-        }
+        return 0;
     }
 
-    private function testBot(array $argv): void
+    /**
+     * @param string[] $argv
+     */
+    private function listCommands(array $argv): int
     {
-        $token = $this->getOption($argv, 'token');
-        if (!$token) {
-            echo "❌ Error: --token is required\n";
-            return;
+        $commands = $this->bot($argv)->getMyCommands($this->getOption($argv, 'scope'), $this->getOption($argv, 'lang'));
+
+        if ($commands === []) {
+            $this->write('No commands set');
+            return 0;
         }
 
-        echo "🧪 Testing bot...\n";
-
-        $bot = new Bot($token);
-        $me = $bot->getMe();
-
-        if ($me) {
-            echo "✅ Bot is working\n";
-            echo "   ID: {$me['id']}\n";
-            echo "   Username: @{$me['username']}\n";
-        } else {
-            echo "❌ Bot test failed\n";
+        foreach ($commands as $command) {
+            $this->write(sprintf('  /%s - %s', $command['command'] ?? '', $command['description'] ?? ''));
         }
+
+        return 0;
     }
 
+    /**
+     * @param string[] $argv
+     */
+    private function deleteCommands(array $argv): int
+    {
+        $this->bot($argv)->deleteMyCommands($this->getOption($argv, 'scope'), $this->getOption($argv, 'lang'));
+
+        $this->write('✅ Commands deleted');
+        return 0;
+    }
+
+    private function unknown(string $command): int
+    {
+        $this->write("❌ Unknown command: $command");
+        $this->showHelp();
+        return 1;
+    }
+
+    /**
+     * @param string[] $argv
+     */
+    private function bot(array $argv): Bot
+    {
+        $token = $this->getOption($argv, 'token') ?? (getenv('TELEGRAM_BOT_TOKEN') ?: null);
+
+        if ($token === null || $token === '') {
+            throw new \InvalidArgumentException('--token or TELEGRAM_BOT_TOKEN is required');
+        }
+
+        return ($this->botFactory)($token);
+    }
+
+    /**
+     * @param string[] $argv
+     */
     private function getOption(array $argv, string $name): ?string
     {
         $prefix = "--$name=";
@@ -168,5 +233,18 @@ EOF;
             }
         }
         return null;
+    }
+
+    /**
+     * @param string[] $argv
+     */
+    private function hasFlag(array $argv, string $name): bool
+    {
+        return in_array("--$name", $argv, true);
+    }
+
+    private function write(string $line): void
+    {
+        fwrite($this->output, $line . PHP_EOL);
     }
 }

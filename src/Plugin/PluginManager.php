@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Plugin;
 
+/**
+ * Plugin registry and priority-ordered hooks
+ */
 class PluginManager
 {
+    /** @var array<string, PluginInterface> */
     private array $plugins = [];
+
+    /** @var array<string, array<int, callable[]>> */
     private array $hooks = [];
 
     public function register(string $name, PluginInterface $plugin): void
@@ -27,24 +33,34 @@ class PluginManager
         }
     }
 
-    public function addHook(string $hook, callable $callback, int $priority = 10): void
+    public function get(string $name): ?PluginInterface
     {
-        if (!isset($this->hooks[$hook])) {
-            $this->hooks[$hook] = [];
-        }
-
-        $this->hooks[$hook][$priority][] = $callback;
+        return $this->plugins[$name] ?? null;
     }
 
+    /**
+     * @return array<string, PluginInterface>
+     */
+    public function all(): array
+    {
+        return $this->plugins;
+    }
+
+    /**
+     * Add a hook callback; lower priorities run first
+     */
+    public function addHook(string $hook, callable $callback, int $priority = 10): void
+    {
+        $this->hooks[$hook][$priority][] = $callback;
+        ksort($this->hooks[$hook]);
+    }
+
+    /**
+     * Pass a value through every callback of a hook
+     */
     public function executeHook(string $hook, mixed $value = null): mixed
     {
-        if (!isset($this->hooks[$hook])) {
-            return $value;
-        }
-
-        ksort($this->hooks[$hook]);
-
-        foreach ($this->hooks[$hook] as $callbacks) {
+        foreach ($this->hooks[$hook] ?? [] as $callbacks) {
             foreach ($callbacks as $callback) {
                 $value = $callback($value);
             }

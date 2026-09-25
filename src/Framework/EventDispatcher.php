@@ -8,6 +8,9 @@ namespace TGbotPHP\Framework;
  * Event dispatcher for custom events
  *
  * Allows plugins and handlers to hook into bot lifecycle.
+ *
+ * Built-in events: "update.received", "update.processed", "error", "error.api",
+ * "polling.started", "polling.stopped".
  */
 final class EventDispatcher
 {
@@ -19,25 +22,25 @@ final class EventDispatcher
      */
     public function listen(string $event, callable $handler): void
     {
-        if (!isset($this->listeners[$event])) {
-            $this->listeners[$event] = [];
-        }
-
         $this->listeners[$event][] = $handler;
     }
 
     /**
      * Dispatch event
      */
-    public function dispatch(string $event, mixed $data = null): void
+    public function dispatch(string $event, mixed ...$data): void
     {
-        if (!isset($this->listeners[$event])) {
-            return;
+        foreach ($this->listeners[$event] ?? [] as $handler) {
+            $handler(...$data);
         }
+    }
 
-        foreach ($this->listeners[$event] as $handler) {
-            call_user_func($handler, $data);
-        }
+    /**
+     * Check whether an event has listeners
+     */
+    public function hasListeners(string $event): bool
+    {
+        return !empty($this->listeners[$event]);
     }
 
     /**
@@ -51,10 +54,14 @@ final class EventDispatcher
     }
 
     /**
-     * Remove all listeners
+     * Remove listeners of one event, or all listeners
      */
-    public function clear(): void
+    public function clear(?string $event = null): void
     {
-        $this->listeners = [];
+        if ($event === null) {
+            $this->listeners = [];
+        } else {
+            unset($this->listeners[$event]);
+        }
     }
 }

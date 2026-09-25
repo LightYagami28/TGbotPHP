@@ -1,6 +1,6 @@
 {
     "name": "lightyagami28/tgbotphp",
-    "description": "Production-ready PHP library for Telegram Bot API with 100+ methods",
+    "description": "Production-ready PHP framework for the Telegram Bot API: routing, middleware, conversations, webhooks and long polling",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -14,16 +14,20 @@
         "telegram",
         "bot",
         "telegram-bot",
+        "telegram-bot-api",
         "php",
         "webhook",
         "polling",
         "api"
     ],
     "require": {
-        "php": ">=7.0"
+        "php": ">=8.2",
+        "ext-curl": "*",
+        "ext-json": "*"
     },
     "require-dev": {
-        "phpstan/phpstan": "^1.10"
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^11.5"
     },
     "autoload": {
         "psr-4": {
@@ -35,9 +39,19 @@
             "TGbotPHP\\Tests\\": "tests/"
         }
     },
+    "bin": [
+        "bin/tgbot"
+    ],
+    "config": {
+        "sort-packages": true
+    },
     "scripts": {
-        "test": "bash run-unit-tests.sh",
-        "phpstan": "phpstan analyse src/ --level=5",
-        "analyze": "@phpstan"
+        "test": "phpunit",
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "analyze": "@phpstan",
+        "check": [
+            "@test",
+            "@phpstan"
+        ]
     }
 }

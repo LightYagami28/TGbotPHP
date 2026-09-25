@@ -4,78 +4,92 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
-use CURLFile;
-use TGbotPHP\Traits\HttpClientTrait;
+use JsonSerializable;
+use TGbotPHP\Types\InputFile;
 
 /**
  * Sticker methods from Telegram Bot API
+ *
+ * InputSticker objects may contain an InputFile in their "sticker" field;
+ * it is uploaded automatically.
  *
  * @see https://core.telegram.org/bots/api#stickers
  */
 trait StickerMethods
 {
-    use HttpClientTrait;
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
 
     /**
      * Send sticker
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendsticker
      */
     public function sendSticker(
         int|string $chatId,
-        string $sticker,
-        array|null $replyMarkup = null
-    ): array|null {
-        return $this->httpRequest('sendSticker', [
+        string|InputFile $sticker,
+        array|JsonSerializable|null $replyMarkup = null,
+        array $options = []
+    ): array {
+        return $this->apiCall('sendSticker', [
             'chat_id' => $chatId,
             'sticker' => $sticker,
-            ...(null !== $replyMarkup ? ['reply_markup' => json_encode($replyMarkup)] : []),
-        ], returnResponse: true);
+            'reply_markup' => $replyMarkup,
+        ], $options);
     }
 
     /**
-     * Get sticker set
+     * @return array<string, mixed> StickerSet
      *
      * @see https://core.telegram.org/bots/api#getstickerset
      */
-    public function getStickerSet(string $name): array|null
+    public function getStickerSet(string $name): array
     {
-        return $this->httpRequest('getStickerSet', [
-            'name' => $name,
-        ], returnResponse: true);
+        return $this->apiCall('getStickerSet', ['name' => $name]);
     }
 
     /**
-     * Get custom emoji stickers
+     * @param string[] $customEmojiIds
+     * @return array<int, array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getcustomemojistickers
      */
-    public function getCustomEmojiStickers(array $customEmojiIds): array|null
+    public function getCustomEmojiStickers(array $customEmojiIds): array
     {
-        return $this->httpRequest('getCustomEmojiStickers', [
-            'custom_emoji_ids' => json_encode($customEmojiIds),
-        ], returnResponse: true);
+        return $this->apiCall('getCustomEmojiStickers', [
+            'custom_emoji_ids' => array_values($customEmojiIds),
+        ]);
     }
 
     /**
-     * Upload sticker file
+     * Upload a sticker file for later use
+     *
+     * @param string $stickerFormat "static", "animated" or "video"
+     * @return array<string, mixed> File
      *
      * @see https://core.telegram.org/bots/api#uploadstickerfile
      */
-    public function uploadStickerFile(
-        int $userId,
-        string $pngSticker,
-        string $stickerFormat
-    ): array|null {
-        return $this->httpRequest('uploadStickerFile', [
+    public function uploadStickerFile(int $userId, InputFile $sticker, string $stickerFormat): array
+    {
+        return $this->apiCall('uploadStickerFile', [
             'user_id' => $userId,
-            'sticker' => new CURLFile($pngSticker),
+            'sticker' => $sticker,
             'sticker_format' => $stickerFormat,
-        ], returnResponse: true);
+        ]);
     }
 
     /**
-     * Create new sticker set
+     * Create a new sticker set owned by a user
+     *
+     * @param array<int, array<string, mixed>> $stickers InputSticker objects (1-50)
+     * @param string|null $stickerType "regular", "mask" or "custom_emoji"
      *
      * @see https://core.telegram.org/bots/api#createnewstickerset
      */
@@ -83,75 +97,97 @@ trait StickerMethods
         int $userId,
         string $name,
         string $title,
-        string $sticker,
-        string $stickerFormat,
-        string|null $emojis = null,
-        bool $containsMasks = false,
-        array|null $maskPosition = null
+        array $stickers,
+        ?string $stickerType = null,
+        bool $needsRepainting = false
     ): bool {
-        $result = $this->httpRequest('createNewStickerSet', [
+        return (bool) $this->apiCall('createNewStickerSet', [
             'user_id' => $userId,
             'name' => $name,
             'title' => $title,
-            'sticker' => new CURLFile($sticker),
-            'sticker_format' => $stickerFormat,
-            'emojis' => $emojis,
-            'contains_masks' => $containsMasks ? 'true' : 'false',
-            'mask_position' => $maskPosition ? json_encode($maskPosition) : null,
-        ], returnResponse: true);
-
-        return $result !== null;
+            'stickers' => array_values($stickers),
+            'sticker_type' => $stickerType,
+            'needs_repainting' => $needsRepainting ?: null,
+        ]);
     }
 
     /**
-     * Add sticker to set
+     * Add a sticker to a set
+     *
+     * @param array<string, mixed> $sticker InputSticker object
      *
      * @see https://core.telegram.org/bots/api#addstickertoset
      */
-    public function addStickerToSet(
-        int $userId,
-        string $name,
-        string $sticker,
-        string $emojis,
-        array|null $maskPosition = null
-    ): bool {
-        $result = $this->httpRequest('addStickerToSet', [
+    public function addStickerToSet(int $userId, string $name, array $sticker): bool
+    {
+        return (bool) $this->apiCall('addStickerToSet', [
             'user_id' => $userId,
             'name' => $name,
-            'sticker' => new CURLFile($sticker),
-            'emojis' => $emojis,
-            'mask_position' => $maskPosition ? json_encode($maskPosition) : null,
-        ], returnResponse: true);
-
-        return $result !== null;
+            'sticker' => $sticker,
+        ]);
     }
 
     /**
-     * Set sticker position in set
-     *
      * @see https://core.telegram.org/bots/api#setstickerpositioninset
      */
     public function setStickerPositionInSet(string $sticker, int $position): bool
     {
-        $result = $this->httpRequest('setStickerPositionInSet', [
+        return (bool) $this->apiCall('setStickerPositionInSet', [
             'sticker' => $sticker,
             'position' => $position,
-        ], returnResponse: true);
-
-        return $result !== null;
+        ]);
     }
 
     /**
-     * Delete sticker from set
-     *
      * @see https://core.telegram.org/bots/api#deletestickerfromset
      */
     public function deleteStickerFromSet(string $sticker): bool
     {
-        $result = $this->httpRequest('deleteStickerFromSet', [
-            'sticker' => $sticker,
-        ], returnResponse: true);
+        return (bool) $this->apiCall('deleteStickerFromSet', ['sticker' => $sticker]);
+    }
 
-        return $result !== null;
+    /**
+     * @param string[] $emojiList
+     *
+     * @see https://core.telegram.org/bots/api#setstickeremojilist
+     */
+    public function setStickerEmojiList(string $sticker, array $emojiList): bool
+    {
+        return (bool) $this->apiCall('setStickerEmojiList', [
+            'sticker' => $sticker,
+            'emoji_list' => array_values($emojiList),
+        ]);
+    }
+
+    /**
+     * @param string[] $keywords
+     *
+     * @see https://core.telegram.org/bots/api#setstickerkeywords
+     */
+    public function setStickerKeywords(string $sticker, array $keywords = []): bool
+    {
+        return (bool) $this->apiCall('setStickerKeywords', [
+            'sticker' => $sticker,
+            'keywords' => array_values($keywords),
+        ]);
+    }
+
+    /**
+     * @see https://core.telegram.org/bots/api#setstickersettitle
+     */
+    public function setStickerSetTitle(string $name, string $title): bool
+    {
+        return (bool) $this->apiCall('setStickerSetTitle', [
+            'name' => $name,
+            'title' => $title,
+        ]);
+    }
+
+    /**
+     * @see https://core.telegram.org/bots/api#deletestickerset
+     */
+    public function deleteStickerSet(string $name): bool
+    {
+        return (bool) $this->apiCall('deleteStickerSet', ['name' => $name]);
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
-use TGbotPHP\Traits\HttpClientTrait;
+use TGbotPHP\Types\InputFile;
 
 /**
  * Update handling methods from Telegram Bot API
@@ -14,50 +14,63 @@ use TGbotPHP\Traits\HttpClientTrait;
  */
 trait UpdateMethods
 {
-    use HttpClientTrait;
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
 
     /**
      * Receive incoming updates using long polling
      *
+     * @param string[]|null $allowedUpdates
+     * @return array<int, array<string, mixed>>
+     *
      * @see https://core.telegram.org/bots/api#getupdates
      */
     public function getUpdates(
-        int|null $offset = null,
-        int|null $limit = null,
-        int|null $timeout = null,
-        array|null $allowedUpdates = null
-    ): array|null {
-        return $this->httpRequest('getUpdates', [
+        ?int $offset = null,
+        ?int $limit = null,
+        ?int $timeout = null,
+        ?array $allowedUpdates = null
+    ): array {
+        return $this->apiCall('getUpdates', [
             'offset' => $offset,
             'limit' => $limit,
             'timeout' => $timeout,
-            'allowed_updates' => $allowedUpdates ? json_encode($allowedUpdates) : null,
-        ], returnResponse: true);
+            'allowed_updates' => $allowedUpdates !== null ? array_values($allowedUpdates) : null,
+        ]);
     }
 
     /**
      * Set webhook URL for receiving updates
      *
+     * @param string[]|null $allowedUpdates
+     *
      * @see https://core.telegram.org/bots/api#setwebhook
      */
     public function setWebhook(
         string $url,
-        string|null $ipAddress = null,
-        int|null $maxConnections = null,
-        array|null $allowedUpdates = null,
+        ?string $ipAddress = null,
+        ?int $maxConnections = null,
+        ?array $allowedUpdates = null,
         bool $dropPendingUpdates = false,
-        string|null $secretToken = null
+        ?string $secretToken = null,
+        ?InputFile $certificate = null
     ): bool {
-        $result = $this->httpRequest('setWebhook', [
+        if ($url !== '' && !str_starts_with($url, 'https://')) {
+            throw new \InvalidArgumentException('Webhook URL must use HTTPS');
+        }
+
+        return (bool) $this->apiCall('setWebhook', [
             'url' => $url,
+            'certificate' => $certificate,
             'ip_address' => $ipAddress,
             'max_connections' => $maxConnections,
-            'allowed_updates' => $allowedUpdates ? json_encode($allowedUpdates) : null,
-            'drop_pending_updates' => $dropPendingUpdates ? 'true' : 'false',
+            'allowed_updates' => $allowedUpdates !== null ? array_values($allowedUpdates) : null,
+            'drop_pending_updates' => $dropPendingUpdates ?: null,
             'secret_token' => $secretToken,
-        ], returnResponse: true);
-
-        return $result !== null;
+        ]);
     }
 
     /**
@@ -67,20 +80,20 @@ trait UpdateMethods
      */
     public function deleteWebhook(bool $dropPendingUpdates = false): bool
     {
-        $result = $this->httpRequest('deleteWebhook', [
-            'drop_pending_updates' => $dropPendingUpdates ? 'true' : 'false',
-        ], returnResponse: true);
-
-        return $result !== null;
+        return (bool) $this->apiCall('deleteWebhook', [
+            'drop_pending_updates' => $dropPendingUpdates ?: null,
+        ]);
     }
 
     /**
      * Get current webhook status and information
      *
+     * @return array<string, mixed> WebhookInfo
+     *
      * @see https://core.telegram.org/bots/api#getwebhookinfo
      */
-    public function getWebhookInfo(): array|null
+    public function getWebhookInfo(): array
     {
-        return $this->httpRequest('getWebhookInfo', [], returnResponse: true);
+        return $this->apiCall('getWebhookInfo');
     }
 }

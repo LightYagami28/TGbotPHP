@@ -4,48 +4,81 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Utilities;
 
+use TGbotPHP\Framework\Router;
+
 class MessageParser
 {
+    /**
+     * Parse "/command@bot arguments"
+     *
+     * @return array{command: string, args: string, username: ?string}|null
+     */
     public static function parseCommand(string $text): ?array
     {
-        if (!str_starts_with($text, '/')) {
+        $parsed = Router::parseCommand($text);
+
+        if ($parsed === null) {
             return null;
         }
 
-        $parts = explode(' ', $text, 2);
-        $command = substr($parts[0], 1);
-        $args = $parts[1] ?? '';
-
         return [
-            'command' => $command,
-            'args' => $args,
+            'command' => $parsed['command'],
+            'args' => $parsed['args'],
+            'username' => $parsed['username'],
         ];
     }
 
+    /**
+     * Split command arguments on whitespace, honouring "double quoted" values
+     *
+     * @return string[]
+     */
+    public static function parseArguments(string $args): array
+    {
+        preg_match_all('/"((?:[^"\\\\]|\\\\.)*)"|(\S+)/u', $args, $matches, PREG_SET_ORDER);
+
+        return array_map(
+            static fn(array $match): string => ($match[2] ?? '') !== '' ? $match[2] : stripcslashes($match[1]),
+            $matches
+        );
+    }
+
+    /**
+     * @return string[]
+     */
     public static function extractMentions(string $text): array
     {
-        if (preg_match_all('/@(\w+)/', $text, $matches) > 0) {
+        if (preg_match_all('/(?<![\w@])@(\w{3,32})/u', $text, $matches) > 0) {
             return $matches[1];
         }
         return [];
     }
 
+    /**
+     * @return string[]
+     */
     public static function extractHashtags(string $text): array
     {
-        if (preg_match_all('/#(\w+)/', $text, $matches) > 0) {
+        if (preg_match_all('/(?<!\w)#(\w+)/u', $text, $matches) > 0) {
             return $matches[1];
         }
         return [];
     }
 
+    /**
+     * @return string[]
+     */
     public static function extractUrls(string $text): array
     {
-        if (preg_match_all('/https?:\/\/[^\s]+/', $text, $matches) > 0) {
-            return $matches[0];
+        if (preg_match_all('/https?:\/\/[^\s<>"]+/u', $text, $matches) > 0) {
+            return array_map(static fn(string $url): string => rtrim($url, '.,;:!?)'), $matches[0]);
         }
         return [];
     }
 
+    /**
+     * @return string[]
+     */
     public static function extractEmails(string $text): array
     {
         if (preg_match_all('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $text, $matches) > 0) {
@@ -56,11 +89,18 @@ class MessageParser
 
     public static function stripMarkdown(string $text): string
     {
-        $text = preg_replace('/\*\*(.+?)\*\*/', '$1', $text);
-        $text = preg_replace('/\*(.+?)\*/', '$1', $text);
-        $text = preg_replace('/__(.+?)__/', '$1', $text);
-        $text = preg_replace('/_(.+?)_/', '$1', $text);
-        $text = preg_replace('/`(.+?)`/', '$1', $text);
+        $patterns = [
+            '/\*\*(.+?)\*\*/s',
+            '/\*(.+?)\*/s',
+            '/__(.+?)__/s',
+            '/_(.+?)_/s',
+            '/~(.+?)~/s',
+            '/`(.+?)`/s',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $text = (string) preg_replace($pattern, '$1', $text);
+        }
 
         return $text;
     }

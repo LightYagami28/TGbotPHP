@@ -9,9 +9,18 @@ declare(strict_types=1);
  * Manage Telegram bots with ease
  */
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+$autoloaders = [
+    dirname(__DIR__) . '/vendor/autoload.php',   // running from the repository
+    dirname(__DIR__, 3) . '/autoload.php',       // installed as a Composer dependency
+];
+
+foreach ($autoloaders as $autoloader) {
+    if (is_file($autoloader)) {
+        require_once $autoloader;
+        break;
+    }
+}
 
 use TGbotPHP\CLI\Console;
 
-$console = new Console();
-$console->run($argv);
+exit((new Console())->run($argv));
