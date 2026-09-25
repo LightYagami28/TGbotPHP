@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `composer.json` and the README declared the MIT license, but `LICENSE` (inherited from the Apache-licensed upstream repository) is the Apache License 2.0. The metadata now says Apache-2.0.
 
 ### Added
-- `Bot::handle()` for webhooks (secret token check, 403/400 responses) and `Bot::poll()` for long polling (backoff, 429 handling, `stop()`).
+- `Bot::handle()` for webhooks (secret token check, 403/400 responses, `respondFirst` to answer Telegram before slow handlers run) and `Bot::poll()` for long polling (backoff, 429 handling, `stop()`).
 - Routing: `hears()`, `inlineQuery()`, `onUpdate()` for any update type, `fallback()`, `onUnknownCommand()`, and exact, `prefix:*` or regex patterns for callbacks and inline queries. Handlers receive the `Bot` and the route data.
 - Middleware can stop processing (`return false`) or wrap it (`$next`).
 - Conversations: `useConversations()`, `state()`, `setState()`, `updateStateData()`, `clearState()`.

@@ -24,9 +24,11 @@ final readonly class WebhookHandler
     /**
      * @param string|null $body Request body (default: php://input)
      * @param string|null $secretToken X-Telegram-Bot-Api-Secret-Token header (default: read from $_SERVER)
+     * @param bool $respondFirst Answer Telegram before running the handlers, on PHP-FPM and LiteSpeed:
+     *                           Telegram does not wait for slow handlers, but output is not sent
      * @return bool Whether the update was accepted
      */
-    public function handle(?string $body = null, ?string $secretToken = null): bool
+    public function handle(?string $body = null, ?string $secretToken = null, bool $respondFirst = false): bool
     {
         $expected = $this->bot->getConfig()->secretToken;
 
@@ -42,6 +44,10 @@ final readonly class WebhookHandler
             return false;
         }
 
+        if ($respondFirst) {
+            self::finishRequest();
+        }
+
         try {
             $this->bot->processUpdate($update);
         } catch (Throwable $e) {
@@ -49,6 +55,18 @@ final readonly class WebhookHandler
         }
 
         return true;
+    }
+
+    /**
+     * Send the response now and keep running
+     */
+    private static function finishRequest(): void
+    {
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        } elseif (function_exists('litespeed_finish_request')) {
+            litespeed_finish_request();
+        }
     }
 
     private static function respond(int $statusCode): void

@@ -472,6 +472,18 @@ final class BotTest extends TestCase
         self::assertSame(['fallback:20', 10], $states);
     }
 
+    public function testHandleCanRespondBeforeRunningHandlers(): void
+    {
+        $handled = false;
+        $this->bot->command('start', function () use (&$handled): void {
+            $handled = true;
+        });
+
+        // Outside PHP-FPM there is no response to finish: the update is still processed
+        self::assertTrue($this->bot->handle(Updates::json(Updates::message('/start')), respondFirst: true));
+        self::assertTrue($handled);
+    }
+
     public function testHandleValidatesSecretToken(): void
     {
         $bot = new Bot(new Config(Updates::TOKEN, secretToken: 'top-secret'), transport: $this->transport);

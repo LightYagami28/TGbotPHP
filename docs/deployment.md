@@ -40,6 +40,8 @@ $bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 
 $bot->handle();
 ```
 
+Telegram waits for the response before it sends the next update of the same chat. On PHP-FPM or LiteSpeed, `$bot->handle(respondFirst: true)` answers Telegram at once and then runs the handlers, so slow handlers (large uploads, external APIs) do not hold updates back. Handlers must not rely on the HTTP output, which is no longer sent.
+
 ### 3. Environment
 
 Set these in the web server or hosting panel, not in a file under the web root:

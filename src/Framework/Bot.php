@@ -56,11 +56,12 @@ final class Bot extends ApiClient
     /**
      * Webhook entry point: see WebhookHandler
      *
+     * @param bool $respondFirst Answer Telegram before running the handlers (PHP-FPM, LiteSpeed)
      * @return bool Whether the update was accepted
      */
-    public function handle(?string $body = null, ?string $secretTokenHeader = null): bool
+    public function handle(?string $body = null, ?string $secretTokenHeader = null, bool $respondFirst = false): bool
     {
-        return new WebhookHandler($this)->handle($body, $secretTokenHeader);
+        return new WebhookHandler($this)->handle($body, $secretTokenHeader, $respondFirst);
     }
 
     /**
