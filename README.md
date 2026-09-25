@@ -22,7 +22,8 @@ Fork of [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotP
 - **Conversations**: multi-step dialogs with per-user state.
 - **Reliability**: 429 flood-control retries, typed exceptions (`ApiException`, `TooManyRequestsException`, `NetworkException`), errors sent to an `onError` handler.
 - **Security**: webhook secret token, Telegram IP ranges, Mini App `initData` validation, HTML/MarkdownV2 escaping, a rate-limiting middleware.
-- **Tooling**: persistent `FileCache`, keyboard builders, `tgbot` CLI, PHPUnit test suite, PHPStan.
+- **Type safety**: PHPStan level 10 (max) with strict rules on the whole codebase, results validated at runtime, and `Support\Value` for reading payloads.
+- **Tooling**: persistent `FileCache`, keyboard builders, `tgbot` CLI, PHPUnit test suite (PHP 8.2 to 8.5).
 
 ## Installation
 

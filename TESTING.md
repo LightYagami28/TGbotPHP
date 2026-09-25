@@ -5,11 +5,11 @@
 ```bash
 composer install
 composer test          # PHPUnit
-composer phpstan       # static analysis (level 5)
+composer phpstan       # static analysis (level 10 + strict rules)
 composer check         # both
 ```
 
-CI runs the test suite on PHP 8.2, 8.3 and 8.4 and PHPStan on every push and pull request.
+CI runs the test suite on PHP 8.2, 8.3, 8.4 and 8.5, and PHPStan on every push and pull request.
 
 ## Test layout
 
@@ -20,6 +20,7 @@ CI runs the test suite on PHP 8.2, 8.3 and 8.4 and PHPStan on every push and pul
 | `tests/Unit/CacheTest.php` | `ArrayCache`, `FileCache`, rate limiter, conversations, sessions |
 | `tests/Unit/SecurityTest.php` | Secret token, signatures, Telegram IPs, Mini App data |
 | `tests/Unit/UtilitiesTest.php` | Keyboards, formatter, parsers, pattern matching |
+| `tests/Unit/ValueTest.php` | Type-safe readers for untyped data |
 | `tests/Unit/ConsoleTest.php` | `tgbot` CLI |
 
 No test talks to Telegram: `tests/Support/FakeTransport.php` records requests and replays queued responses.

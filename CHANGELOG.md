@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ArrayCache::has()` returned `false` for stored `null` values.
 - `composer.json` required PHP ≥ 7.0 although the code needs 8.2. The `test` script pointed to a missing file, and CI ignored failures (`|| true`).
 - The CLI used a wrong autoloader path when installed as a dependency, and always exited with status 0.
+- `Formatter::escape()` produced `&apos;`, which Telegram rejects ("can't parse entities"). Quotes are now escaped as `&quot;` and `&#039;`.
+- Numeric callback data, commands and keyboard labels (`'123'`) no longer break routing. PHP turns such array keys into integers.
+- `UpdateParser::getType()` could return an integer for numeric property names.
 
 ### Added
 - `Bot::handle()`: webhook entry point with secret token validation (403) and JSON validation (400).
@@ -41,7 +44,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `UpdateParser::getType()`, `getPayload()`, `getChat()`, `getUser()` and `fromArray()`.
 - `MessageParser::parseArguments()`.
 - CLI: `commands:list`, `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
-- A PHPUnit test suite (83 tests), PHPStan configuration, and runnable examples in `examples/`.
+- A PHPUnit test suite (107 tests) and runnable examples in `examples/`.
+- PHPStan **level 10** (max) with `phpstan-strict-rules` and `phpstan-phpunit`, on `src/`, `tests/`, `examples/` and `bin/`, with no baseline and no ignored errors. CI tests PHP 8.2 to 8.5.
+- Every API result is validated against the type the method declares (`apiCallObject()`, `apiCallList()`, `apiCallBool()`, ...). An unexpected payload throws `ApiException` instead of a `TypeError` deep in your handler.
+- `Support\Value`: type-safe readers for decoded JSON and update payloads (`Value::int()`, `string()`, `id()`, `path()`, `map()`, `env()`).
+- `Bot::edit()` edits the message a callback button belongs to, including inline messages. `Bot::chatId()` returns the chat id of any payload.
+
+### Security
+- The debug log redacts `secret_token` and `provider_token`. The bot token never appears in it.
+- `Config` is immutable: its properties are `readonly`, so the token and API URL cannot be changed after validation.
+- cURL never follows redirects and only speaks HTTP(S).
+- Update payloads are read through `Support\Value`: malformed input can no longer be cast to `"Array"` strings or accidental integers.
 
 ### Changed
 - Requires PHP 8.2+ with ext-curl and ext-json.

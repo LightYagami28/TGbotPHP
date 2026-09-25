@@ -19,6 +19,10 @@ Please do not open public issues for security problems. Report them privately wi
 | No object deserialization from the cache | `FileCache` |
 | Log injection prevention | `Logger` |
 | Per-user rate limiting | `RateLimiter::middleware()` |
+| Secrets redacted from the debug log | `HttpClientTrait` |
+| Immutable configuration | `Config` (readonly properties) |
+| No redirects, HTTP(S) only | `CurlTransport` |
+| API results validated against the declared type | `apiCall*()` wrappers |
 
 ## Best Practices
 

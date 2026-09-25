@@ -55,6 +55,8 @@ $bot->stop();                      // from a handler or a signal handler
 ```php
 $bot->reply($message, 'text', ['reply_markup' => $keyboard]); // same chat and forum topic, HTML by default
 $bot->answer($callbackQuery, 'Saved!', showAlert: false);
+$bot->edit($callbackQuery, 'New text', ['reply_markup' => $keyboard]); // message of the button, inline messages too
+$bot->chatId($messageOrCallback);  // int|string
 $bot->setUsername('my_bot');     // ignore /cmd@other_bot
 $bot->useConversations($cache);  // enable state()
 $bot->setState($message, 'ask_name', ['step' => 1]);
@@ -222,6 +224,19 @@ MessageParser::parseCommand('/start@bot payload'); // ['command' => 'start', 'ar
 MessageParser::parseArguments('add "buy milk" 2'); // ['add', 'buy milk', '2']
 MessageParser::extractMentions($text); MessageParser::extractHashtags($text);
 MessageParser::extractUrls($text); MessageParser::extractEmails($text);
+```
+
+### Reading payloads
+
+Update payloads are `stdClass` objects decoded from JSON, so every field is `mixed`. `Support\Value` reads them safely:
+
+```php
+use TGbotPHP\Support\Value;
+
+$text   = Value::string($message->text ?? null);             // '' if missing or not a string
+$userId = Value::id(Value::path($message, 'from', 'id'));   // int|string|null
+$page   = Value::int($matches[1] ?? null, default: 1);
+$token  = Value::env('TELEGRAM_BOT_TOKEN');                 // null if unset or empty
 ```
 
 ### Security

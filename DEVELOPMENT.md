@@ -16,6 +16,7 @@ TGbotPHP/
 │   ├── Rate/         # RateLimiter
 │   ├── Security/     # WebhookValidator
 │   ├── Session/      # SessionManager, ConversationManager
+│   ├── Support/      # Value: type-safe readers for mixed data
 │   ├── Traits/       # HttpClientTrait (request encoding, errors, retries)
 │   ├── Types/        # InputFile
 │   └── Utilities/    # Keyboard, InlineKeyboard, Formatter, MessageParser, Logger, BotBuilder
@@ -33,8 +34,8 @@ composer check
 
 ## Adding an API method
 
-1. Add it to the matching trait in `src/Methods/` using `$this->apiCall('methodName', [...], $options)`.
-2. Return `bool` for methods that return `True`, and an array for objects. Cast with `(bool)`, `(int)` or `(string)` when needed.
+1. Add it to the matching trait in `src/Methods/`.
+2. Use the typed wrapper that matches the documented result: `apiCallObject()`, `apiCallList()`, `apiCallObjectOrTrue()`, `apiCallBool()`, `apiCallInt()` or `apiCallString()`. The wrapper validates the response.
 3. Pass booleans, arrays and `InputFile` objects as they are. `HttpClientTrait::prepareFields()` encodes them.
 4. Add a test in `tests/Unit/ApiClientTest.php` that checks the encoded fields.
 
@@ -43,7 +44,8 @@ composer check
 - PSR-4, PSR-12
 - PHP 8.2+, `declare(strict_types=1)` everywhere
 - Full type hints, with generics in PHPDoc (`array<string, mixed>`)
-- PHPStan level 5 must pass
+- PHPStan level 10 (max) with strict rules must pass, with no baseline and no `@phpstan-ignore`
+- Read untyped data (update payloads, decoded JSON, cache entries) through `TGbotPHP\Support\Value`
 
 ## Contributing
 
