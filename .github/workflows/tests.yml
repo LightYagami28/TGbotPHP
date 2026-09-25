@@ -46,4 +46,5 @@ jobs:
       if: matrix.coverage != 'none'
       run: |
         vendor/bin/phpunit --coverage-text=coverage.txt --coverage-clover=coverage.xml
-        { echo '### Code coverage'; echo '```'; sed -n '/Summary:/,/Lines:/p' coverage.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+        sed -n '/Summary:/,/Lines:/p' coverage.txt | tee summary.txt
+        { echo '### Code coverage'; echo '```'; cat summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
