@@ -164,7 +164,7 @@ trait ChatMethods
     public function setChatPermissions(
         int|string $chatId,
         array $permissions,
-        ?bool $useIndependentChatPermissions = null
+        ?bool $useIndependentChatPermissions = null,
     ): bool {
         return $this->apiCallBool('setChatPermissions', [
             'chat_id' => $chatId,
@@ -182,7 +182,7 @@ trait ChatMethods
         int|string $chatId,
         int $messageId,
         bool $disableNotification = false,
-        array $options = []
+        array $options = [],
     ): bool {
         return $this->apiCallBool('pinChatMessage', [
             'chat_id' => $chatId,
@@ -254,7 +254,7 @@ trait ChatMethods
         ?int $expireDate = null,
         ?int $memberLimit = null,
         bool $createsJoinRequest = false,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('createChatInviteLink', [
             'chat_id' => $chatId,

@@ -65,7 +65,7 @@ class Keyboard
 
         return ['inline_keyboard' => array_map(
             static fn(array $chunk): array => self::callbackButtons($chunk),
-            array_chunk($buttons, $cols, true)
+            array_chunk($buttons, $cols, true),
         )];
     }
 
@@ -112,14 +112,14 @@ class Keyboard
         bool $resize = true,
         bool $oneTime = false,
         ?string $placeholder = null,
-        bool $selective = false
+        bool $selective = false,
     ): array {
         $keyboard = array_map(
             static fn(array $row): array => array_map(
                 static fn(string|array $button): array => is_string($button) ? ['text' => $button] : $button,
-                array_values($row)
+                array_values($row),
             ),
-            array_values($rows)
+            array_values($rows),
         );
 
         return array_filter([

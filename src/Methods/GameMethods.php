@@ -64,7 +64,7 @@ trait GameMethods
         string $gameShortName,
         bool $disableNotification = false,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendGame', [
             'chat_id' => $chatId,
@@ -86,7 +86,7 @@ trait GameMethods
         bool $disableEditMessage = false,
         ?int $chatId = null,
         ?int $messageId = null,
-        ?string $inlineMessageId = null
+        ?string $inlineMessageId = null,
     ): array|bool {
         return $this->apiCallObjectOrTrue('setGameScore', [
             'user_id' => $userId,
@@ -108,7 +108,7 @@ trait GameMethods
         int $userId,
         ?int $chatId = null,
         ?int $messageId = null,
-        ?string $inlineMessageId = null
+        ?string $inlineMessageId = null,
     ): array {
         return $this->apiCallList('getGameHighScores', [
             'user_id' => $userId,

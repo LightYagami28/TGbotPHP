@@ -610,7 +610,7 @@ final class BotTest extends TestCase
         self::assertSame('built_bot', $bot->getUsername());
         self::assertSame(
             ['middleware', 'start', 'processed', 'middleware', 'callback', 'processed', 'middleware', 'text', 'processed'],
-            $log
+            $log,
         );
     }
 }

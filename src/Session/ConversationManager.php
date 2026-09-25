@@ -21,8 +21,7 @@ final readonly class ConversationManager
         private CacheInterface $cache,
         private int $ttl = 3600,
         private string $prefix = 'conversation:',
-    ) {
-    }
+    ) {}
 
     public function getState(int|string $chatId, int|string|null $userId = null): ?string
     {

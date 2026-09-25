@@ -65,7 +65,7 @@ trait UpdateMethods
         ?int $offset = null,
         ?int $limit = null,
         ?int $timeout = null,
-        ?array $allowedUpdates = null
+        ?array $allowedUpdates = null,
     ): array {
         return $this->apiCallList('getUpdates', [
             'offset' => $offset,
@@ -89,7 +89,7 @@ trait UpdateMethods
         ?array $allowedUpdates = null,
         bool $dropPendingUpdates = false,
         ?string $secretToken = null,
-        ?InputFile $certificate = null
+        ?InputFile $certificate = null,
     ): bool {
         if ($url !== '' && !str_starts_with($url, 'https://')) {
             throw new \InvalidArgumentException('Webhook URL must use HTTPS');

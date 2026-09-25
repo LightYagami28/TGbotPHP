@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Support\Value` and `Support\Payload` to read update payloads with types.
 - CLI commands `commands:list` and `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
 - Unit tests, an end-to-end suite against the real API (`--testsuite e2e`), PHPStan at level 10 with strict rules, and runnable examples.
+- GitHub workflows: tests with coverage, PHPStan, code style (PHP-CS-Fixer, PER-CS 2.0), workflow linting (actionlint, zizmor), documentation link check, `composer audit` and dependency review, Docker image build and smoke test, on-demand end-to-end tests, and releases from `v*` tags with notes from this file.
 
 ### Changed
 - Requires PHP 8.4. CI runs on PHP 8.4 and 8.5, and on 8.6 (in development) without blocking.

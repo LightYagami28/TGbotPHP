@@ -9,7 +9,7 @@ namespace TGbotPHP\Exceptions;
  */
 class InvalidTokenException extends TelegramException
 {
-    public function __construct(string $message = "Invalid Telegram bot token")
+    public function __construct(string $message = 'Invalid Telegram bot token')
     {
         parent::__construct($message, 401);
     }

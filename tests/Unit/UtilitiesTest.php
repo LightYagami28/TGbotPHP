@@ -20,7 +20,7 @@ final class UtilitiesTest extends TestCase
     {
         self::assertSame(
             ['inline_keyboard' => [[['text' => 'A', 'callback_data' => 'a'], ['text' => 'B', 'callback_data' => 'b']]]],
-            Keyboard::inline(['A' => 'a', 'B' => 'b'])
+            Keyboard::inline(['A' => 'a', 'B' => 'b']),
         );
 
         self::assertSame(
@@ -28,12 +28,12 @@ final class UtilitiesTest extends TestCase
                 [['text' => 'A', 'callback_data' => 'a'], ['text' => 'B', 'callback_data' => 'b']],
                 [['text' => 'C', 'callback_data' => 'c']],
             ]],
-            Keyboard::grid(['A' => 'a', 'B' => 'b', 'C' => 'c'], 2)
+            Keyboard::grid(['A' => 'a', 'B' => 'b', 'C' => 'c'], 2),
         );
 
         self::assertSame(
             ['inline_keyboard' => [[['text' => 'Site', 'url' => 'https://example.com']]]],
-            Keyboard::links(['Site' => 'https://example.com'])
+            Keyboard::links(['Site' => 'https://example.com']),
         );
     }
 
@@ -41,7 +41,7 @@ final class UtilitiesTest extends TestCase
     {
         self::assertSame(
             ['keyboard' => [[['text' => 'Yes'], ['text' => 'No']], [['text' => 'Location', 'request_location' => true]]], 'resize_keyboard' => true],
-            Keyboard::reply([['Yes', 'No'], [['text' => 'Location', 'request_location' => true]]])
+            Keyboard::reply([['Yes', 'No'], [['text' => 'Location', 'request_location' => true]]]),
         );
         self::assertSame(['remove_keyboard' => true], Keyboard::remove());
         self::assertSame(['force_reply' => true, 'input_field_placeholder' => 'Name'], Keyboard::forceReply('Name'));
@@ -74,7 +74,7 @@ final class UtilitiesTest extends TestCase
         self::assertSame(
             '{"inline_keyboard":[[{"text":"Yes","callback_data":"yes"},{"text":"No","callback_data":"no"}],'
             . '[{"text":"Docs","url":"https://core.telegram.org"},{"text":"App","web_app":{"url":"https://example.com/app"}}]]}',
-            json_encode($keyboard, JSON_UNESCAPED_SLASHES)
+            json_encode($keyboard, JSON_UNESCAPED_SLASHES),
         );
     }
 

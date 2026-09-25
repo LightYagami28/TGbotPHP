@@ -10,9 +10,9 @@ namespace TGbotPHP\Exceptions;
 class TelegramException extends \Exception
 {
     public function __construct(
-        string $message = "Telegram API Error",
+        string $message = 'Telegram API Error',
         int $code = 0,
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
     ) {
         parent::__construct($message, $code, $previous);
     }

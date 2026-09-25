@@ -56,7 +56,7 @@ trait AdminMethods
     public function kickChatMember(
         int|string $chatId,
         int $userId,
-        ?int $untilDate = null
+        ?int $untilDate = null,
     ): bool {
         return $this->banChatMember($chatId, $userId, $untilDate);
     }
@@ -68,7 +68,7 @@ trait AdminMethods
         int|string $chatId,
         int $userId,
         ?int $untilDate = null,
-        bool $revokeMessages = false
+        bool $revokeMessages = false,
     ): bool {
         return $this->apiCallBool('banChatMember', [
             'chat_id' => $chatId,
@@ -84,7 +84,7 @@ trait AdminMethods
     public function unbanChatMember(
         int|string $chatId,
         int $userId,
-        bool $onlyIfBanned = false
+        bool $onlyIfBanned = false,
     ): bool {
         return $this->apiCallBool('unbanChatMember', [
             'chat_id' => $chatId,
@@ -104,7 +104,7 @@ trait AdminMethods
         int $userId,
         array $permissions,
         ?int $untilDate = null,
-        array $options = []
+        array $options = [],
     ): bool {
         return $this->apiCallBool('restrictChatMember', [
             'chat_id' => $chatId,
@@ -131,7 +131,7 @@ trait AdminMethods
     public function setChatAdministratorCustomTitle(
         int|string $chatId,
         int $userId,
-        string $customTitle
+        string $customTitle,
     ): bool {
         return $this->apiCallBool('setChatAdministratorCustomTitle', [
             'chat_id' => $chatId,

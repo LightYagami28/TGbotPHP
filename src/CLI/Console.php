@@ -138,7 +138,7 @@ EOF);
         $this->bot($argv)->setWebhook(
             url: $url,
             dropPendingUpdates: $this->hasFlag($argv, 'drop-pending'),
-            secretToken: $this->getOption($argv, 'secret')
+            secretToken: $this->getOption($argv, 'secret'),
         );
 
         $this->write('Webhook set');

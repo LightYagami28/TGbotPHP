@@ -32,9 +32,7 @@ final class LongPolling
 
     private int $failures = 0;
 
-    public function __construct(private readonly Bot $bot)
-    {
-    }
+    public function __construct(private readonly Bot $bot) {}
 
     /**
      * @param string[]|null $allowedUpdates

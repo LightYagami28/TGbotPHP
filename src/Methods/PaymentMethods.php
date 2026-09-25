@@ -68,7 +68,7 @@ trait PaymentMethods
         string $payload,
         string $currency,
         array $prices,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendInvoice', [
             'chat_id' => $chatId,
@@ -93,7 +93,7 @@ trait PaymentMethods
         string $currency,
         array $prices,
         ?string $providerToken = null,
-        array $options = []
+        array $options = [],
     ): string {
         return $this->apiCallString('createInvoiceLink', [
             'title' => $title,
@@ -114,7 +114,7 @@ trait PaymentMethods
         string $shippingQueryId,
         bool $ok,
         ?array $shippingOptions = null,
-        ?string $errorMessage = null
+        ?string $errorMessage = null,
     ): bool {
         return $this->apiCallBool('answerShippingQuery', [
             'shipping_query_id' => $shippingQueryId,
@@ -132,7 +132,7 @@ trait PaymentMethods
     public function answerPreCheckoutQuery(
         string $preCheckoutQueryId,
         bool $ok,
-        ?string $errorMessage = null
+        ?string $errorMessage = null,
     ): bool {
         return $this->apiCallBool('answerPreCheckoutQuery', [
             'pre_checkout_query_id' => $preCheckoutQueryId,

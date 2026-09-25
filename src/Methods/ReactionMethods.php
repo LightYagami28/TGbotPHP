@@ -64,11 +64,11 @@ trait ReactionMethods
         int|string $chatId,
         int $messageId,
         ?array $reaction = null,
-        bool $isBig = false
+        bool $isBig = false,
     ): bool {
         $reactions = array_map(
             static fn(string|array $item): array => is_string($item) ? ['type' => 'emoji', 'emoji' => $item] : $item,
-            array_values($reaction ?? [])
+            array_values($reaction ?? []),
         );
 
         return $this->apiCallBool('setMessageReaction', [

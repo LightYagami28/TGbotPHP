@@ -14,9 +14,7 @@ use TGbotPHP\Support\Value;
  */
 class RateLimiter
 {
-    public function __construct(private CacheInterface $cache)
-    {
-    }
+    public function __construct(private CacheInterface $cache) {}
 
     /**
      * Register a hit; returns false when the limit for the current window is reached

@@ -67,7 +67,7 @@ trait StickerMethods
         int|string $chatId,
         string|InputFile $sticker,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendSticker', [
             'chat_id' => $chatId,
@@ -130,7 +130,7 @@ trait StickerMethods
         string $title,
         array $stickers,
         ?string $stickerType = null,
-        bool $needsRepainting = false
+        bool $needsRepainting = false,
     ): bool {
         return $this->apiCallBool('createNewStickerSet', [
             'user_id' => $userId,

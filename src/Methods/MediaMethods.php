@@ -68,7 +68,7 @@ trait MediaMethods
         ?string $caption = null,
         ?string $parseMode = 'HTML',
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendAnimation', [
             'chat_id' => $chatId,
@@ -95,7 +95,7 @@ trait MediaMethods
         ?int $duration = null,
         ?string $parseMode = 'HTML',
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendVoice', [
             'chat_id' => $chatId,
@@ -123,7 +123,7 @@ trait MediaMethods
         ?int $length = null,
         string|InputFile|null $thumbnail = null,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendVideoNote', [
             'chat_id' => $chatId,
@@ -150,7 +150,7 @@ trait MediaMethods
         int|string $chatId,
         array $media,
         bool $disableNotification = false,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallList('sendMediaGroup', [
             'chat_id' => $chatId,

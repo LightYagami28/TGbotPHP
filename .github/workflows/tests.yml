@@ -5,6 +5,10 @@ on: [push, pull_request]
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     name: PHP ${{ matrix.php-version }}${{ matrix.experimental && ' (in development)' || '' }}
@@ -14,10 +18,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.4', '8.5']
-        experimental: [false]
         include:
+          - php-version: '8.4'
+            coverage: pcov
+            experimental: false
+          - php-version: '8.5'
+            coverage: none
+            experimental: false
           - php-version: '8.6'
+            coverage: none
             experimental: true
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -27,8 +36,14 @@ jobs:
       with:
         php-version: ${{ matrix.php-version }}
         extensions: curl, json
-        coverage: none
+        coverage: ${{ matrix.coverage }}
         tools: composer
     - run: composer validate --strict
     - run: composer install --no-interaction --no-progress
     - run: vendor/bin/phpunit
+      if: matrix.coverage == 'none'
+    - name: Tests with coverage
+      if: matrix.coverage != 'none'
+      run: |
+        vendor/bin/phpunit --coverage-text=coverage.txt --coverage-clover=coverage.xml
+        { echo '### Code coverage'; echo '```'; sed -n '/Summary:/,/Lines:/p' coverage.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

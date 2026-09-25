@@ -7,6 +7,4 @@ namespace TGbotPHP\Exceptions;
 /**
  * Exception for transport level failures (DNS, TLS, timeouts, ...)
  */
-class NetworkException extends TelegramException
-{
-}
+class NetworkException extends TelegramException {}

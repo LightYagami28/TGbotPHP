@@ -50,7 +50,7 @@ trait HttpClientTrait
     protected function httpRequest(
         string $method,
         array $data = [],
-        bool $returnResponse = false
+        bool $returnResponse = false,
     ): mixed {
         [$fields, $multipart] = self::prepareFields($data);
 
@@ -218,7 +218,7 @@ trait HttpClientTrait
             "Unexpected result from $method: expected $expected, got " . get_debug_type($result),
             0,
             ['ok' => true, 'result' => $result],
-            $method
+            $method,
         );
     }
 
@@ -287,7 +287,7 @@ trait HttpClientTrait
             } elseif (is_array($value) || $value instanceof JsonSerializable) {
                 $fields[$key] = json_encode(
                     self::extractAttachments($value, $files),
-                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
                 );
             } elseif (is_scalar($value) || $value instanceof \Stringable) {
                 $fields[$key] = (string) $value;

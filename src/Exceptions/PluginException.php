@@ -7,6 +7,4 @@ namespace TGbotPHP\Exceptions;
 /**
  * A plugin could not be registered
  */
-class PluginException extends TelegramException
-{
-}
+class PluginException extends TelegramException {}

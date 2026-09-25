@@ -68,7 +68,7 @@ final class ApiClientTest extends TestCase
     {
         $client = new ApiClient(
             new Config(Updates::TOKEN, enforceHttps: false, apiBaseUrl: 'http://localhost:8081/'),
-            $this->transport
+            $this->transport,
         );
 
         $client->getMe();
@@ -185,7 +185,7 @@ final class ApiClientTest extends TestCase
         self::assertTrue($request['multipart']);
         self::assertSame(
             '[{"type":"photo","media":"attach://file0"},{"type":"photo","media":"https://example.com/b.png"}]',
-            $request['fields']['media']
+            $request['fields']['media'],
         );
         self::assertInstanceOf(CURLStringFile::class, $request['fields']['file0']);
     }
@@ -296,7 +296,7 @@ final class ApiClientTest extends TestCase
         $fields = $this->transport->lastRequest()['fields'];
         self::assertSame(
             '[{"command":"start","description":"Start the bot"},{"command":"help","description":"Help"}]',
-            $fields['commands']
+            $fields['commands'],
         );
         self::assertSame('{"type":"all_private_chats"}', $fields['scope']);
     }
@@ -332,7 +332,7 @@ final class ApiClientTest extends TestCase
         self::assertSame('binary-data', $this->client->downloadFile('f'));
         self::assertSame(
             'https://api.telegram.org/file/bot' . Updates::TOKEN . '/photos/file_1.jpg',
-            $this->transport->lastRequest()['url']
+            $this->transport->lastRequest()['url'],
         );
     }
 }

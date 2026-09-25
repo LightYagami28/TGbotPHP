@@ -23,9 +23,8 @@ final class InputFile
         private readonly ?string $path,
         private readonly ?string $contents,
         private readonly string $filename,
-        private readonly string $mimeType
-    ) {
-    }
+        private readonly string $mimeType,
+    ) {}
 
     /**
      * Upload a file from the local filesystem

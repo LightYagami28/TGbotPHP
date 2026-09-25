@@ -64,7 +64,7 @@ trait LocationMethods
         float $latitude,
         float $longitude,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendLocation', [
             'chat_id' => $chatId,
@@ -87,7 +87,7 @@ trait LocationMethods
         float $latitude,
         float $longitude,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array|bool {
         return $this->apiCallObjectOrTrue('editMessageLiveLocation', [
             'chat_id' => $chatId,
@@ -108,7 +108,7 @@ trait LocationMethods
         int|string|null $chatId,
         ?int $messageId,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): bool {
         return $this->apiCallBool('stopMessageLiveLocation', [
             'chat_id' => $chatId,
@@ -131,7 +131,7 @@ trait LocationMethods
         string $title,
         string $address,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendVenue', [
             'chat_id' => $chatId,
@@ -157,7 +157,7 @@ trait LocationMethods
         ?string $lastName = null,
         ?string $vcard = null,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendContact', [
             'chat_id' => $chatId,
@@ -184,14 +184,14 @@ trait LocationMethods
         array $answers,
         ?string $type = null,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendPoll', [
             'chat_id' => $chatId,
             'question' => $question,
             'options' => array_map(
                 static fn(string|array $answer): array => is_string($answer) ? ['text' => $answer] : $answer,
-                $answers
+                $answers,
             ),
             'type' => $type,
             'reply_markup' => $replyMarkup,
@@ -209,7 +209,7 @@ trait LocationMethods
         int|string $chatId,
         int $messageId,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('stopPoll', [
             'chat_id' => $chatId,
@@ -230,7 +230,7 @@ trait LocationMethods
         ?string $emoji = null,
         bool $disableNotification = false,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendDice', [
             'chat_id' => $chatId,

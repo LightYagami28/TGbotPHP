@@ -67,7 +67,7 @@ trait CustomCommandMethods
     public function setMyCommands(
         array $commands,
         array|string|null $scope = null,
-        ?string $languageCode = null
+        ?string $languageCode = null,
     ): bool {
         $list = [];
         foreach ($commands as $key => $value) {
@@ -91,7 +91,7 @@ trait CustomCommandMethods
      */
     public function getMyCommands(
         array|string|null $scope = null,
-        ?string $languageCode = null
+        ?string $languageCode = null,
     ): array {
         return $this->apiCallList('getMyCommands', [
             'scope' => self::normalizeCommandScope($scope),
@@ -108,7 +108,7 @@ trait CustomCommandMethods
      */
     public function deleteMyCommands(
         array|string|null $scope = null,
-        ?string $languageCode = null
+        ?string $languageCode = null,
     ): bool {
         return $this->apiCallBool('deleteMyCommands', [
             'scope' => self::normalizeCommandScope($scope),

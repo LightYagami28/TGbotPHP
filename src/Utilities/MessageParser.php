@@ -39,7 +39,7 @@ class MessageParser
 
         return array_map(
             static fn(array $match): string => ($match[2] ?? '') !== '' ? $match[2] : stripcslashes($match[1] ?? ''),
-            $matches
+            $matches,
         );
     }
 

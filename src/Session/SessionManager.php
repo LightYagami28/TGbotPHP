@@ -19,7 +19,7 @@ class SessionManager
         $this->cache->put(
             "session:$sessionId",
             ['user_id' => $userId, 'created_at' => time()],
-            self::SESSION_TTL
+            self::SESSION_TTL,
         );
         return $sessionId;
     }

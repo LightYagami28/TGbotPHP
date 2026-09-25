@@ -73,7 +73,7 @@ trait MessageMethods
         array|JsonSerializable|null $replyMarkup = null,
         bool $disableWebPagePreview = false,
         bool $disableNotification = false,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendMessage', [
             'chat_id' => $chatId,
@@ -96,7 +96,7 @@ trait MessageMethods
         int|string $fromChatId,
         int $messageId,
         bool $disableNotification = false,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('forwardMessage', [
             'chat_id' => $chatId,
@@ -119,7 +119,7 @@ trait MessageMethods
         int|string $chatId,
         int|string $fromChatId,
         array $messageIds,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallList('forwardMessages', [
             'chat_id' => $chatId,
@@ -142,7 +142,7 @@ trait MessageMethods
         ?string $caption = null,
         ?string $parseMode = 'HTML',
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('copyMessage', [
             'chat_id' => $chatId,
@@ -167,7 +167,7 @@ trait MessageMethods
         int|string $chatId,
         int|string $fromChatId,
         array $messageIds,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallList('copyMessages', [
             'chat_id' => $chatId,
@@ -190,7 +190,7 @@ trait MessageMethods
         ?string $caption = null,
         ?string $parseMode = 'HTML',
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendPhoto', [
             'chat_id' => $chatId,
@@ -215,7 +215,7 @@ trait MessageMethods
         ?int $duration = null,
         ?string $performer = null,
         ?string $title = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendAudio', [
             'chat_id' => $chatId,
@@ -239,7 +239,7 @@ trait MessageMethods
         string|InputFile $document,
         ?string $caption = null,
         ?string $parseMode = 'HTML',
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendDocument', [
             'chat_id' => $chatId,
@@ -263,7 +263,7 @@ trait MessageMethods
         ?string $caption = null,
         ?string $parseMode = 'HTML',
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array {
         return $this->apiCallObject('sendVideo', [
             'chat_id' => $chatId,
@@ -293,7 +293,7 @@ trait MessageMethods
         string $text,
         ?string $parseMode = 'HTML',
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array|bool {
         return $this->apiCallObjectOrTrue('editMessageText', [
             'chat_id' => $chatId,
@@ -317,7 +317,7 @@ trait MessageMethods
         ?string $caption = null,
         ?string $parseMode = 'HTML',
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array|bool {
         return $this->apiCallObjectOrTrue('editMessageCaption', [
             'chat_id' => $chatId,
@@ -341,7 +341,7 @@ trait MessageMethods
         ?int $messageId,
         array $media,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array|bool {
         return $this->apiCallObjectOrTrue('editMessageMedia', [
             'chat_id' => $chatId,
@@ -362,7 +362,7 @@ trait MessageMethods
         int|string|null $chatId,
         ?int $messageId,
         array|JsonSerializable|null $replyMarkup = null,
-        array $options = []
+        array $options = [],
     ): array|bool {
         return $this->apiCallObjectOrTrue('editMessageReplyMarkup', [
             'chat_id' => $chatId,

@@ -74,7 +74,7 @@ trait ForumTopicMethods
         int|string $chatId,
         string $name,
         ?int $iconColor = null,
-        ?string $iconCustomEmojiId = null
+        ?string $iconCustomEmojiId = null,
     ): array {
         return $this->apiCallObject('createForumTopic', [
             'chat_id' => $chatId,
@@ -91,7 +91,7 @@ trait ForumTopicMethods
         int|string $chatId,
         int $messageThreadId,
         ?string $name = null,
-        ?string $iconCustomEmojiId = null
+        ?string $iconCustomEmojiId = null,
     ): bool {
         return $this->apiCallBool('editForumTopic', [
             'chat_id' => $chatId,

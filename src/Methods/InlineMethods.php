@@ -66,7 +66,7 @@ trait InlineMethods
         bool $showAlert = false,
         ?string $url = null,
         ?int $cacheTime = null,
-        array $options = []
+        array $options = [],
     ): bool {
         return $this->apiCallBool('answerCallbackQuery', [
             'callback_query_id' => $callbackQueryId,
@@ -89,7 +89,7 @@ trait InlineMethods
         ?int $cacheTime = null,
         bool $isPersonal = false,
         ?string $nextOffset = null,
-        array $options = []
+        array $options = [],
     ): bool {
         return $this->apiCallBool('answerInlineQuery', [
             'inline_query_id' => $inlineQueryId,

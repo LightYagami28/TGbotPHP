@@ -23,7 +23,7 @@ class ApiException extends TelegramException
         string $message,
         int $code,
         array $apiResponse = [],
-        string $apiMethod = ''
+        string $apiMethod = '',
     ) {
         parent::__construct($message, $code);
         $this->apiResponse = $apiResponse;

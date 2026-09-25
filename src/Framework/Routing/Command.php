@@ -15,8 +15,7 @@ final readonly class Command
         public string $name,
         public ?string $username,
         public string $args,
-    ) {
-    }
+    ) {}
 
     public static function parse(string $text): ?self
     {

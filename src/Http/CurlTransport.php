@@ -12,9 +12,7 @@ use TGbotPHP\Exceptions\NetworkException;
  */
 final class CurlTransport implements TransportInterface
 {
-    public function __construct(private readonly int $connectTimeout = 5)
-    {
-    }
+    public function __construct(private readonly int $connectTimeout = 5) {}
 
     #[\Override]
     public function post(string $url, array $fields, bool $multipart, int $timeout): HttpResponse

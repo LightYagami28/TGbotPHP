@@ -97,7 +97,7 @@ trait UserMethods
     public function getUserProfilePhotos(
         int $userId,
         ?int $offset = null,
-        ?int $limit = null
+        ?int $limit = null,
     ): array {
         return $this->apiCallObject('getUserProfilePhotos', [
             'user_id' => $userId,
