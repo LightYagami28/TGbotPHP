@@ -1,0 +1,49 @@
+name: Docker
+
+on:
+  push:
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - composer.json
+      - composer.lock
+      - bin/**
+      - src/**
+      - examples/**
+      - .github/workflows/docker.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - composer.json
+      - composer.lock
+      - bin/**
+      - src/**
+      - examples/**
+      - .github/workflows/docker.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and smoke test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - run: docker build --tag tgbotphp:ci .
+    - name: The CLI runs
+      run: docker run --rm tgbotphp:ci php bin/tgbot version
+    - name: The library loads
+      run: docker run --rm tgbotphp:ci php -r 'require "vendor/autoload.php"; new TGbotPHP\Framework\Bot("123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw"); echo "ok\n";'
+    - name: Runs as an unprivileged user
+      run: test "$(docker run --rm tgbotphp:ci id -u)" != "0"
+    - name: Contains no tests, docs or dev dependencies
+      run: docker run --rm tgbotphp:ci sh -c 'test ! -e tests && test ! -e docs && test ! -e vendor/phpunit'

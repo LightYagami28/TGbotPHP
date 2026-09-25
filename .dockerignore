@@ -1,0 +1,11 @@
+.git
+.github
+.env
+.env.*
+config.local.php
+vendor
+tests
+docs
+*.md
+.phpunit.cache
+.phpstan.cache

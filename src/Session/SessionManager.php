@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace TGbotPHP\Session;
 
 use TGbotPHP\Cache\CacheInterface;
+use TGbotPHP\Support\Value;
 
 class SessionManager
 {
-    private const SESSION_TTL = 3600;
+    private const int SESSION_TTL = 3600;
 
     public function __construct(private CacheInterface $cache) {}
 
@@ -18,23 +19,28 @@ class SessionManager
         $this->cache->put(
             "session:$sessionId",
             ['user_id' => $userId, 'created_at' => time()],
-            self::SESSION_TTL
+            self::SESSION_TTL,
         );
         return $sessionId;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getSession(string $sessionId): ?array
     {
-        return $this->cache->get("session:$sessionId");
+        $session = $this->cache->get("session:$sessionId");
+
+        return Value::isMap($session) ? $session : null;
     }
 
     public function setSessionData(string $sessionId, string $key, mixed $value): void
     {
-        $session = $this->getSession($sessionId);
-        if ($session) {
-            $session[$key] = $value;
-            $this->cache->put("session:$sessionId", $session, self::SESSION_TTL);
-        }
+        $this->cache->update(
+            "session:$sessionId",
+            static fn(mixed $session): ?array => Value::isMap($session) ? [$key => $value] + $session : null,
+            self::SESSION_TTL,
+        );
     }
 
     public function getSessionData(string $sessionId, string $key, mixed $default = null): mixed

@@ -1,0 +1,39 @@
+name: Bot API
+
+# Fails when the official documentation no longer matches tools/bot-api.json,
+# i.e. when Telegram released methods or parameters the library lacks
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spec:
+    name: Documentation matches tools/bot-api.json
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      with:
+        php-version: '8.4'
+        coverage: none
+        extensions: dom
+    - run: php tools/bot-api-spec.php > "$RUNNER_TEMP/bot-api.json"
+    - name: Compare
+      run: |
+        if ! diff -u tools/bot-api.json "$RUNNER_TEMP/bot-api.json" > "$RUNNER_TEMP/bot-api.diff"; then
+          {
+            echo '## The Bot API changed'
+            echo "Regenerate the spec with \`php tools/bot-api-spec.php > tools/bot-api.json\`, then implement what \`BotApiCoverageTest\` reports."
+            echo '```diff'
+            head -c 60000 "$RUNNER_TEMP/bot-api.diff"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+        fi

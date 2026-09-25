@@ -1,0 +1,584 @@
+<?php
+
+declare(strict_types=1);
+
+namespace TGbotPHP\Tests\Unit;
+
+use CURLStringFile;
+use PHPUnit\Framework\TestCase;
+use TGbotPHP\Core\ApiClient;
+use TGbotPHP\Core\Config;
+use TGbotPHP\Core\RetryPolicy;
+use TGbotPHP\Exceptions\ApiException;
+use TGbotPHP\Exceptions\StorageException;
+use TGbotPHP\Exceptions\TooManyRequestsException;
+use TGbotPHP\Support\Value;
+use TGbotPHP\Testing\FakeTransport;
+use TGbotPHP\Tests\Support\ParseMode;
+use TGbotPHP\Tests\Support\Updates;
+use TGbotPHP\Types\InputFile;
+use TGbotPHP\Utilities\Keyboard;
+
+final class ApiClientTest extends TestCase
+{
+    private FakeTransport $transport;
+    private ApiClient $client;
+
+    #[\Override]
+    protected function setUp(): void
+    {
+        $this->transport = new FakeTransport();
+        $this->client = new ApiClient(new Config(Updates::TOKEN, retry: new RetryPolicy(maxRetries: 2, maxDelay: 0)), $this->transport);
+    }
+
+    public function testBuildsMethodUrl(): void
+    {
+        $this->transport->queueResult(['id' => 1, 'is_bot' => true, 'first_name' => 'Bot', 'username' => 'test_bot']);
+
+        $me = $this->client->getMe();
+
+        self::assertSame('test_bot', $me['username']);
+        self::assertSame('https://api.telegram.org/bot' . Updates::TOKEN . '/getMe', $this->transport->lastRequest()['url']);
+    }
+
+    public function testDebugLogRedactsSecrets(): void
+    {
+        $log = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($log);
+
+        try {
+            $client = new ApiClient(new Config(Updates::TOKEN, debug: $log), $this->transport);
+            $client->setWebhook('https://example.com/hook', secretToken: 'super-secret-value');
+
+            $contents = (string) file_get_contents($log);
+            self::assertStringContainsString('setWebhook', $contents);
+            self::assertStringContainsString('<redacted>', $contents);
+            self::assertStringNotContainsString('super-secret-value', $contents);
+            self::assertStringNotContainsString(Updates::TOKEN, $contents);
+        } finally {
+            unlink($log);
+        }
+    }
+
+    public function testDebugLogIsCreatedPrivate(): void
+    {
+        $log = sys_get_temp_dir() . '/tgbotphp-debug-' . bin2hex(random_bytes(4)) . '.log';
+
+        try {
+            new ApiClient(new Config(Updates::TOKEN, debug: $log), $this->transport)->getMe();
+
+            self::assertSame('0600', substr(sprintf('%o', fileperms($log)), -4));
+        } finally {
+            @unlink($log);
+        }
+    }
+
+    public function testConfigIsImmutable(): void
+    {
+        foreach ((new \ReflectionClass(Config::class))->getProperties() as $property) {
+            self::assertTrue($property->isReadOnly(), "Config::\${$property->getName()} must be readonly");
+        }
+    }
+
+    public function testCustomApiServer(): void
+    {
+        $client = new ApiClient(
+            new Config(Updates::TOKEN, enforceHttps: false, apiBaseUrl: 'http://localhost:8081/'),
+            $this->transport,
+        );
+
+        $client->getMe();
+
+        self::assertSame('http://localhost:8081/bot' . Updates::TOKEN . '/getMe', $this->transport->lastRequest()['url']);
+    }
+
+    public function testRejectsPlainHttpApiServerByDefault(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $config = new Config(Updates::TOKEN, apiBaseUrl: 'http://localhost:8081');
+        self::fail('Accepted plain HTTP API server: ' . $config->apiBaseUrl);
+    }
+
+    public function testRejectsMalformedToken(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $config = new Config('12345/../../evil:token');
+        self::fail('Accepted malformed token: ' . $config->token);
+    }
+
+    public function testTokenAndSecretValidation(): void
+    {
+        self::assertTrue(Config::isValidToken('123456:ABC-def_1'));
+        self::assertFalse(Config::isValidToken('x123456:ABC-def_1'), 'Garbage before the bot id');
+        self::assertFalse(Config::isValidToken('123456:ABC def'), 'Space');
+        self::assertFalse(Config::isValidToken("123456:ABC\n"), 'Trailing newline');
+        self::assertFalse(Config::isValidToken('1:abcdefg'), 'Shorter than 10 characters');
+        self::assertTrue(Config::isValidToken('1:abcdefgh'), 'Exactly 10 characters');
+
+        foreach (['bad secret!', "secret\n", '!!!' . str_repeat('a', 10), str_repeat('a', 257)] as $secret) {
+            try {
+                new Config(Updates::TOKEN, secretToken: $secret);
+                self::fail('Accepted secret token: ' . json_encode($secret));
+            } catch (\InvalidArgumentException) {
+                // expected
+            }
+        }
+
+        self::assertSame(str_repeat('a', 256), new Config(Updates::TOKEN, secretToken: str_repeat('a', 256))->secretToken);
+    }
+
+    public function testConfigDefaults(): void
+    {
+        $config = new Config(Updates::TOKEN, timeout: 0, debug: '');
+
+        self::assertSame(1, $config->timeout, 'At least one second');
+        self::assertFalse($config->debug);
+        self::assertFalse($config->debugFile);
+        self::assertFalse(new Config(Updates::TOKEN)->debug);
+        self::assertTrue(new Config(Updates::TOKEN, debug: true)->debug);
+        self::assertFalse(new Config(Updates::TOKEN, debug: true)->debugFile);
+        self::assertSame(1, new Config(Updates::TOKEN)->retry->maxRetries);
+        self::assertSame(30, new Config(Updates::TOKEN)->retry->maxDelay);
+    }
+
+    public function testPreparesFields(): void
+    {
+        $this->transport->queueResult(['message_id' => 10]);
+
+        $this->client->sendMessage(42, 'Hello', replyMarkup: Keyboard::inline(['Yes' => 'y']), disableWebPagePreview: true);
+
+        $request = $this->transport->lastRequest();
+        self::assertSame('sendMessage', $request['method']);
+        self::assertFalse($request['multipart']);
+        self::assertSame('42', $request['fields']['chat_id']);
+        self::assertSame('HTML', $request['fields']['parse_mode']);
+        self::assertSame('{"is_disabled":true}', $request['fields']['link_preview_options']);
+        self::assertSame('{"inline_keyboard":[[{"text":"Yes","callback_data":"y"}]]}', $request['fields']['reply_markup']);
+        self::assertArrayNotHasKey('disable_notification', $request['fields']);
+    }
+
+    public function testOptionsAreMergedAndOverrideDefaults(): void
+    {
+        $this->client->sendMessage(42, 'Hi', options: ['message_thread_id' => 3, 'parse_mode' => 'MarkdownV2', 'protect_content' => true]);
+
+        $fields = $this->transport->lastRequest()['fields'];
+        self::assertSame('3', $fields['message_thread_id']);
+        self::assertSame('MarkdownV2', $fields['parse_mode']);
+        self::assertSame('true', $fields['protect_content']);
+    }
+
+    public function testBooleanMethodsReturnBool(): void
+    {
+        $this->transport->queueResult(true);
+
+        self::assertTrue($this->client->deleteMessage(42, 1));
+        self::assertTrue($this->client->answerCallbackQuery('abc', 'Done'));
+    }
+
+    public function testUnexpectedResultTypeThrows(): void
+    {
+        $this->transport->queueResult(['unexpected' => 'object']);
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('Unexpected result from deleteMessage: expected a boolean, got array');
+
+        $this->client->deleteMessage(42, 1);
+    }
+
+    public function testListResultIsValidated(): void
+    {
+        $this->transport->queueResult(['not' => 'a list']);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->getUpdates();
+    }
+
+    public function testIntegerResult(): void
+    {
+        $this->transport->queueResult(17);
+
+        self::assertSame(17, $this->client->getChatMemberCount(-100123));
+    }
+
+    public function testFileIdIsSentAsString(): void
+    {
+        $this->client->sendPhoto(42, 'AgACAgIAAxkBAAIB', 'caption');
+
+        $request = $this->transport->lastRequest();
+        self::assertFalse($request['multipart']);
+        self::assertSame('AgACAgIAAxkBAAIB', $request['fields']['photo']);
+    }
+
+    public function testInputFileIsUploadedAsMultipart(): void
+    {
+        $this->client->sendDocument(42, InputFile::fromContents('a,b', 'report.csv', 'text/csv'));
+
+        $request = $this->transport->lastRequest();
+        self::assertTrue($request['multipart']);
+        self::assertInstanceOf(CURLStringFile::class, $request['fields']['document']);
+        self::assertSame('report.csv', $request['fields']['document']->postname);
+        self::assertArrayNotHasKey('parse_mode', $request['fields']);
+    }
+
+    public function testNestedInputFilesBecomeAttachments(): void
+    {
+        $this->transport->queueResult([]);
+
+        $this->client->sendMediaGroup(42, [
+            ['type' => 'photo', 'media' => InputFile::fromContents('png', 'a.png')],
+            ['type' => 'photo', 'media' => 'https://example.com/b.png'],
+        ]);
+
+        $request = $this->transport->lastRequest();
+        self::assertTrue($request['multipart']);
+        self::assertSame(
+            '[{"type":"photo","media":"attach://file0"},{"type":"photo","media":"https://example.com/b.png"}]',
+            $request['fields']['media'],
+        );
+        self::assertInstanceOf(CURLStringFile::class, $request['fields']['file0']);
+    }
+
+    public function testInputFileFromMissingPathThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        InputFile::fromPath('/does/not/exist.png');
+    }
+
+    public function testApiErrorKeepsTelegramDescription(): void
+    {
+        $this->transport->queueError(400, 'Bad Request: chat not found');
+
+        try {
+            $this->client->sendMessage(1, 'x');
+            self::fail('Expected ApiException');
+        } catch (ApiException $e) {
+            self::assertSame('Bad Request: chat not found', $e->getMessage());
+            self::assertSame(400, $e->getCode());
+            self::assertSame('sendMessage', $e->getApiMethod());
+        }
+    }
+
+    public function testMigrateToChatId(): void
+    {
+        $this->transport->queueError(400, 'Bad Request: group chat was upgraded', ['migrate_to_chat_id' => -1001234]);
+
+        try {
+            $this->client->sendMessage(1, 'x');
+            self::fail('Expected ApiException');
+        } catch (ApiException $e) {
+            self::assertSame(-1001234, $e->getMigrateToChatId());
+        }
+    }
+
+    public function testRetriesAfterFloodControl(): void
+    {
+        $this->transport
+            ->queueError(429, 'Too Many Requests: retry after 0', ['retry_after' => 0])
+            ->queueResult(['message_id' => 3]);
+
+        $result = $this->client->sendMessage(1, 'x');
+
+        self::assertSame(3, $result['message_id']);
+        self::assertCount(2, $this->transport->requests());
+    }
+
+    public function testGivesUpAfterMaxRetries(): void
+    {
+        for ($i = 0; $i < 3; $i++) {
+            $this->transport->queueError(429, 'Too Many Requests', ['retry_after' => 0]);
+        }
+
+        try {
+            $this->client->sendMessage(1, 'x');
+            self::fail('Expected TooManyRequestsException');
+        } catch (TooManyRequestsException $e) {
+            self::assertSame(0, $e->getRetryAfter());
+            self::assertCount(3, $this->transport->requests());
+        }
+    }
+
+    public function testDoesNotWaitLongerThanMaxRetryDelay(): void
+    {
+        $this->transport->queueError(429, 'Too Many Requests', ['retry_after' => 60]);
+
+        $this->expectException(TooManyRequestsException::class);
+
+        $this->client->sendMessage(1, 'x');
+    }
+
+    public function testInvalidJsonResponse(): void
+    {
+        $this->transport->queueRaw('<html>502 Bad Gateway</html>', 502);
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionCode(502);
+
+        $this->client->getMe();
+    }
+
+    public function testCallGenericMethod(): void
+    {
+        $this->transport->queueResult(['ok' => 1]);
+
+        $result = $this->client->call('someFutureMethod', ['chat_id' => 1, 'flag' => false]);
+
+        self::assertSame(['ok' => 1], $result);
+        self::assertSame('someFutureMethod', $this->transport->lastRequest()['method']);
+        self::assertSame('false', $this->transport->lastRequest()['fields']['flag']);
+    }
+
+    public function testLongPollingTimeoutExtendsHttpTimeout(): void
+    {
+        $this->transport->queueResult([]);
+
+        $this->client->getUpdates(timeout: 30);
+
+        self::assertSame(40, $this->transport->lastRequest()['timeout']);
+    }
+
+    public function testSetMyCommandsAcceptsMapAndScopeType(): void
+    {
+        $this->client->setMyCommands(['/start' => 'Start the bot', 'help' => 'Help'], 'all_private_chats');
+
+        $fields = $this->transport->lastRequest()['fields'];
+        self::assertSame(
+            '[{"command":"start","description":"Start the bot"},{"command":"help","description":"Help"}]',
+            $fields['commands'],
+        );
+        self::assertSame('{"type":"all_private_chats"}', $fields['scope']);
+    }
+
+    public function testReactionShortcut(): void
+    {
+        $this->client->setMessageReaction(1, 2, ['👍']);
+
+        self::assertSame('[{"type":"emoji","emoji":"👍"}]', $this->transport->lastRequest()['fields']['reaction']);
+    }
+
+    public function testDeprecatedAliasesUseCurrentMethods(): void
+    {
+        $this->client->kickChatMember(1, 2);
+        $this->client->pinMessage(1, 2);
+        $this->client->unpinMessage(1);
+
+        self::assertSame(['banChatMember', 'pinChatMessage', 'unpinChatMessage'], $this->transport->methods());
+    }
+
+    public function testSetWebhookRequiresHttps(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->client->setWebhook('http://example.com/hook');
+    }
+
+    public function testDownloadFile(): void
+    {
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'photos/file_1.jpg']);
+        $this->transport->queueRaw('binary-data');
+
+        self::assertSame('binary-data', $this->client->downloadFile('f'));
+        self::assertSame(
+            'https://api.telegram.org/file/bot' . Updates::TOKEN . '/photos/file_1.jpg',
+            $this->transport->lastRequest()['url'],
+        );
+    }
+
+    public function testDownloadFileStreamsToDestination(): void
+    {
+        $destination = sys_get_temp_dir() . '/tgbotphp-download-' . bin2hex(random_bytes(4));
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'documents/a.pdf', 'file_size' => 50 * 1024 * 1024]);
+        $this->transport->queueRaw('pdf-data');
+
+        try {
+            self::assertSame($destination, $this->client->downloadFile('f', $destination));
+            self::assertSame('pdf-data', file_get_contents($destination));
+            self::assertSame([$destination], glob($destination . '*'));
+        } finally {
+            @unlink($destination);
+        }
+    }
+
+    public function testFailedDownloadLeavesNoFile(): void
+    {
+        $destination = sys_get_temp_dir() . '/tgbotphp-download-' . bin2hex(random_bytes(4));
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'documents/a.pdf']);
+        $this->transport->queueRaw('Not Found', 404);
+
+        try {
+            $this->client->downloadFile('f', $destination);
+            self::fail('Expected an ApiException');
+        } catch (ApiException $e) {
+            self::assertSame(404, $e->getCode());
+        }
+
+        self::assertSame([], glob($destination . '*'));
+    }
+
+    public function testRefusesToLoadLargeFilesInMemory(): void
+    {
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'videos/v.mp4', 'file_size' => ApiClient::MAX_MEMORY_DOWNLOAD + 1]);
+
+        $this->expectException(StorageException::class);
+
+        $this->client->downloadFile('f');
+    }
+
+    public function testCopiesFilesFromLocalBotApiServer(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($source);
+        file_put_contents($source, 'local-data');
+
+        $transport = new FakeTransport();
+        $client = new ApiClient(new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false), $transport);
+        $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
+
+        try {
+            self::assertSame('local-data', $client->downloadFile('f'));
+            self::assertSame(['getFile'], $transport->methods());
+        } finally {
+            unlink($source);
+        }
+    }
+
+    public function testListsWithGapsAreSentAsJsonArrays(): void
+    {
+        $row = array_filter([['text' => 'A', 'callback_data' => 'a'], null, ['text' => 'C', 'callback_data' => 'c']]);
+
+        $this->client->sendMessage(1, 'x', replyMarkup: ['inline_keyboard' => [$row]]);
+        $this->client->sendPoll(1, 'Q', array_filter(['Yes', '', 'No']));
+
+        self::assertSame(
+            '{"inline_keyboard":[[{"text":"A","callback_data":"a"},{"text":"C","callback_data":"c"}]]}',
+            $this->transport->requests()[0]['fields']['reply_markup'],
+        );
+        self::assertSame('[{"text":"Yes"},{"text":"No"}]', $this->transport->requests()[1]['fields']['options']);
+
+        [$fields] = ApiClient::prepareFields(['object' => ['a' => 1, 5 => 2]]);
+        self::assertSame('{"a":1,"5":2}', $fields['object']);
+    }
+
+    public function testFetchUpdatesDecodesObjectsLikeWebhooks(): void
+    {
+        $this->transport->queueRaw('{"ok":true,"result":[{"update_id":7,"callback_query":{"id":"q","data":"x","message":{"reply_markup":{"inline_keyboard":[[{"text":"Play","callback_game":{}}]]}}}}]}');
+
+        $updates = $this->client->fetchUpdates();
+
+        self::assertCount(1, $updates);
+        self::assertSame(7, $updates[0]->update_id);
+        self::assertInstanceOf(\stdClass::class, Value::path($updates[0], 'callback_query', 'message', 'reply_markup', 'inline_keyboard', '0', '0', 'callback_game'));
+    }
+
+    public function testFetchUpdatesRejectsUnexpectedResults(): void
+    {
+        $this->transport->queueResult([1, 2]);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->fetchUpdates();
+    }
+
+    public function testDatesAndEnumsAreEncoded(): void
+    {
+        [$fields] = ApiClient::prepareFields([
+            'until_date' => new \DateTimeImmutable('@1900000000'),
+            'nested' => ['expire_date' => new \DateTimeImmutable('@5'), 'mode' => ParseMode::Html],
+            'parse_mode' => ParseMode::Html,
+        ]);
+
+        self::assertSame('1900000000', $fields['until_date']);
+        self::assertSame('{"expire_date":5,"mode":"HTML"}', $fields['nested']);
+        self::assertSame('HTML', $fields['parse_mode']);
+    }
+
+    public function testCommandNamesAreNormalized(): void
+    {
+        $this->client->setMyCommands(['/Start' => 'Start', '2024' => 'Numeric', 7 => ['command' => 'raw', 'description' => 'Raw']]);
+
+        self::assertSame(
+            '[{"command":"start","description":"Start"},{"command":"2024","description":"Numeric"},{"command":"raw","description":"Raw"}]',
+            $this->transport->lastRequest()['fields']['commands'],
+        );
+    }
+
+    public function testResponsesWithoutOkAreErrors(): void
+    {
+        $this->transport->queueJson(['result' => true]);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->deleteMessage(1, 2);
+    }
+
+    public function testFetchUpdatesTreatsResponsesWithoutOkAsErrors(): void
+    {
+        $this->transport->queueJson(['result' => []]);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->fetchUpdates();
+    }
+
+    public function testInvalidJsonResponsesAreReported(): void
+    {
+        $this->transport->queueRaw('<html>Bad Gateway</html>', 502);
+
+        try {
+            $this->client->getMe();
+            self::fail('Expected an ApiException');
+        } catch (ApiException $e) {
+            self::assertSame('Invalid JSON response from Telegram API (HTTP 502)', $e->getMessage());
+            self::assertSame(502, $e->getCode());
+        }
+
+        $this->transport->queueRaw('', 504);
+        $this->expectExceptionMessage('Empty response from Telegram API (HTTP 504)');
+        $this->client->getMe();
+    }
+
+    public function testFetchUpdatesRejectsObjectResults(): void
+    {
+        $this->transport->queueResult(['update_id' => 1]);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->fetchUpdates();
+    }
+
+    public function testListResultsKeepEveryItem(): void
+    {
+        $this->transport->queueResult([['command' => 'a', 'description' => 'A'], ['command' => 'b', 'description' => 'B']]);
+
+        self::assertCount(2, $this->client->getMyCommands());
+    }
+
+    public function testDebugLogKeepsOneEntryPerLine(): void
+    {
+        $log = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($log);
+
+        try {
+            $client = new ApiClient(new Config(Updates::TOKEN, debug: $log, retry: RetryPolicy::none()), $this->transport);
+            // A proxy error page: real line breaks that could forge log entries
+            $this->transport->queueRaw("<html>\n[2030-01-01 00:00:00] forged\n</html>", 502);
+
+            try {
+                $client->sendDocument(1, InputFile::fromContents('data', 'notes.txt'), 'caption');
+            } catch (ApiException) {
+                // expected: the body is not JSON
+            }
+
+            $lines = explode("\n", trim((string) file_get_contents($log)));
+            self::assertCount(2, $lines);
+            self::assertMatchesRegularExpression('/^\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] → sendDocument \{/', $lines[0]);
+            self::assertStringContainsString('"document":"<file notes.txt>"', $lines[0]);
+            self::assertStringEndsWith('← sendDocument [502] <html>\\n[2030-01-01 00:00:00] forged\\n</html>', $lines[1]);
+        } finally {
+            unlink($log);
+        }
+    }
+}

@@ -1,28 +1,23 @@
-# Contributing to TGbotPHP
+# Contributing
 
-Thank you for your interest in contributing!
+1. Fork the repository and create a branch.
+2. Make your change, with tests.
+3. Run the checks:
 
-## Getting Started
+   ```bash
+   composer install
+   composer check                # PHPUnit + PHPStan level 10
+   php-cs-fixer check --diff     # code style (PER-CS 2.0)
+   ```
 
-1. Fork the repository
-2. Clone your fork
-3. Create a feature branch: `git checkout -b feature/your-feature`
-4. Make your changes
-5. Commit: `git commit -m "feat: description"`
-6. Push: `git push origin feature/your-feature`
-7. Open a Pull Request
+4. Open a pull request describing what changed and why.
 
 ## Guidelines
 
-- Follow PSR-12 coding standards
-- Add tests for new features
-- Update documentation
-- Keep commits atomic and descriptive
+- PER-CS 2.0 code style (`php-cs-fixer fix`), `declare(strict_types=1)` in every file.
+- PHPStan must pass at level 10 without baseline entries or `@phpstan-ignore`.
+- New API methods follow [docs/development.md](docs/development.md#adding-an-api-method).
+- User-facing changes go in [CHANGELOG.md](CHANGELOG.md), and in the guide when they change how the library is used.
+- The wiki is edited in [`wiki/`](wiki), not on GitHub: the `Wiki` workflow publishes it when it reaches `main`, replacing edits made on GitHub. `DocumentationTest` checks that its PHP examples use existing methods and parameters, and that its links work.
 
-## Code of Conduct
-
-Be respectful and professional.
-
-## Questions?
-
-Open an issue or discussion.
+Report security problems privately, as described in [SECURITY.md](SECURITY.md).

@@ -2,17 +2,52 @@ name: Tests
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
+    name: PHP ${{ matrix.php-version }}${{ matrix.experimental && ' (in development)' || '' }}
     runs-on: ubuntu-latest
+    # PHP 8.6 is still in development: its job reports problems early without blocking the build
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
+      fail-fast: false
       matrix:
-        php-version: ['8.2', '8.3', '8.4']
+        include:
+          - php-version: '8.4'
+            coverage: pcov
+            experimental: false
+          - php-version: '8.5'
+            coverage: none
+            experimental: false
+          - php-version: '8.6'
+            coverage: none
+            experimental: true
     steps:
-    - uses: actions/checkout@v7
-    - uses: shivammathur/setup-php@v2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
       with:
         php-version: ${{ matrix.php-version }}
+        extensions: curl, json
+        coverage: ${{ matrix.coverage }}
         tools: composer
-    - run: composer install --dev
-    - run: composer run test || true
+    - run: composer validate --strict
+    - run: composer install --no-interaction --no-progress
+    - run: vendor/bin/phpunit
+      if: matrix.coverage == 'none'
+    - name: Tests with coverage
+      if: matrix.coverage != 'none'
+      run: |
+        vendor/bin/phpunit --coverage-text=coverage.txt --coverage-clover=coverage.xml
+        sed -n '/Summary:/,/Lines:/p' coverage.txt | tee summary.txt
+        { echo '### Code coverage'; echo '```'; cat summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+    - name: Minimum coverage
+      if: matrix.coverage != 'none'
+      run: php tools/coverage-check.php coverage.xml 95

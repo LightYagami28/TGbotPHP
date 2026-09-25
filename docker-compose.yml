@@ -1,14 +1,19 @@
-version: '3.8'
-
 services:
   bot:
     build: .
+    restart: unless-stopped
     environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - WEBHOOK_URL=${WEBHOOK_URL}
-      - DEBUG=${DEBUG:-false}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    command: php examples/polling.php
+
+  # Webhook mode: put an HTTPS reverse proxy in front of this service
+  webhook:
+    build: .
+    profiles: ["webhook"]
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_SECRET_TOKEN=${TELEGRAM_SECRET_TOKEN}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-}
     ports:
       - "8000:8000"
-    volumes:
-      - ./:/app
-    command: php -S 0.0.0.0:8000 -t ./public
+    command: php -S 0.0.0.0:8000 examples/webhook.php

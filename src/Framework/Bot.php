@@ -4,129 +4,178 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Framework;
 
+use JsonException;
+use stdClass;
+use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Core\Config;
 use TGbotPHP\Core\UpdateParser;
-use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Exceptions\InvalidTokenException;
-use TGbotPHP\Exceptions\ApiException;
-use stdClass;
+use TGbotPHP\Framework\Concerns\ManagesConversations;
+use TGbotPHP\Framework\Concerns\RegistersHandlers;
+use TGbotPHP\Framework\Concerns\RespondsToUpdates;
+use TGbotPHP\Framework\Runner\LongPolling;
+use TGbotPHP\Framework\Runner\WebhookHandler;
+use TGbotPHP\Http\TransportInterface;
+use TGbotPHP\Plugin\BotPluginInterface;
+use TGbotPHP\Plugin\PluginInterface;
+use TGbotPHP\Plugin\PluginManager;
+use TGbotPHP\Support\Value;
 
 /**
- * Main Bot class - orchestrates all Telegram Bot API interactions
+ * Telegram bot: the API client plus routing, middleware, events and runners
  *
- * Provides high-level API for handling updates, routing, middleware, and events.
+ *     $bot = new Bot(getenv('TELEGRAM_BOT_TOKEN'));
+ *     $bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi!'));
+ *     $bot->handle(); // webhook, or $bot->poll() for long polling
  */
 final class Bot extends ApiClient
 {
-    private readonly Router $router;
-    private readonly MiddlewarePipeline $middleware;
-    private readonly EventDispatcher $events;
-    private ?stdClass $update = null;
+    use RegistersHandlers;
+    use RespondsToUpdates;
+    use ManagesConversations;
 
-    public function __construct(
-        string $token,
-        bool $debug = false,
-        string|false $debugFile = false,
-        string|false $secretToken = false
-    ) {
+    private readonly Kernel $kernel;
+    private readonly PluginManager $plugins;
+    private ?LongPolling $polling = null;
+
+    public function __construct(string|Config $token, ?TransportInterface $transport = null)
+    {
         try {
-            $config = new Config($token, $debug, $debugFile, $secretToken);
-            parent::__construct($config);
-
-            $this->router = new Router();
-            $this->middleware = new MiddlewarePipeline();
-            $this->events = new EventDispatcher();
+            $config = $token instanceof Config ? $token : new Config($token);
         } catch (\InvalidArgumentException $e) {
             throw new InvalidTokenException($e->getMessage());
         }
+
+        parent::__construct($config, $transport);
+
+        $this->kernel = new Kernel();
+        $this->kernel->router->setBot($this);
+        $this->plugins = new PluginManager();
     }
 
     /**
-     * Handle incoming webhook update
+     * Webhook entry point: see WebhookHandler
+     *
+     * @param bool $respondFirst Answer Telegram before running the handlers (PHP-FPM, LiteSpeed)
+     * @return bool Whether the update was accepted
      */
-    public function handleUpdate(string $webhookJson): void
+    public function handle(?string $body = null, ?string $secretTokenHeader = null, bool $respondFirst = false): bool
     {
-        try {
-            $this->update = UpdateParser::parse($webhookJson);
-            $this->middleware->execute($this->update);
-            $this->events->dispatch('update.received', $this->update);
+        return new WebhookHandler($this)->handle($body, $secretTokenHeader, $respondFirst);
+    }
 
-            if (UpdateParser::hasMessage($this->update)) {
-                $this->router->handleMessage($this->update->message);
-            } elseif (UpdateParser::hasCallbackQuery($this->update)) {
-                $this->router->handleCallback($this->update->callback_query);
-            } elseif (UpdateParser::hasInlineQuery($this->update)) {
-                $this->router->handleInlineQuery($this->update->inline_query);
-            }
+    /**
+     * Process one update given as JSON, a decoded array or an object
+     *
+     * @param string|array<string, mixed>|stdClass $update
+     *
+     * @throws JsonException
+     */
+    public function handleUpdate(string|array|stdClass $update): void
+    {
+        $this->processUpdate(match (true) {
+            is_string($update) => UpdateParser::parse($update),
+            is_array($update) => UpdateParser::fromArray($update),
+            default => $update,
+        });
+    }
 
-            $this->events->dispatch('update.processed', $this->update);
-        } catch (ApiException $e) {
-            $this->events->dispatch('error.api', $e);
-            throw $e;
+    /**
+     * Run middleware and routing; exceptions go to onError() handlers, or are re-thrown
+     */
+    public function processUpdate(stdClass $update): void
+    {
+        $this->kernel->process($update, $this);
+    }
+
+    /**
+     * Long polling until stop() is called: see LongPolling
+     *
+     * @param string[]|null $allowedUpdates
+     * @param int $maxIterations Stop after this many getUpdates calls (0: run until stop())
+     */
+    public function poll(int $timeout = 30, ?array $allowedUpdates = null, ?int $limit = null, int $maxIterations = 0): void
+    {
+        if ($this->getUsername() === null) {
+            $this->setUsername(Value::nullableString($this->getMe()['username'] ?? null));
         }
+
+        $this->polling = new LongPolling($this);
+        $this->polling->run($timeout, $allowedUpdates, $limit, $maxIterations);
     }
 
     /**
-     * Register command handler
+     * Stop polling after the update being processed
      */
-    public function command(string $command, callable $handler): void
+    public function stop(): void
     {
-        $this->router->registerCommand($command, $handler);
+        $this->polling?->stop();
+    }
+
+    public function isRunning(): bool
+    {
+        return $this->polling?->isRunning() ?? false;
     }
 
     /**
-     * Register callback handler
+     * Commands addressed to other bots (/start@other_bot) are ignored once the username is set
      */
-    public function callback(string $data, callable $handler): void
+    public function setUsername(?string $username): static
     {
-        $this->router->registerCallback($data, $handler);
+        $this->kernel->router->setBotUsername($username);
+        return $this;
+    }
+
+    public function getUsername(): ?string
+    {
+        return $this->kernel->router->getBotUsername();
     }
 
     /**
-     * Register middleware
+     * Plugins implementing BotPluginInterface are booted with this bot
      */
-    public function middleware(callable $handler): void
+    public function plugin(PluginInterface $plugin): static
     {
-        $this->middleware->add($handler);
+        $this->plugins->register($plugin->getName(), $plugin);
+
+        if ($plugin instanceof BotPluginInterface) {
+            $plugin->boot($this);
+        }
+
+        return $this;
+    }
+
+    public function getPlugins(): PluginManager
+    {
+        return $this->plugins;
     }
 
     /**
-     * Listen to events
-     */
-    public function on(string $event, callable $handler): void
-    {
-        $this->events->listen($event, $handler);
-    }
-
-    /**
-     * Get current update
+     * The update being processed, or the last one
      */
     public function getUpdate(): ?stdClass
     {
-        return $this->update;
+        return $this->kernel->currentUpdate();
     }
 
-    /**
-     * Get router instance
-     */
     public function getRouter(): Router
     {
-        return $this->router;
+        return $this->kernel->router;
     }
 
-    /**
-     * Get event dispatcher
-     */
     public function getEvents(): EventDispatcher
     {
-        return $this->events;
+        return $this->kernel->events;
     }
 
-    /**
-     * Get middleware pipeline
-     */
     public function getMiddleware(): MiddlewarePipeline
     {
-        return $this->middleware;
+        return $this->kernel->middleware;
+    }
+
+    #[\Override]
+    protected function kernel(): Kernel
+    {
+        return $this->kernel;
     }
 }

@@ -1,0 +1,34 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 5 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Composer audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      with:
+        php-version: '8.4'
+        coverage: none
+        tools: composer
+    # Checks every locked package, dev tools included, against known advisories.
+    # For GitHub's own alerts, enable Dependency graph and Dependabot alerts in
+    # Settings > Security.
+    - run: composer audit --locked --abandoned=report
+

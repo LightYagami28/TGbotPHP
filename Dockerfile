@@ -2,21 +2,25 @@ FROM php:8.4-cli
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+# pcntl lets the polling example stop cleanly on SIGTERM
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git unzip \
+    && docker-php-ext-install pcntl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home bot
 
-COPY composer.json composer.lock* ./
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
-RUN curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-progress --no-autoloader
 
-RUN composer install --no-dev --optimize-autoloader
+# Only what the bot needs at runtime: no tests, docs, .env or VCS files
+COPY bin/ bin/
+COPY src/ src/
+COPY examples/ examples/
+RUN composer dump-autoload --no-dev --optimize
 
-COPY . .
+USER bot
 
-RUN chmod +x bin/tgbot
-
-ENTRYPOINT ["php"]
-CMD ["-S", "localhost:8000", "-t", "."]
+# Long polling by default; override the command to run your own bot
+CMD ["php", "examples/polling.php"]

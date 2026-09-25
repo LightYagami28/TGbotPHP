@@ -1,0 +1,37 @@
+name: End-to-end
+
+# Runs tests/E2E against the real Telegram API. It sends messages to the test
+# chat, so it only runs on demand. Set these secrets on the "telegram-e2e"
+# environment (Settings > Environments):
+#   TELEGRAM_BOT_TOKEN     token of a dedicated test bot
+#   TELEGRAM_TEST_CHAT_ID  id of a chat that has started the bot
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: Telegram API
+    runs-on: ubuntu-latest
+    environment: telegram-e2e
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      with:
+        php-version: '8.4'
+        extensions: curl, gd, json
+        coverage: none
+        tools: composer
+    - run: composer install --no-interaction --no-progress
+    - run: vendor/bin/phpunit --testsuite e2e --testdox
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_TEST_CHAT_ID: ${{ secrets.TELEGRAM_TEST_CHAT_ID }}
