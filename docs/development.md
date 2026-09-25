@@ -24,6 +24,7 @@ TGbotPHP/
 │   ├── Types/        # InputFile
 │   └── Utilities/    # Keyboard, InlineKeyboard, Formatter, MessageParser, Logger, BotBuilder
 ├── bin/tgbot         # CLI entry point
+├── tools/            # Bot API spec extractor and bot-api.json
 ├── docs/             # Guides
 ├── examples/         # Runnable example bots
 └── tests/
@@ -41,10 +42,17 @@ composer check
 
 ## Adding an API method
 
-1. Add it to the matching trait in `src/Methods/`.
+`tools/bot-api.json` lists every method and parameter of the Bot API, extracted from the official documentation. When Telegram releases a new version, the weekly `bot-api.yml` workflow fails. Then:
+
+1. Regenerate the spec with `php tools/bot-api-spec.php > tools/bot-api.json` and set `ApiClient::BOT_API_VERSION`.
+2. Run the tests: `BotApiCoverageTest` lists the methods that are missing or send the wrong parameters.
+
+For each method:
+
+1. Add it to the matching trait in `src/Methods/`. Required parameters are arguments; optional ones go in `$options`, except the few that most calls use.
 2. Use the typed wrapper that matches the documented result: `apiCallObject()`, `apiCallList()`, `apiCallObjectOrTrue()`, `apiCallBool()`, `apiCallInt()` or `apiCallString()`. The wrapper validates the response.
 3. Pass booleans, arrays and `InputFile` objects as they are. `HttpClientTrait::prepareFields()` encodes them.
-4. Add a test in `tests/Unit/ApiClientTest.php` that checks the encoded fields.
+4. `BotApiCoverageTest` covers the parameter names. Add a test in `tests/Unit/ApiClientTest.php` when the method converts its arguments.
 
 ## Code Standards
 
@@ -68,6 +76,7 @@ composer check
 | `lint.yml` | push, pull request | Code style, workflows (actionlint, zizmor), links between Markdown files |
 | `security.yml` | push to main, pull request, daily | `composer audit` of every locked package |
 | `docker.yml` | changes to the image inputs | Builds the image and runs smoke tests: CLI, autoload, non-root user, no dev files |
+| `bot-api.yml` | weekly, manual | Compares the official Bot API documentation with `tools/bot-api.json` |
 | `e2e.yml` | manual | `tests/E2E` against the real Telegram API, with secrets from the `telegram-e2e` environment |
 | `release.yml` | `v*.*.*` tags | Checks that the tag matches `ApiClient::VERSION` and the CHANGELOG, runs the checks, publishes the GitHub release with the CHANGELOG notes |
 

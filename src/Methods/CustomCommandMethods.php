@@ -13,44 +13,7 @@ use TGbotPHP\Support\Value;
  */
 trait CustomCommandMethods
 {
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
+    use CallsApi;
 
     /**
      * Change the list of bot commands
@@ -240,5 +203,32 @@ trait CustomCommandMethods
         }
 
         return $scope;
+    }
+
+    /**
+     * Remove the profile photo of the bot
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#removemyprofilephoto
+     */
+    public function removeMyProfilePhoto(array $options = []): bool
+    {
+        return $this->apiCallBool('removeMyProfilePhoto', [], $options);
+    }
+
+    /**
+     * Change the profile photo of the bot
+     *
+     * @param array<string, mixed> $photo
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#setmyprofilephoto
+     */
+    public function setMyProfilePhoto(array $photo, array $options = []): bool
+    {
+        return $this->apiCallBool('setMyProfilePhoto', [
+            'photo' => $photo,
+        ], $options);
     }
 }

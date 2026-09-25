@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `null` parameters were sent as empty strings.
 - `RateLimiter` used a window that slid forward on every hit.
 - `ArrayCache::has()` returned `false` for stored `null` values.
+- Conversation data, session data and rate limit counters could lose updates when two webhook requests from the same user ran at the same time.
+- `downloadFile()` loaded whole files in memory, and could not download files from a local Bot API server.
 - The CLI used a wrong autoloader path when installed as a dependency, and always exited with status 0.
 - `composer.json` and the README declared the MIT license, but `LICENSE` (inherited from the Apache-licensed upstream repository) is the Apache License 2.0. The metadata now says Apache-2.0.
 
@@ -29,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Conversations: `useConversations()`, `state()`, `setState()`, `updateStateData()`, `clearState()`.
 - `Bot::reply()`, `edit()` (returns `false` when the content did not change), `answer()`, `chatId()`, `onError()`, and plugins with `BotPluginInterface::boot()`.
 - `InputFile` for uploads, with automatic `attach://` references for albums and sticker sets. `downloadFile()` and `getFileUrl()`.
-- About 40 API methods, including `answerCallbackQuery`, `editMessageCaption`, `editMessageMedia`, `deleteMessages`, `copyMessages`, invite links, join requests, bot profile methods, Telegram Stars payments and the current sticker set methods.
+- Every method of Bot API 10.3: business accounts, gifts, stories, checklists, rich messages and drafts, ephemeral messages, paid media, live photos, suggested posts, managed bots, verification and more, including `answerCallbackQuery`, `editMessageCaption`, `editMessageMedia`, `deleteMessages`, `copyMessages`, invite links, join requests, bot profile methods, Telegram Stars payments and the current sticker set methods.
 - API results are checked against the declared return type; a mismatch throws `ApiException`.
 - `TooManyRequestsException`, `NetworkException`, `StorageException` and `PluginException`. `ApiException` gains `getApiMethod()`, `getParameters()`, `getMigrateToChatId()` and `isMessageNotModified()`.
 - `Http\TransportInterface`, to use another HTTP client or a fake one in tests. Support for a local Bot API server.
@@ -38,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Formatter` (HTML and MarkdownV2 escaping), the `InlineKeyboard` builder, `Keyboard::reply()`, `remove()`, `forceReply()` and `pagination()`.
 - `Support\Value` and `Support\Payload` to read update payloads with types.
 - CLI commands `commands:list` and `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
+- `tools/bot-api.json`, the methods and parameters of the Bot API extracted from the official documentation by `tools/bot-api-spec.php`. A test checks every method against it, and a weekly workflow reports new API versions.
+- `CacheInterface::update()`, an atomic read-change-write; `FileCache` locks the entry meanwhile.
 - Unit tests, an end-to-end suite against the real API (`--testsuite e2e`), PHPStan at level 10 with strict rules, and runnable examples.
 - GitHub workflows: tests with coverage, PHPStan, code style (PHP-CS-Fixer, PER-CS 2.0), workflow linting (actionlint, zizmor), documentation link check, `composer audit`, Docker image build and smoke test, on-demand end-to-end tests, and releases from `v*` tags with notes from this file.
 
@@ -46,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Bot` is split into `Kernel`, `Router`, `Runner\WebhookHandler`, `Runner\LongPolling` and three traits; its public methods are unchanged.
 - Rarely used optional parameters moved into the `$options` array (see the migration notes).
 - `editMessageReplyMarkup()` without a markup removes the inline keyboard.
+- `downloadFile()` streams to the destination file, which only appears once complete. Without a destination it refuses files over 20 MB.
+- `CurlTransport` keeps its connection open between requests. `TransportInterface` gains `download()`.
 - The debug log escapes line breaks and redacts `secret_token` and `provider_token`.
 - cURL does not follow redirects and only allows HTTP and HTTPS.
 - GitHub Actions are pinned to commit SHAs and run with read-only permissions. The Docker image runs as an unprivileged user and only contains the files the bot needs.

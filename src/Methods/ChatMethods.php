@@ -13,44 +13,7 @@ use TGbotPHP\Types\InputFile;
  */
 trait ChatMethods
 {
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
+    use CallsApi;
 
     /**
      * Get chat information (ChatFullInfo)
@@ -333,5 +296,105 @@ trait ChatMethods
     public function deleteChatStickerSet(int|string $chatId): bool
     {
         return $this->apiCallBool('deleteChatStickerSet', ['chat_id' => $chatId]);
+    }
+
+    /**
+     * Process a received chat join request query
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#answerchatjoinrequestquery
+     */
+    public function answerChatJoinRequestQuery(
+        string $chatJoinRequestQueryId,
+        string $result,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('answerChatJoinRequestQuery', [
+            'chat_join_request_query_id' => $chatJoinRequestQueryId,
+            'result' => $result,
+        ], $options);
+    }
+
+    /**
+     * Create a subscription invite link for a channel chat
+     *
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#createchatsubscriptioninvitelink
+     */
+    public function createChatSubscriptionInviteLink(
+        int|string $chatId,
+        int $subscriptionPeriod,
+        int $subscriptionPrice,
+        ?string $name = null,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('createChatSubscriptionInviteLink', [
+            'chat_id' => $chatId,
+            'subscription_period' => $subscriptionPeriod,
+            'subscription_price' => $subscriptionPrice,
+            'name' => $name,
+        ], $options);
+    }
+
+    /**
+     * Edit a subscription invite link created by the bot
+     *
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#editchatsubscriptioninvitelink
+     */
+    public function editChatSubscriptionInviteLink(
+        int|string $chatId,
+        string $inviteLink,
+        ?string $name = null,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('editChatSubscriptionInviteLink', [
+            'chat_id' => $chatId,
+            'invite_link' => $inviteLink,
+            'name' => $name,
+        ], $options);
+    }
+
+    /**
+     * Show a Mini App to the user of a chat join request query before deciding the outcome
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#sendchatjoinrequestwebapp
+     */
+    public function sendChatJoinRequestWebApp(
+        string $chatJoinRequestQueryId,
+        string $webAppUrl,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('sendChatJoinRequestWebApp', [
+            'chat_join_request_query_id' => $chatJoinRequestQueryId,
+            'web_app_url' => $webAppUrl,
+        ], $options);
+    }
+
+    /**
+     * Set a tag for a regular member in a group or a supergroup
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#setchatmembertag
+     */
+    public function setChatMemberTag(
+        int|string $chatId,
+        int $userId,
+        ?string $tag = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('setChatMemberTag', [
+            'chat_id' => $chatId,
+            'user_id' => $userId,
+            'tag' => $tag,
+        ], $options);
     }
 }

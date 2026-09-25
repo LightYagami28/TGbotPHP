@@ -11,44 +11,7 @@ namespace TGbotPHP\Methods;
  */
 trait ReactionMethods
 {
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
+    use CallsApi;
 
     /**
      * Change the bot's reactions on a message
@@ -77,5 +40,47 @@ trait ReactionMethods
             'reaction' => $reactions,
             'is_big' => $isBig ? true : null,
         ]);
+    }
+
+    /**
+     * Remove up to 10000 recent reactions in a group or a supergroup chat added by a given user or chat
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#deleteallmessagereactions
+     */
+    public function deleteAllMessageReactions(
+        int|string $chatId,
+        ?int $userId = null,
+        ?int $actorChatId = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('deleteAllMessageReactions', [
+            'chat_id' => $chatId,
+            'user_id' => $userId,
+            'actor_chat_id' => $actorChatId,
+        ], $options);
+    }
+
+    /**
+     * Remove a reaction from a message in a group or a supergroup chat
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#deletemessagereaction
+     */
+    public function deleteMessageReaction(
+        int|string $chatId,
+        int $messageId,
+        ?int $userId = null,
+        ?int $actorChatId = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('deleteMessageReaction', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'user_id' => $userId,
+            'actor_chat_id' => $actorChatId,
+        ], $options);
     }
 }

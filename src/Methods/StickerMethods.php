@@ -17,44 +17,7 @@ use TGbotPHP\Types\InputFile;
  */
 trait StickerMethods
 {
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
+    use CallsApi;
 
     /**
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
@@ -218,5 +181,87 @@ trait StickerMethods
     public function deleteStickerSet(string $name): bool
     {
         return $this->apiCallBool('deleteStickerSet', ['name' => $name]);
+    }
+
+    /**
+     * Replace an existing sticker in a sticker set with a new one
+     *
+     * @param array<string, mixed> $sticker
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#replacestickerinset
+     */
+    public function replaceStickerInSet(
+        int $userId,
+        string $name,
+        string $oldSticker,
+        array $sticker,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('replaceStickerInSet', [
+            'user_id' => $userId,
+            'name' => $name,
+            'old_sticker' => $oldSticker,
+            'sticker' => $sticker,
+        ], $options);
+    }
+
+    /**
+     * Set the thumbnail of a custom emoji sticker set
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#setcustomemojistickersetthumbnail
+     */
+    public function setCustomEmojiStickerSetThumbnail(
+        string $name,
+        ?string $customEmojiId = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('setCustomEmojiStickerSetThumbnail', [
+            'name' => $name,
+            'custom_emoji_id' => $customEmojiId,
+        ], $options);
+    }
+
+    /**
+     * Change the mask position of a mask sticker
+     *
+     * @param array<string, mixed>|null $maskPosition
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#setstickermaskposition
+     */
+    public function setStickerMaskPosition(
+        string $sticker,
+        ?array $maskPosition = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('setStickerMaskPosition', [
+            'sticker' => $sticker,
+            'mask_position' => $maskPosition,
+        ], $options);
+    }
+
+    /**
+     * Set the thumbnail of a regular or mask sticker set
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#setstickersetthumbnail
+     */
+    public function setStickerSetThumbnail(
+        string $name,
+        int $userId,
+        string $format,
+        InputFile|string|null $thumbnail = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('setStickerSetThumbnail', [
+            'name' => $name,
+            'user_id' => $userId,
+            'format' => $format,
+            'thumbnail' => $thumbnail,
+        ], $options);
     }
 }

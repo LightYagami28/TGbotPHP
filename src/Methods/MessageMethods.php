@@ -18,44 +18,7 @@ use TGbotPHP\Types\InputFile;
  */
 trait MessageMethods
 {
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
+    use CallsApi;
 
     /**
      * Send text message
@@ -410,6 +373,181 @@ trait MessageMethods
         return $this->apiCallBool('sendChatAction', [
             'chat_id' => $chatId,
             'action' => $action,
+        ], $options);
+    }
+
+    /**
+     * Approve a suggested post in a direct messages chat
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#approvesuggestedpost
+     */
+    public function approveSuggestedPost(
+        int $chatId,
+        int $messageId,
+        ?int $sendDate = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('approveSuggestedPost', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'send_date' => $sendDate,
+        ], $options);
+    }
+
+    /**
+     * Decline a suggested post in a direct messages chat
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#declinesuggestedpost
+     */
+    public function declineSuggestedPost(
+        int $chatId,
+        int $messageId,
+        ?string $comment = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('declineSuggestedPost', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'comment' => $comment,
+        ], $options);
+    }
+
+    /**
+     * Edit a checklist on behalf of a connected business account
+     *
+     * @param array<string, mixed> $checklist
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#editmessagechecklist
+     */
+    public function editMessageChecklist(
+        string $businessConnectionId,
+        int|string $chatId,
+        int $messageId,
+        array $checklist,
+        array|JsonSerializable|null $replyMarkup = null,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('editMessageChecklist', [
+            'business_connection_id' => $businessConnectionId,
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'checklist' => $checklist,
+            'reply_markup' => $replyMarkup,
+        ], $options);
+    }
+
+    /**
+     * Get the last messages from the personal chat a user added to their profile
+     *
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     *
+     * @see https://core.telegram.org/bots/api#getuserpersonalchatmessages
+     */
+    public function getUserPersonalChatMessages(
+        int $userId,
+        int $limit,
+        array $options = [],
+    ): array {
+        return $this->apiCallList('getUserPersonalChatMessages', [
+            'user_id' => $userId,
+            'limit' => $limit,
+        ], $options);
+    }
+
+    /**
+     * Send a checklist on behalf of a connected business account
+     *
+     * @param array<string, mixed> $checklist
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed> $options disable_notification, protect_content, message_effect_id, reply_parameters
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#sendchecklist
+     */
+    public function sendChecklist(
+        string $businessConnectionId,
+        int|string $chatId,
+        array $checklist,
+        array|JsonSerializable|null $replyMarkup = null,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('sendChecklist', [
+            'business_connection_id' => $businessConnectionId,
+            'chat_id' => $chatId,
+            'checklist' => $checklist,
+            'reply_markup' => $replyMarkup,
+        ], $options);
+    }
+
+    /**
+     * Stream a partial message to a user while the message is being generated
+     *
+     * @param array<string, mixed> $options message_thread_id, parse_mode, entities, can_stop, ...
+     *
+     * @see https://core.telegram.org/bots/api#sendmessagedraft
+     */
+    public function sendMessageDraft(
+        int $chatId,
+        int $draftId,
+        ?string $text = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('sendMessageDraft', [
+            'chat_id' => $chatId,
+            'draft_id' => $draftId,
+            'text' => $text,
+        ], $options);
+    }
+
+    /**
+     * Send a rich message
+     *
+     * @param array<string, mixed> $richMessage
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed> $options business_connection_id, message_thread_id, direct_messages_topic_id, ephemeral_message_parameters, ...
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#sendrichmessage
+     */
+    public function sendRichMessage(
+        int|string $chatId,
+        array $richMessage,
+        array|JsonSerializable|null $replyMarkup = null,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('sendRichMessage', [
+            'chat_id' => $chatId,
+            'rich_message' => $richMessage,
+            'reply_markup' => $replyMarkup,
+        ], $options);
+    }
+
+    /**
+     * Stream a partial rich message to a user while the message is being generated
+     *
+     * @param array<string, mixed> $richMessage
+     * @param array<string, mixed> $options message_thread_id, can_stop, keep_on_stop
+     *
+     * @see https://core.telegram.org/bots/api#sendrichmessagedraft
+     */
+    public function sendRichMessageDraft(
+        int $chatId,
+        int $draftId,
+        array $richMessage,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('sendRichMessageDraft', [
+            'chat_id' => $chatId,
+            'draft_id' => $draftId,
+            'rich_message' => $richMessage,
         ], $options);
     }
 }

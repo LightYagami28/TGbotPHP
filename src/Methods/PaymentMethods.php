@@ -13,44 +13,7 @@ namespace TGbotPHP\Methods;
  */
 trait PaymentMethods
 {
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
+    use CallsApi;
 
     /**
      * For payments in Telegram Stars use the "XTR" currency and no provider token
@@ -167,5 +130,38 @@ trait PaymentMethods
             'offset' => $offset,
             'limit' => $limit,
         ]);
+    }
+
+    /**
+     * Cancel or re-enable extension of a subscription paid in Telegram Stars
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#edituserstarsubscription
+     */
+    public function editUserStarSubscription(
+        int $userId,
+        string $telegramPaymentChargeId,
+        bool $isCanceled,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('editUserStarSubscription', [
+            'user_id' => $userId,
+            'telegram_payment_charge_id' => $telegramPaymentChargeId,
+            'is_canceled' => $isCanceled,
+        ], $options);
+    }
+
+    /**
+     * Get the current Telegram Stars balance of the bot
+     *
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#getmystarbalance
+     */
+    public function getMyStarBalance(array $options = []): array
+    {
+        return $this->apiCallObject('getMyStarBalance', [], $options);
     }
 }

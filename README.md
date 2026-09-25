@@ -54,7 +54,7 @@ $bot->poll();      // long polling
 
 ## What it covers
 
-- **API client:** typed methods for the Bot API, `call()` for any other method, and an `$options` array on sending methods for optional parameters. Results are checked against the type each method declares.
+- **API client:** every method of Bot API 10.3 (checked against the official documentation by the tests), `call()` for methods Telegram adds later, and an `$options` array on sending methods for optional parameters. Results are checked against the type each method declares.
 - **Files:** `InputFile` uploads local files or in-memory contents, including albums and sticker sets. `downloadFile()` fetches them back.
 - **Routing:** commands (including `/cmd@bot` and deep-link payloads), text patterns, callback and inline query patterns (exact, `prefix:*` or a regex), and handlers for any update type.
 - **Updates:** `handle()` for webhooks, with secret token check. `poll()` for long polling, with backoff on errors.

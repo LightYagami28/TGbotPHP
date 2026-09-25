@@ -14,44 +14,7 @@ use TGbotPHP\Types\InputFile;
  */
 trait MediaMethods
 {
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
+    use CallsApi;
 
     /**
      * Send a GIF or an H.264/MPEG-4 AVC video without sound
@@ -156,6 +119,53 @@ trait MediaMethods
             'chat_id' => $chatId,
             'media' => array_values($media),
             'disable_notification' => $disableNotification ? true : null,
+        ], $options);
+    }
+
+    /**
+     * Send a live photo
+     *
+     * @param array<string, mixed> $options business_connection_id, message_thread_id, direct_messages_topic_id, ephemeral_message_parameters, ...
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#sendlivephoto
+     */
+    public function sendLivePhoto(
+        int|string $chatId,
+        InputFile|string $livePhoto,
+        InputFile|string $photo,
+        ?string $caption = null,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('sendLivePhoto', [
+            'chat_id' => $chatId,
+            'live_photo' => $livePhoto,
+            'photo' => $photo,
+            'caption' => $caption,
+        ], $options);
+    }
+
+    /**
+     * Send paid media
+     *
+     * @param list<array<string, mixed>> $media
+     * @param array<string, mixed> $options business_connection_id, message_thread_id, direct_messages_topic_id, payload, ...
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#sendpaidmedia
+     */
+    public function sendPaidMedia(
+        int|string $chatId,
+        int $starCount,
+        array $media,
+        ?string $caption = null,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('sendPaidMedia', [
+            'chat_id' => $chatId,
+            'star_count' => $starCount,
+            'media' => $media,
+            'caption' => $caption,
         ], $options);
     }
 }

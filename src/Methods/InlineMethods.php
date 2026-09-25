@@ -11,44 +11,7 @@ namespace TGbotPHP\Methods;
  */
 trait InlineMethods
 {
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
+    use CallsApi;
 
     /**
      * Answer a callback query sent from an inline keyboard button
@@ -112,5 +75,65 @@ trait InlineMethods
             'web_app_query_id' => $webAppQueryId,
             'result' => $result,
         ]);
+    }
+
+    /**
+     * Reply to a received guest message
+     *
+     * @param array<string, mixed> $result
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#answerguestquery
+     */
+    public function answerGuestQuery(
+        string $guestQueryId,
+        array $result,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('answerGuestQuery', [
+            'guest_query_id' => $guestQueryId,
+            'result' => $result,
+        ], $options);
+    }
+
+    /**
+     * Store a message that can be sent by a user of a Mini App
+     *
+     * @param array<string, mixed> $result
+     * @param array<string, mixed> $options allow_user_chats, allow_bot_chats, allow_group_chats, allow_channel_chats
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#savepreparedinlinemessage
+     */
+    public function savePreparedInlineMessage(
+        int $userId,
+        array $result,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('savePreparedInlineMessage', [
+            'user_id' => $userId,
+            'result' => $result,
+        ], $options);
+    }
+
+    /**
+     * Store a keyboard button that can be used by a user within a Mini App
+     *
+     * @param array<string, mixed> $button
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#savepreparedkeyboardbutton
+     */
+    public function savePreparedKeyboardButton(
+        int $userId,
+        array $button,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('savePreparedKeyboardButton', [
+            'user_id' => $userId,
+            'button' => $button,
+        ], $options);
     }
 }

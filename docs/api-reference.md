@@ -154,21 +154,29 @@ $bot->downloadFile($fileId, '/tmp/download.jpg');
 
 ### Method groups
 
+Every method of Bot API 10.3 is implemented. `tests/Unit/BotApiCoverageTest.php` checks each one against the official documentation: method name, required parameters, parameter names and result type.
+
 | Group | Methods |
 |---|---|
 | Updates | `getUpdates`, `setWebhook`, `deleteWebhook`, `getWebhookInfo` |
-| Bot & users | `getMe`, `logOut`, `close`, `getUserProfilePhotos`, `getUserChatBoosts`, `getFile`, `getFileUrl`, `downloadFile` |
-| Messages | `sendMessage`, `forwardMessage(s)`, `copyMessage(s)`, `sendPhoto`, `sendAudio`, `sendDocument`, `sendVideo`, `editMessageText`, `editMessageCaption`, `editMessageMedia`, `editMessageReplyMarkup`, `deleteMessage(s)`, `sendChatAction` |
-| Media | `sendAnimation`, `sendVoice`, `sendVideoNote`, `sendMediaGroup` |
+| Bot, users & files | `getMe`, `logOut`, `close`, `getUserProfilePhotos`, `getUserChatBoosts`, `getFile`, `getFileUrl`, `downloadFile`, `getUserProfileAudios`, `setPassportDataErrors`, `setUserEmojiStatus` |
+| Messages | `sendMessage`, `forwardMessage`, `forwardMessages`, `copyMessage`, `copyMessages`, `sendPhoto`, `sendAudio`, `sendDocument`, `sendVideo`, `editMessageText`, `editMessageCaption`, `editMessageMedia`, `editMessageReplyMarkup`, `deleteMessage`, `deleteMessages`, `sendChatAction`, `approveSuggestedPost`, `declineSuggestedPost`, `editMessageChecklist`, `getUserPersonalChatMessages`, `sendChecklist`, `sendMessageDraft`, `sendRichMessage`, `sendRichMessageDraft` |
+| Media | `sendAnimation`, `sendVoice`, `sendVideoNote`, `sendMediaGroup`, `sendLivePhoto`, `sendPaidMedia` |
+| Ephemeral messages | `deleteEphemeralMessage`, `editEphemeralMessageCaption`, `editEphemeralMessageMedia`, `editEphemeralMessageReplyMarkup`, `editEphemeralMessageText` |
 | Location & polls | `sendLocation`, `editMessageLiveLocation`, `stopMessageLiveLocation`, `sendVenue`, `sendContact`, `sendPoll`, `stopPoll`, `sendDice` |
-| Callbacks & inline | `answerCallbackQuery`, `answerInlineQuery`, `answerWebAppQuery` |
-| Chats | `getChat`, `getChatMember`, `getChatAdministrators`, `getChatMemberCount`, `leaveChat`, `setChatTitle`, `setChatDescription`, `setChatPhoto`, `deleteChatPhoto`, `setChatPermissions`, `pinChatMessage`, `unpinChatMessage`, `unpinAllChatMessages`, `exportChatInviteLink`, `createChatInviteLink`, `editChatInviteLink`, `revokeChatInviteLink`, `approveChatJoinRequest`, `declineChatJoinRequest`, `setChatStickerSet`, `deleteChatStickerSet` |
+| Callbacks & inline | `answerCallbackQuery`, `answerInlineQuery`, `answerWebAppQuery`, `answerGuestQuery`, `savePreparedInlineMessage`, `savePreparedKeyboardButton` |
+| Chats | `getChat`, `getChatMember`, `getChatAdministrators`, `getChatMemberCount`, `leaveChat`, `setChatTitle`, `setChatDescription`, `setChatPhoto`, `deleteChatPhoto`, `setChatPermissions`, `pinChatMessage`, `unpinChatMessage`, `unpinAllChatMessages`, `exportChatInviteLink`, `createChatInviteLink`, `editChatInviteLink`, `revokeChatInviteLink`, `approveChatJoinRequest`, `declineChatJoinRequest`, `setChatStickerSet`, `deleteChatStickerSet`, `answerChatJoinRequestQuery`, `createChatSubscriptionInviteLink`, `editChatSubscriptionInviteLink`, `sendChatJoinRequestWebApp`, `setChatMemberTag` |
 | Administration | `banChatMember`, `unbanChatMember`, `restrictChatMember`, `promoteChatMember`, `setChatAdministratorCustomTitle`, `banChatSenderChat`, `unbanChatSenderChat` |
-| Bot profile | `setMyCommands`, `getMyCommands`, `deleteMyCommands`, `setMyName`, `getMyName`, `setMyDescription`, `getMyDescription`, `setMyShortDescription`, `getMyShortDescription`, `setChatMenuButton`, `getChatMenuButton`, `setMyDefaultAdministratorRights`, `getMyDefaultAdministratorRights` |
+| Bot profile | `setMyCommands`, `getMyCommands`, `deleteMyCommands`, `setMyName`, `getMyName`, `setMyDescription`, `getMyDescription`, `setMyShortDescription`, `getMyShortDescription`, `setChatMenuButton`, `getChatMenuButton`, `setMyDefaultAdministratorRights`, `getMyDefaultAdministratorRights`, `removeMyProfilePhoto`, `setMyProfilePhoto` |
 | Forum topics | `getForumTopicIconStickers`, `createForumTopic`, `editForumTopic`, `closeForumTopic`, `reopenForumTopic`, `deleteForumTopic`, `unpinAllForumTopicMessages`, `editGeneralForumTopic`, `closeGeneralForumTopic`, `reopenGeneralForumTopic`, `hideGeneralForumTopic`, `unhideGeneralForumTopic`, `unpinAllGeneralForumTopicMessages` |
-| Stickers | `sendSticker`, `getStickerSet`, `getCustomEmojiStickers`, `uploadStickerFile`, `createNewStickerSet`, `addStickerToSet`, `setStickerPositionInSet`, `deleteStickerFromSet`, `setStickerEmojiList`, `setStickerKeywords`, `setStickerSetTitle`, `deleteStickerSet` |
-| Reactions | `setMessageReaction` (accepts plain emoji: `['👍']`) |
-| Payments | `sendInvoice`, `createInvoiceLink`, `answerShippingQuery`, `answerPreCheckoutQuery`, `refundStarPayment`, `getStarTransactions` |
+| Stickers | `sendSticker`, `getStickerSet`, `getCustomEmojiStickers`, `uploadStickerFile`, `createNewStickerSet`, `addStickerToSet`, `setStickerPositionInSet`, `deleteStickerFromSet`, `setStickerEmojiList`, `setStickerKeywords`, `setStickerSetTitle`, `deleteStickerSet`, `replaceStickerInSet`, `setCustomEmojiStickerSetThumbnail`, `setStickerMaskPosition`, `setStickerSetThumbnail` |
+| Reactions | `setMessageReaction`, `deleteAllMessageReactions`, `deleteMessageReaction` |
+| Payments & Stars | `sendInvoice`, `createInvoiceLink`, `answerShippingQuery`, `answerPreCheckoutQuery`, `refundStarPayment`, `getStarTransactions`, `editUserStarSubscription`, `getMyStarBalance` |
+| Gifts | `getAvailableGifts`, `getChatGifts`, `getUserGifts`, `giftPremiumSubscription`, `sendGift` |
+| Business accounts | `convertGiftToStars`, `deleteBusinessMessages`, `getBusinessAccountGifts`, `getBusinessAccountStarBalance`, `getBusinessConnection`, `readBusinessMessage`, `removeBusinessAccountProfilePhoto`, `setBusinessAccountBio`, `setBusinessAccountGiftSettings`, `setBusinessAccountName`, `setBusinessAccountProfilePhoto`, `setBusinessAccountUsername`, `transferBusinessAccountStars`, `transferGift`, `upgradeGift` |
+| Stories | `deleteStory`, `editStory`, `postStory`, `repostStory` |
+| Managed bots | `getManagedBotAccessSettings`, `getManagedBotToken`, `replaceManagedBotToken`, `setManagedBotAccessSettings` |
+| Verification | `removeChatVerification`, `removeUserVerification`, `verifyChat`, `verifyUser` |
 | Games | `sendGame`, `setGameScore`, `getGameHighScores` |
 | Anything else | `call('methodName', [...])` |
 

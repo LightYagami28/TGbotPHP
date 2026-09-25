@@ -17,47 +17,10 @@ use TGbotPHP\Support\Value;
  */
 trait UserMethods
 {
+    use CallsApi;
+
     /** Largest file downloadFile() loads in memory: the Bot API download limit */
     public const int MAX_MEMORY_DOWNLOAD = 20 * 1024 * 1024;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
-     */
-    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
-     */
-    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
-     */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
-     */
-    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     abstract public function getTransport(): TransportInterface;
 
@@ -242,5 +205,65 @@ trait UserMethods
         if ($statusCode !== 200) {
             throw new ApiException("HTTP $statusCode while downloading file", $statusCode, [], 'getFile');
         }
+    }
+
+    /**
+     * Get a list of profile audios for a user
+     *
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#getuserprofileaudios
+     */
+    public function getUserProfileAudios(
+        int $userId,
+        ?int $offset = null,
+        ?int $limit = null,
+        array $options = [],
+    ): array {
+        return $this->apiCallObject('getUserProfileAudios', [
+            'user_id' => $userId,
+            'offset' => $offset,
+            'limit' => $limit,
+        ], $options);
+    }
+
+    /**
+     * Tell a user that some of the Telegram Passport elements they provided contain errors
+     *
+     * @param list<array<string, mixed>> $errors
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#setpassportdataerrors
+     */
+    public function setPassportDataErrors(
+        int $userId,
+        array $errors,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('setPassportDataErrors', [
+            'user_id' => $userId,
+            'errors' => $errors,
+        ], $options);
+    }
+
+    /**
+     * Change the emoji status of a user who allowed the bot to manage it (requestEmojiStatusAccess in Mini Apps)
+     *
+     * @param array<string, mixed> $options
+     *
+     * @see https://core.telegram.org/bots/api#setuseremojistatus
+     */
+    public function setUserEmojiStatus(
+        int $userId,
+        ?string $emojiStatusCustomEmojiId = null,
+        ?int $emojiStatusExpirationDate = null,
+        array $options = [],
+    ): bool {
+        return $this->apiCallBool('setUserEmojiStatus', [
+            'user_id' => $userId,
+            'emoji_status_custom_emoji_id' => $emojiStatusCustomEmojiId,
+            'emoji_status_expiration_date' => $emojiStatusExpirationDate,
+        ], $options);
     }
 }
