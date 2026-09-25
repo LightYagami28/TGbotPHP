@@ -10,6 +10,7 @@ jobs:
     - uses: shivammathur/setup-php@v2
       with:
         php-version: '8.4'
-        tools: composer, phpstan
-    - run: composer install --dev
-    - run: phpstan analyze src --level=5 || true
+        coverage: none
+        tools: composer
+    - run: composer install --no-interaction --no-progress
+    - run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M

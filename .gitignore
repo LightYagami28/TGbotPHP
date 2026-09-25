@@ -24,13 +24,13 @@ config.local.php
 logs/
 errors.txt
 
-# Testing (security: excluded from production)
-tests/
-examples/
+# Testing
+.phpunit.cache/
 .phpunit.result.cache
 coverage/
 .coverage
-run-unit-tests.sh
+phpunit.xml
+phpstan.neon
 
 # Temporary
 tmp/
@@ -64,7 +64,7 @@ Jenkinsfile
 # botlib.php, botesempio.php, echobot.php, bot-complete.php
 # example-webhook.php, webhook-secure.php
 # README_COMPLETE.md, PROJECT_STATUS.md, PROJECT_SUMMARY.md
-# SECURITY_SCAN_REPORT.md, phpstan.neon
+# SECURITY_SCAN_REPORT.md
 
 # Node (if using node scripts)
 node_modules/
