@@ -9,7 +9,7 @@ composer phpstan       # static analysis (level 10 + strict rules)
 composer check         # both
 ```
 
-CI runs the test suite on PHP 8.2, 8.3, 8.4 and 8.5, and PHPStan on every push and pull request.
+CI runs the test suite on PHP 8.4 and 8.5 (plus 8.6, still in development, as a non-blocking job), and PHPStan on every push and pull request.
 
 ## Test layout
 
@@ -74,3 +74,18 @@ vendor/bin/tgbot bot:info
 vendor/bin/tgbot webhook:delete
 php examples/polling.php
 ```
+
+## End-to-end tests against Telegram
+
+`tests/E2E` calls the real Bot API. The suite is skipped unless a token is set, and it does not run by default:
+
+```bash
+# Bot-level methods: commands, description, webhook, errors
+TELEGRAM_BOT_TOKEN=... vendor/bin/phpunit --testsuite e2e
+
+# Also messages, uploads, downloads, media groups, polls, reactions...
+# TELEGRAM_TEST_CHAT_ID is your user id: send /start to the bot first
+TELEGRAM_BOT_TOKEN=... TELEGRAM_TEST_CHAT_ID=... vendor/bin/phpunit --testsuite e2e
+```
+
+Use a dedicated test bot. The tests change its commands and description and restore them afterwards. They delete the messages they send, except dice, which Telegram does not allow deleting in private chats for 24 hours.

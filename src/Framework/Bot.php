@@ -442,12 +442,30 @@ final class Bot extends ApiClient
     /**
      * Edit the text of the message a callback query button belongs to
      *
-     * Works for regular messages and for messages sent in inline mode.
+     * Works for regular messages and for messages sent in inline mode. Editing
+     * a message to the content it already has is not an error: false is returned.
      *
      * @param array<string, mixed> $options Extra editMessageText parameters (reply_markup, parse_mode, ...)
-     * @return array<string, mixed>|bool Edited message, or true for inline messages
+     * @return array<string, mixed>|bool Edited message, true for inline messages, false when nothing changed
      */
     public function edit(stdClass $callbackQuery, string $text, array $options = []): array|bool
+    {
+        try {
+            return $this->editCallbackMessage($callbackQuery, $text, $options);
+        } catch (ApiException $e) {
+            if ($e->isMessageNotModified()) {
+                return false;
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    private function editCallbackMessage(stdClass $callbackQuery, string $text, array $options): array|bool
     {
         $inlineMessageId = Value::nullableString(Value::path($callbackQuery, 'inline_message_id'));
 

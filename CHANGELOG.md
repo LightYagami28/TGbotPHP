@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - 2026-09-24
+## [3.0.0] - 2026-09-25
 
 ### Fixed
 - Methods returning `True` (`deleteMessage`, `banChatMember`, `setWebhook`, ...) no longer throw a `TypeError` under `strict_types`. The same fix covers `getChatMemberCount`, which returns an integer.
@@ -44,8 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `UpdateParser::getType()`, `getPayload()`, `getChat()`, `getUser()` and `fromArray()`.
 - `MessageParser::parseArguments()`.
 - CLI: `commands:list`, `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
-- A PHPUnit test suite (107 tests) and runnable examples in `examples/`.
-- PHPStan **level 10** (max) with `phpstan-strict-rules` and `phpstan-phpunit`, on `src/`, `tests/`, `examples/` and `bin/`, with no baseline and no ignored errors. CI tests PHP 8.2 to 8.5.
+- A PHPUnit test suite (109 unit tests) and runnable examples in `examples/`.
+- An end-to-end suite against the real Telegram API (`tests/E2E`, `--testsuite e2e`), enabled by `TELEGRAM_BOT_TOKEN` and `TELEGRAM_TEST_CHAT_ID`.
+- PHPStan **level 10** (max) with `phpstan-strict-rules` and `phpstan-phpunit`, on `src/`, `tests/`, `examples/` and `bin/`, with no baseline and no ignored errors.
 - Every API result is validated against the type the method declares (`apiCallObject()`, `apiCallList()`, `apiCallBool()`, ...). An unexpected payload throws `ApiException` instead of a `TypeError` deep in your handler.
 - `Support\Value`: type-safe readers for decoded JSON and update payloads (`Value::int()`, `string()`, `id()`, `path()`, `map()`, `env()`).
 - `Bot::edit()` edits the message a callback button belongs to, including inline messages. `Bot::chatId()` returns the chat id of any payload.
@@ -57,7 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update payloads are read through `Support\Value`: malformed input can no longer be cast to `"Array"` strings or accidental integers.
 
 ### Changed
-- Requires PHP 8.2+ with ext-curl and ext-json.
+- Requires **PHP 8.4+** with ext-curl and ext-json. CI tests PHP 8.4 and 8.5, plus 8.6 (in development) as a non-blocking job.
+- Uses PHP 8.3 and 8.4 features: typed class constants, `#[\Override]`, and PHPUnit 13.
+- `Bot::edit()` returns `false` instead of throwing when the new content equals the current one ("message is not modified"). `ApiException::isMessageNotModified()` detects that case.
+- `editMessageReplyMarkup()` with a `null` markup explicitly removes the inline keyboard.
 - `disableWebPagePreview` is sent as `link_preview_options`, and `switchPmText` as the `button` object of `answerInlineQuery`.
 - `parse_mode` is only sent with a caption when there is a caption.
 - `Config` validates the token format (`<digits>:<secret>`) and the secret token charset.

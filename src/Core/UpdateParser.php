@@ -16,7 +16,7 @@ class UpdateParser
     /**
      * Known update types, in the order they appear in the Update object
      */
-    public const UPDATE_TYPES = [
+    public const array UPDATE_TYPES = [
         'message',
         'edited_message',
         'channel_post',

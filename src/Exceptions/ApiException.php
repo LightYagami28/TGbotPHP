@@ -59,6 +59,16 @@ class ApiException extends TelegramException
     }
 
     /**
+     * Whether an edit failed only because the new content equals the current one
+     *
+     * Typical when a user presses the button of the page already shown.
+     */
+    public function isMessageNotModified(): bool
+    {
+        return $this->getCode() === 400 && str_contains($this->getMessage(), 'message is not modified');
+    }
+
+    /**
      * Supergroup id to use when a group has been migrated
      */
     public function getMigrateToChatId(): ?int

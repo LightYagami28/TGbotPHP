@@ -42,7 +42,7 @@ composer check
 ## Code Standards
 
 - PSR-4, PSR-12
-- PHP 8.2+, `declare(strict_types=1)` everywhere
+- PHP 8.4+, `declare(strict_types=1)` everywhere
 - Full type hints, with generics in PHPDoc (`array<string, mixed>`)
 - PHPStan level 10 (max) with strict rules must pass, with no baseline and no `@phpstan-ignore`
 - Read untyped data (update payloads, decoded JSON, cache entries) through `TGbotPHP\Support\Value`

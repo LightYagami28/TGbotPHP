@@ -101,6 +101,7 @@ final class InlineKeyboard implements JsonSerializable
     /**
      * @return array{inline_keyboard: array<int, array<int, array<string, mixed>>>}
      */
+    #[\Override]
     public function jsonSerialize(): array
     {
         return $this->toArray();

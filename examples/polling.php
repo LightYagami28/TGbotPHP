@@ -10,13 +10,21 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use TGbotPHP\Core\Config;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Utilities\Formatter;
 use TGbotPHP\Utilities\InlineKeyboard;
 use TGbotPHP\Utilities\Keyboard;
 
-$bot = new Bot(Value::env('TELEGRAM_BOT_TOKEN') ?? '');
+// Optional: TGBOTPHP_DEBUG_LOG=/tmp/bot.log logs every request and response
+$debugLog = Value::env('TGBOTPHP_DEBUG_LOG');
+
+$bot = new Bot(new Config(
+    token: Value::env('TELEGRAM_BOT_TOKEN') ?? '',
+    debug: $debugLog !== null,
+    debugFile: $debugLog ?? false,
+));
 
 $bot->setMyCommands([
     'start' => 'Start the bot',

@@ -5,6 +5,10 @@ includes:
 
 parameters:
     level: 10
+    phpVersion:
+        min: 80400
+        max: 80599
+    checkMissingOverrideMethodAttribute: true
     paths:
         - src
         - tests

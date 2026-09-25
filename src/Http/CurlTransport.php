@@ -16,6 +16,7 @@ final class CurlTransport implements TransportInterface
     {
     }
 
+    #[\Override]
     public function post(string $url, array $fields, bool $multipart, int $timeout): HttpResponse
     {
         $options = [
@@ -34,6 +35,7 @@ final class CurlTransport implements TransportInterface
         return $this->execute($url, $options);
     }
 
+    #[\Override]
     public function get(string $url, int $timeout): HttpResponse
     {
         return $this->execute($url, [

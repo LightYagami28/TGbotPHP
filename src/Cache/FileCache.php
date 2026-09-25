@@ -29,6 +29,7 @@ class FileCache implements CacheInterface
         $this->directory = rtrim($directory, '/\\');
     }
 
+    #[\Override]
     public function get(string $key, mixed $default = null): mixed
     {
         $entry = $this->read($key);
@@ -36,6 +37,7 @@ class FileCache implements CacheInterface
         return $entry !== null ? $entry['value'] : $default;
     }
 
+    #[\Override]
     public function put(string $key, mixed $value, ?int $ttl = null): void
     {
         $payload = serialize([
@@ -52,6 +54,7 @@ class FileCache implements CacheInterface
         }
     }
 
+    #[\Override]
     public function forget(string $key): void
     {
         $path = $this->path($key);
@@ -61,6 +64,7 @@ class FileCache implements CacheInterface
         }
     }
 
+    #[\Override]
     public function flush(): void
     {
         foreach ($this->files() as $file) {
@@ -68,6 +72,7 @@ class FileCache implements CacheInterface
         }
     }
 
+    #[\Override]
     public function has(string $key): bool
     {
         return $this->read($key) !== null;

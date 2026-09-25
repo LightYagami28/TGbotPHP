@@ -19,6 +19,7 @@ final class ConsoleTest extends TestCase
 
     private Console $console;
 
+    #[\Override]
     protected function setUp(): void
     {
         $this->transport = new FakeTransport();
@@ -37,7 +38,7 @@ final class ConsoleTest extends TestCase
     public function testVersion(): void
     {
         self::assertSame(0, $this->console->run(['tgbot', 'version']));
-        self::assertStringContainsString('TGbotPHP v2.1.0', $this->readOutput());
+        self::assertStringContainsString('TGbotPHP v3.0.0', $this->readOutput());
     }
 
     public function testBotInfo(): void

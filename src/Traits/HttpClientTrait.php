@@ -22,7 +22,7 @@ use TGbotPHP\Types\InputFile;
 trait HttpClientTrait
 {
     /** Parameters never written to the debug log */
-    private const SECRET_FIELDS = ['secret_token', 'provider_token'];
+    private const array SECRET_FIELDS = ['secret_token', 'provider_token'];
 
     private ?TransportInterface $transport = null;
 
@@ -350,7 +350,8 @@ trait HttpClientTrait
             return;
         }
 
-        $line = '[' . date('Y-m-d H:i:s') . '] ' . $line . PHP_EOL;
+        // One entry per line, whatever the response contains
+        $line = '[' . date('Y-m-d H:i:s') . '] ' . str_replace(["\r", "\n"], ['\\r', '\\n'], $line) . PHP_EOL;
 
         if ($this->config->debugFile !== false) {
             error_log($line, 3, $this->config->debugFile);

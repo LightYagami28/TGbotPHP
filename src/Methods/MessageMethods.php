@@ -295,6 +295,9 @@ trait MessageMethods
      * Pass `$chatId = null`, `$messageId = null` and `['inline_message_id' => ...]`
      * in `$options` to edit an inline message.
      *
+     * Telegram removes the inline keyboard when $replyMarkup is omitted: pass
+     * it again to keep the buttons.
+     *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options
      * @return array<string, mixed>|bool Edited message, or true for inline messages
@@ -372,7 +375,7 @@ trait MessageMethods
     /**
      * Edit message reply markup
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup null removes the keyboard
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup New inline keyboard; null removes it
      * @param array<string, mixed> $options
      * @return array<string, mixed>|bool
      *
@@ -387,7 +390,8 @@ trait MessageMethods
         return $this->apiCallObjectOrTrue('editMessageReplyMarkup', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
-            'reply_markup' => $replyMarkup,
+            // An empty keyboard is the explicit way to remove it
+            'reply_markup' => $replyMarkup ?? ['inline_keyboard' => []],
         ], $options);
     }
 

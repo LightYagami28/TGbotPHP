@@ -9,7 +9,7 @@ namespace TGbotPHP\Tests\Support;
  */
 final class Updates
 {
-    public const TOKEN = '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw';
+    public const string TOKEN = '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw';
 
     private static int $nextId = 1000;
 

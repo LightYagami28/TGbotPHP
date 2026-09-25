@@ -18,6 +18,7 @@ class ArrayCache implements CacheInterface
     /** @var array<string, int> */
     private array $expiration = [];
 
+    #[\Override]
     public function get(string $key, mixed $default = null): mixed
     {
         if (!$this->has($key)) {
@@ -27,6 +28,7 @@ class ArrayCache implements CacheInterface
         return $this->store[$key];
     }
 
+    #[\Override]
     public function put(string $key, mixed $value, ?int $ttl = null): void
     {
         $this->store[$key] = $value;
@@ -38,17 +40,20 @@ class ArrayCache implements CacheInterface
         }
     }
 
+    #[\Override]
     public function forget(string $key): void
     {
         unset($this->store[$key], $this->expiration[$key]);
     }
 
+    #[\Override]
     public function flush(): void
     {
         $this->store = [];
         $this->expiration = [];
     }
 
+    #[\Override]
     public function has(string $key): bool
     {
         if (!array_key_exists($key, $this->store)) {

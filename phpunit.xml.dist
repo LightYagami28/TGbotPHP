@@ -4,6 +4,7 @@
          bootstrap="vendor/autoload.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
+         defaultTestSuite="unit"
          failOnWarning="true"
          failOnRisky="true"
          displayDetailsOnTestsThatTriggerWarnings="true"
@@ -11,6 +12,10 @@
     <testsuites>
         <testsuite name="unit">
             <directory>tests/Unit</directory>
+        </testsuite>
+        <!-- Real Telegram API: needs TELEGRAM_BOT_TOKEN (and TELEGRAM_TEST_CHAT_ID) -->
+        <testsuite name="e2e">
+            <directory>tests/E2E</directory>
         </testsuite>
     </testsuites>
     <source>

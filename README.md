@@ -1,12 +1,12 @@
 # TGbotPHP
 
-Professional Telegram Bot Framework for PHP 8.2+
+Professional Telegram Bot Framework for PHP 8.4+
 
-[![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
+[![PHP Version](https://img.shields.io/badge/PHP-8.4%2B-blue)](https://www.php.net/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Tests](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml)
 [![Code Analysis](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml)
-[![Version](https://img.shields.io/badge/Version-2.1.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-3.0.0-blue)](CHANGELOG.md)
 
 Fork of [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotPHP)
 
@@ -23,7 +23,7 @@ Fork of [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotP
 - **Reliability**: 429 flood-control retries, typed exceptions (`ApiException`, `TooManyRequestsException`, `NetworkException`), errors sent to an `onError` handler.
 - **Security**: webhook secret token, Telegram IP ranges, Mini App `initData` validation, HTML/MarkdownV2 escaping, a rate-limiting middleware.
 - **Type safety**: PHPStan level 10 (max) with strict rules on the whole codebase, results validated at runtime, and `Support\Value` for reading payloads.
-- **Tooling**: persistent `FileCache`, keyboard builders, `tgbot` CLI, PHPUnit test suite (PHP 8.2 to 8.5).
+- **Tooling**: persistent `FileCache`, keyboard builders, `tgbot` CLI, PHPUnit test suite (PHP 8.4, 8.5, and 8.6 in development).
 
 ## Installation
 
@@ -104,7 +104,7 @@ TELEGRAM_BOT_TOKEN=... vendor/bin/tgbot webhook:set \
 
 ## Requirements
 
-- PHP 8.2 or higher
+- PHP 8.4 or higher
 - cURL and JSON extensions
 - An HTTPS server (webhooks only)
 

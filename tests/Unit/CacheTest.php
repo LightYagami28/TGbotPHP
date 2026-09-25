@@ -20,11 +20,13 @@ final class CacheTest extends TestCase
 {
     private static string $directory;
 
+    #[\Override]
     public static function setUpBeforeClass(): void
     {
         self::$directory = sys_get_temp_dir() . '/tgbotphp-test-' . bin2hex(random_bytes(4));
     }
 
+    #[\Override]
     public static function tearDownAfterClass(): void
     {
         $files = glob(self::$directory . '/*');

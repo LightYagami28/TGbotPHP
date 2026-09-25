@@ -22,6 +22,7 @@ final class BotTest extends TestCase
     private FakeTransport $transport;
     private Bot $bot;
 
+    #[\Override]
     protected function setUp(): void
     {
         $this->transport = new FakeTransport();
@@ -188,6 +189,30 @@ final class BotTest extends TestCase
         self::assertSame('5', $request['fields']['message_id'] ?? null);
         self::assertSame('Edited', $request['fields']['text'] ?? null);
         self::assertSame('{"inline_keyboard":[]}', $request['fields']['reply_markup'] ?? null);
+    }
+
+    public function testEditToTheSameContentIsNotAnError(): void
+    {
+        $this->transport->queueError(400, 'Bad Request: message is not modified: specified new message content and reply markup are exactly the same');
+        $result = null;
+        $this->bot->callback('same', function (stdClass $callback, Bot $bot) use (&$result): void {
+            $result = $bot->edit($callback, 'Same text');
+        });
+
+        $this->bot->handleUpdate(Updates::callback('same'));
+
+        self::assertFalse($result);
+    }
+
+    public function testEditErrorsOtherThanNotModifiedAreThrown(): void
+    {
+        $this->transport->queueError(400, 'Bad Request: message to edit not found');
+        $this->bot->callback('gone', fn(stdClass $callback, Bot $bot) => $bot->edit($callback, 'Text'));
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('message to edit not found');
+
+        $this->bot->handleUpdate(Updates::callback('gone'));
     }
 
     public function testEditInlineMessageOfCallbackQuery(): void
@@ -499,26 +524,31 @@ final class BotTest extends TestCase
         $plugin = new class implements BotPluginInterface {
             public bool $active = false;
 
+            #[\Override]
             public function getName(): string
             {
                 return 'ping';
             }
 
+            #[\Override]
             public function getVersion(): string
             {
                 return '1.0.0';
             }
 
+            #[\Override]
             public function activate(): void
             {
                 $this->active = true;
             }
 
+            #[\Override]
             public function deactivate(): void
             {
                 $this->active = false;
             }
 
+            #[\Override]
             public function boot(Bot $bot): void
             {
                 $bot->command('ping', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'pong'));

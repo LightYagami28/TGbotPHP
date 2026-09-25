@@ -20,6 +20,7 @@ final class ApiClientTest extends TestCase
     private FakeTransport $transport;
     private ApiClient $client;
 
+    #[\Override]
     protected function setUp(): void
     {
         $this->transport = new FakeTransport();

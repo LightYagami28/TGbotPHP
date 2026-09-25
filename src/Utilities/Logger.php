@@ -9,7 +9,7 @@ namespace TGbotPHP\Utilities;
  */
 class Logger
 {
-    private const LEVELS = ['DEBUG' => 0, 'INFO' => 1, 'WARNING' => 2, 'ERROR' => 3];
+    private const array LEVELS = ['DEBUG' => 0, 'INFO' => 1, 'WARNING' => 2, 'ERROR' => 3];
 
     private string $logFile;
     private bool $enabled;

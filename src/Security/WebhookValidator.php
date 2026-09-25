@@ -14,7 +14,7 @@ class WebhookValidator
      *
      * @see https://core.telegram.org/bots/webhooks#the-short-version
      */
-    public const TELEGRAM_IP_RANGES = [
+    public const array TELEGRAM_IP_RANGES = [
         '149.154.160.0/20',
         '91.108.4.0/22',
     ];

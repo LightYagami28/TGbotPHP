@@ -9,7 +9,7 @@ use TGbotPHP\Support\Value;
 
 class SessionManager
 {
-    private const SESSION_TTL = 3600;
+    private const int SESSION_TTL = 3600;
 
     public function __construct(private CacheInterface $cache) {}
 

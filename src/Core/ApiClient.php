@@ -45,7 +45,7 @@ class ApiClient
     use UserMethods;
     use HttpClientTrait;
 
-    public const VERSION = '2.1.0';
+    public const string VERSION = '3.0.0';
 
     protected readonly Config $config;
 

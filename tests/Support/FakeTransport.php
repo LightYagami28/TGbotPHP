@@ -53,6 +53,7 @@ final class FakeTransport implements TransportInterface
         return $this;
     }
 
+    #[\Override]
     public function post(string $url, array $fields, bool $multipart, int $timeout): HttpResponse
     {
         $this->requests[] = [
@@ -83,6 +84,7 @@ final class FakeTransport implements TransportInterface
             : true;
     }
 
+    #[\Override]
     public function get(string $url, int $timeout): HttpResponse
     {
         $this->requests[] = ['url' => $url, 'method' => 'GET', 'fields' => [], 'multipart' => false, 'timeout' => $timeout];
