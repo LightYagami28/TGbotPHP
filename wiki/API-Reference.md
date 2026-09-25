@@ -47,6 +47,7 @@ The library encodes parameters as Telegram expects:
 
 - `null` values are not sent;
 - booleans become `true` or `false`;
+- dates (`DateTimeInterface`) become Unix timestamps, so `'until_date' => new DateTimeImmutable('+1 day')` works in `$options`, and backed enums become their value;
 - arrays and `JsonSerializable` objects (such as `InlineKeyboard`) are JSON encoded;
 - `InputFile` objects are uploaded (see [Files](#files)).
 

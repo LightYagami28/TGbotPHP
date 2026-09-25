@@ -53,6 +53,8 @@ src/
 2. `HttpClientTrait::prepareFields()` encodes the parameters:
    - `null` values are dropped
    - booleans become `"true"` / `"false"`
+   - dates become Unix timestamps, backed enums their value
+   - arrays with only integer keys are sent as JSON arrays, even with gaps
    - arrays and `JsonSerializable` objects are JSON encoded
    - `InputFile` objects become `CURLFile` uploads. Nested ones become `attach://fileN` references, and the request switches to `multipart/form-data`.
 3. The transport sends the request. The response is decoded whatever the HTTP status, so Telegram's error `description` is never lost.

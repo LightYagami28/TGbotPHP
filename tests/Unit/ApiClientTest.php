@@ -14,6 +14,7 @@ use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Testing\FakeTransport;
+use TGbotPHP\Tests\Support\ParseMode;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Types\InputFile;
 use TGbotPHP\Utilities\Keyboard;
@@ -431,5 +432,28 @@ final class ApiClientTest extends TestCase
         $this->expectException(ApiException::class);
 
         $this->client->fetchUpdates();
+    }
+
+    public function testDatesAndEnumsAreEncoded(): void
+    {
+        [$fields] = ApiClient::prepareFields([
+            'until_date' => new \DateTimeImmutable('@1900000000'),
+            'nested' => ['expire_date' => new \DateTimeImmutable('@5'), 'mode' => ParseMode::Html],
+            'parse_mode' => ParseMode::Html,
+        ]);
+
+        self::assertSame('1900000000', $fields['until_date']);
+        self::assertSame('{"expire_date":5,"mode":"HTML"}', $fields['nested']);
+        self::assertSame('HTML', $fields['parse_mode']);
+    }
+
+    public function testCommandNamesAreNormalized(): void
+    {
+        $this->client->setMyCommands(['/Start' => 'Start', '2024' => 'Numeric', 7 => ['command' => 'raw', 'description' => 'Raw']]);
+
+        self::assertSame(
+            '[{"command":"start","description":"Start"},{"command":"2024","description":"Numeric"},{"command":"raw","description":"Raw"}]',
+            $this->transport->lastRequest()['fields']['commands'],
+        );
     }
 }

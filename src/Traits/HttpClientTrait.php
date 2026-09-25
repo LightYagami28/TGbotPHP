@@ -297,6 +297,7 @@ trait HttpClientTrait
      * Convert method parameters to HTTP fields
      *
      * - null values are dropped
+     * - dates become Unix timestamps, backed enums their value
      * - booleans become "true"/"false"
      * - arrays and JsonSerializable objects are JSON encoded
      * - InputFile instances are uploaded; nested ones (media groups, stickers)
@@ -311,6 +312,8 @@ trait HttpClientTrait
         $files = [];
 
         foreach ($data as $key => $value) {
+            $value = self::scalarValue($value);
+
             if ($value === null) {
                 continue;
             }
@@ -344,6 +347,8 @@ trait HttpClientTrait
      */
     private static function extractAttachments(mixed $value, array &$files): mixed
     {
+        $value = self::scalarValue($value);
+
         if ($value instanceof JsonSerializable) {
             $value = $value->jsonSerialize();
         }
@@ -365,6 +370,18 @@ trait HttpClientTrait
 
         // [0 => a, 2 => b] (after array_filter or unset) must stay a JSON array: Telegram rejects {"0": a, "2": b}
         return self::hasOnlyIntegerKeys($value) ? array_values($value) : $value;
+    }
+
+    /**
+     * Dates become Unix timestamps (until_date, expire_date...), backed enums their value
+     */
+    private static function scalarValue(mixed $value): mixed
+    {
+        return match (true) {
+            $value instanceof \DateTimeInterface => $value->getTimestamp(),
+            $value instanceof \BackedEnum => $value->value,
+            default => $value,
+        };
     }
 
     /**

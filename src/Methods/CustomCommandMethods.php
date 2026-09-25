@@ -34,7 +34,8 @@ trait CustomCommandMethods
     ): bool {
         $list = [];
         foreach ($commands as $key => $value) {
-            $list[] = is_string($key) ? ['command' => ltrim($key, '/'), 'description' => Value::string($value)] : $value;
+            // A string value is a description: its key is the command, even when PHP made "2024" an integer key
+            $list[] = is_string($value) ? ['command' => self::commandName((string) $key), 'description' => $value] : $value;
         }
 
         return $this->apiCallBool('setMyCommands', [
@@ -190,6 +191,14 @@ trait CustomCommandMethods
         return $this->apiCallObject('getMyDefaultAdministratorRights', [
             'for_channels' => $forChannels ? true : null,
         ]);
+    }
+
+    /**
+     * Telegram only accepts lowercase command names, without the slash
+     */
+    private static function commandName(string $command): string
+    {
+        return strtolower(ltrim(trim($command), '/'));
     }
 
     /**
