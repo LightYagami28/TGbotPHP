@@ -87,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `promoteChatMember()` takes the rights as an array: `['can_delete_messages' => true]`.
 - `createNewStickerSet()` and `addStickerToSet()` take `InputSticker` objects, as in the current API.
 - Methods return `array` or `bool` instead of `array|null`; errors always throw.
+- Custom `CacheInterface` implementations need `update()`, atomic for the same key. Custom `TransportInterface` implementations need `download()`.
 - A handler exception goes to `onError()` listeners when there are any, and is re-thrown otherwise.
 
 ## [2.0.0] - 2026-08-17
