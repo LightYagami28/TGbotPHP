@@ -85,7 +85,7 @@ $bot->middleware(function (stdClass $update, Bot $bot, callable $next) {
 `update.received`, `update.processed`, `error`, `error.api`, `polling.started`, `polling.stopped`
 
 ```php
-$bot->on('update.received', fn(stdClass $update) => ...);
+$bot->on('update.received', fn(stdClass $update) => error_log('update ' . $update->update_id));
 ```
 
 ## Config

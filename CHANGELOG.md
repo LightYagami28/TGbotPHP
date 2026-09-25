@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CacheInterface::update()`, an atomic read-change-write; `FileCache` locks the entry meanwhile.
 - The update types of Bot API 10.3: `guest_message`, `managed_bot`, `subscription` and `stopped_message_generation`.
 - `BotBuilder::withRetry()`.
+- A user guide in the wiki, rewritten for 3.0 and kept in `wiki/`, where a test checks its examples against the code. A workflow publishes it.
 - Unit tests (97% of lines, at least 95% required by CI), an end-to-end suite against the real API (`--testsuite e2e`), PHPStan at level 10 with strict rules, and runnable examples.
 - GitHub workflows: tests with coverage, PHPStan, code style (PHP-CS-Fixer, PER-CS 2.0), workflow linting (actionlint, zizmor), documentation link check, `composer audit`, Docker image build and smoke test, on-demand end-to-end tests, and releases from `v*` tags with notes from this file.
 

@@ -41,7 +41,7 @@ $bot->state('order:product', function (stdClass $message, Bot $bot) {
 
 $bot->state('order:quantity', function (stdClass $message, Bot $bot, array $data) {
     $bot->clearState($message);
-    $bot->reply($message, "Ordered {$message->text} × " . Formatter::escape($data['product']));
+    $bot->reply($message, 'Ordered ' . Formatter::escape($message->text) . ' × ' . Formatter::escape($data['product']));
 });
 
 // Commands are routed before states, so /cancel always works

@@ -1,0 +1,1 @@
+TGbotPHP · [Repository](https://github.com/LightYagami28/TGbotPHP) · [Issues](https://github.com/LightYagami28/TGbotPHP/issues) · Apache License 2.0 · This wiki is generated from the [`wiki/`](https://github.com/LightYagami28/TGbotPHP/tree/main/wiki) directory: edit it there

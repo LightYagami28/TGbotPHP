@@ -26,7 +26,8 @@ TGbotPHP/
 │   └── Utilities/    # Keyboard, InlineKeyboard, Formatter, MessageParser, Logger, BotBuilder
 ├── bin/tgbot         # CLI entry point
 ├── tools/            # Bot API spec extractor and bot-api.json
-├── docs/             # Guides
+├── docs/             # Reference
+├── wiki/             # User guide, published to the GitHub wiki
 ├── examples/         # Runnable example bots
 └── tests/
     ├── Unit/         # Fast tests with a fake transport
@@ -77,6 +78,7 @@ For each method:
 | `lint.yml` | push, pull request | Code style, workflows (actionlint, zizmor), links between Markdown files |
 | `security.yml` | push to main, pull request, daily | `composer audit` of every locked package |
 | `docker.yml` | changes to the image inputs | Builds the image and runs smoke tests: CLI, autoload, non-root user, no dev files |
+| `wiki.yml` | push to `main` changing `wiki/`, manual | Publishes `wiki/` to the GitHub wiki |
 | `bot-api.yml` | weekly, manual | Compares the official Bot API documentation with `tools/bot-api.json` |
 | `e2e.yml` | manual | `tests/E2E` against the real Telegram API, with secrets from the `telegram-e2e` environment |
 | `release.yml` | `v*.*.*` tags | Checks that the tag matches `ApiClient::VERSION` and the CHANGELOG, runs the checks, publishes the GitHub release with the CHANGELOG notes |

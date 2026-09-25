@@ -65,6 +65,10 @@ $bot->poll();      // long polling
 
 ## Documentation
 
+The **[wiki](https://github.com/LightYagami28/TGbotPHP/wiki)** is the user guide: getting started, handling updates, keyboards, conversations, deployment, security, testing, complete examples and an FAQ. Its pages live in [`wiki/`](wiki).
+
+Reference:
+
 - [Installation](docs/installation.md)
 - [API reference](docs/api-reference.md)
 - [Advanced usage](docs/advanced.md): middleware, conversations, cache, plugins, errors

@@ -1,0 +1,42 @@
+name: Wiki
+
+# Publishes wiki/ to the GitHub wiki: edit the pages in the repository, not on GitHub
+
+on:
+  push:
+    branches: [main]
+    paths: ['wiki/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish the wiki
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Push wiki/ to the wiki repository
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPOSITORY: ${{ github.repository }}
+      run: |
+        wiki="$RUNNER_TEMP/wiki"
+        git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.wiki.git" "$wiki"
+        rsync --archive --delete --exclude .git wiki/ "$wiki/"
+        cd "$wiki"
+        git add --all
+        if git diff --cached --quiet; then
+          echo "The wiki is up to date"
+          exit 0
+        fi
+        git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+          commit --quiet --message "Update from ${GITHUB_SHA}"
+        git push --quiet origin HEAD

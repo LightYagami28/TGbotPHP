@@ -38,11 +38,12 @@ declare(strict_types=1);
 require __DIR__ . '/vendor/autoload.php';
 
 use TGbotPHP\Framework\Bot;
+use TGbotPHP\Utilities\Formatter;
 
 $bot = new Bot(getenv('TELEGRAM_BOT_TOKEN'));
 
 $bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hello!'));
-$bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, 'You said: ' . htmlspecialchars($message->text)));
+$bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, 'You said: ' . Formatter::escape($message->text)));
 
 $bot->poll();
 ```

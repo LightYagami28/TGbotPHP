@@ -24,6 +24,7 @@ CI runs the test suite on PHP 8.4 and 8.5 (plus 8.6, still in development, as a 
 | `tests/Unit/SecurityTest.php` | Secret token, Telegram IPs, Mini App data and signatures |
 | `tests/Unit/UtilitiesTest.php` | Keyboards, formatter, parsers, entities, pattern matching |
 | `tests/Unit/ConsoleTest.php` | `tgbot` CLI |
+| `tests/Unit/DocumentationTest.php` | The PHP examples of the README, `docs/` and `wiki/`: they parse, and call existing methods with existing parameters. The links between wiki pages |
 
 CI requires at least 95% of the lines to be covered.
 
