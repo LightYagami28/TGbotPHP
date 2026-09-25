@@ -30,7 +30,7 @@ jobs:
         if ! diff -u tools/bot-api.json "$RUNNER_TEMP/bot-api.json" > "$RUNNER_TEMP/bot-api.diff"; then
           {
             echo '## The Bot API changed'
-            echo 'Regenerate the spec with `php tools/bot-api-spec.php > tools/bot-api.json`, then implement what `BotApiCoverageTest` reports.'
+            echo "Regenerate the spec with \`php tools/bot-api-spec.php > tools/bot-api.json\`, then implement what \`BotApiCoverageTest\` reports."
             echo '```diff'
             head -c 60000 "$RUNNER_TEMP/bot-api.diff"
             echo '```'
