@@ -8,14 +8,15 @@ declare(strict_types=1);
  *     php tools/bot-api-spec.php [api.html] > tools/bot-api.json
  *
  * Without an argument the page is downloaded from core.telegram.org. The JSON
- * lists every method with its parameters and the kind of result it returns;
- * tests/Unit/BotApiCoverageTest.php checks the library against it.
+ * lists the update types, and every method with its parameters and the kind
+ * of result it returns; tests/Unit/BotApiCoverageTest.php checks the library
+ * against it.
  */
 
 const API_URL = 'https://core.telegram.org/bots/api';
 
 /**
- * @return array{version: string, methods: array<string, array{returns: string, parameters: array<string, array{type: string, required: bool}>}>}
+ * @return array{version: string, updates: array<string, string>, methods: array<string, array{returns: string, parameters: array<string, array{type: string, required: bool}>}>}
  */
 function extractSpec(string $html): array
 {
@@ -23,9 +24,17 @@ function extractSpec(string $html): array
     @$document->loadHTML($html, LIBXML_NOERROR);
 
     $methods = [];
+    $updates = [];
 
     foreach ($document->getElementsByTagName('h4') as $heading) {
         $name = trim($heading->textContent);
+
+        // The fields of the Update object are the update types
+        if ($name === 'Update') {
+            $updates = extractFields($heading);
+            unset($updates['update_id']);
+            continue;
+        }
 
         // Methods are lowerCamelCase, types are UpperCamelCase
         if (preg_match('/^[a-z][A-Za-z]+$/', $name) !== 1) {
@@ -48,7 +57,23 @@ function extractSpec(string $html): array
 
     ksort($methods);
 
-    return ['version' => extractVersion($html), 'methods' => $methods];
+    return ['version' => extractVersion($html), 'updates' => $updates, 'methods' => $methods];
+}
+
+/**
+ * Field names and types of the object documented after a heading
+ *
+ * @return array<string, string>
+ */
+function extractFields(DOMElement $heading): array
+{
+    for ($node = $heading->nextElementSibling; $node !== null && $node->nodeName !== 'h4'; $node = $node->nextElementSibling) {
+        if ($node->nodeName === 'table') {
+            return array_map(static fn(array $field): string => $field['type'], extractParameters($node));
+        }
+    }
+
+    return [];
 }
 
 /**

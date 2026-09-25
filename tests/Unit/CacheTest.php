@@ -10,6 +10,7 @@ use TGbotPHP\Cache\ArrayCache;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Cache\FileCache;
 use TGbotPHP\Core\UpdateParser;
+use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Rate\RateLimiter;
 use TGbotPHP\Session\ConversationManager;
 use TGbotPHP\Session\SessionManager;
@@ -138,6 +139,45 @@ final class CacheTest extends TestCase
         (new FileCache(self::$directory))->put('shared', 'value', 60);
 
         self::assertSame('value', (new FileCache(self::$directory))->get('shared'));
+    }
+
+    public function testFileCachePrunesExpiredAndCorruptEntries(): void
+    {
+        $cache = new FileCache(self::$directory);
+        $cache->flush();
+
+        $cache->put('expired', 1, 0);
+        $cache->put('fresh', 1, 60);
+        $cache->put('corrupt', 1);
+        file_put_contents(self::$directory . '/' . hash('sha256', 'corrupt') . '.cache', 'not serialized');
+
+        self::assertSame(2, $cache->prune());
+        self::assertTrue($cache->has('fresh'));
+        self::assertNull($cache->get('corrupt'));
+    }
+
+    public function testFileCacheIgnoresUnexpectedContents(): void
+    {
+        $cache = new FileCache(self::$directory);
+        file_put_contents(self::$directory . '/' . hash('sha256', 'scalar') . '.cache', serialize('no envelope'));
+        file_put_contents(self::$directory . '/' . hash('sha256', 'empty') . '.cache', '');
+
+        self::assertFalse($cache->has('scalar'));
+        self::assertFalse($cache->has('empty'));
+        $cache->forget('missing');
+    }
+
+    public function testFileCacheRejectsUnusableDirectories(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($file);
+
+        try {
+            $this->expectException(StorageException::class);
+            new FileCache($file . '/cache');
+        } finally {
+            unlink($file);
+        }
     }
 
     public function testFileCacheDoesNotRestoreObjects(): void

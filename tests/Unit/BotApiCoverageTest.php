@@ -11,14 +11,15 @@ use ReflectionNamedType;
 use ReflectionParameter;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Core\Config;
+use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Types\InputFile;
 
 /**
- * Checks every Bot API method against tools/bot-api.json, extracted from the
- * official documentation by tools/bot-api-spec.php
+ * Checks the update types and every Bot API method against tools/bot-api.json,
+ * extracted from the official documentation by tools/bot-api-spec.php
  *
  * Each method is called with a value for every argument; the request must use
  * the right method name, send every required parameter and nothing unknown,
@@ -37,7 +38,7 @@ final class BotApiCoverageTest extends TestCase
     ];
 
     /**
-     * @return array{version: string, methods: array<string, array{returns: string, parameters: array<string, array{type: string, required: bool}>}>}
+     * @return array{version: string, updates: list<string>, methods: array<string, array{returns: string, parameters: array<string, array{type: string, required: bool}>}>}
      */
     private static function spec(): array
     {
@@ -60,7 +61,11 @@ final class BotApiCoverageTest extends TestCase
             $methods[$name] = ['returns' => Value::string($method['returns'] ?? null), 'parameters' => $parameters];
         }
 
-        return ['version' => Value::string($spec['version'] ?? null), 'methods' => $methods];
+        return [
+            'version' => Value::string($spec['version'] ?? null),
+            'updates' => array_map(strval(...), array_keys(Value::map($spec['updates'] ?? null))),
+            'methods' => $methods,
+        ];
     }
 
     /**
@@ -81,6 +86,11 @@ final class BotApiCoverageTest extends TestCase
     {
         self::assertMatchesRegularExpression('/^\d+\.\d+$/', self::spec()['version']);
         self::assertSame(self::spec()['version'], ApiClient::BOT_API_VERSION);
+    }
+
+    public function testUpdateTypesMatchTheDocumentation(): void
+    {
+        self::assertSame(self::spec()['updates'], UpdateParser::UPDATE_TYPES);
     }
 
     /**

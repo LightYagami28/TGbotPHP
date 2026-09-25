@@ -25,6 +25,7 @@ class UpdateParser
         'business_message',
         'edited_business_message',
         'deleted_business_messages',
+        'guest_message',
         'message_reaction',
         'message_reaction_count',
         'inline_query',
@@ -40,6 +41,9 @@ class UpdateParser
         'chat_join_request',
         'chat_boost',
         'removed_chat_boost',
+        'managed_bot',
+        'subscription',
+        'stopped_message_generation',
     ];
 
     /**

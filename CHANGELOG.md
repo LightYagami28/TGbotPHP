@@ -42,7 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI commands `commands:list` and `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
 - `tools/bot-api.json`, the methods and parameters of the Bot API extracted from the official documentation by `tools/bot-api-spec.php`. A test checks every method against it, and a weekly workflow reports new API versions.
 - `CacheInterface::update()`, an atomic read-change-write; `FileCache` locks the entry meanwhile.
-- Unit tests, an end-to-end suite against the real API (`--testsuite e2e`), PHPStan at level 10 with strict rules, and runnable examples.
+- The update types of Bot API 10.3: `guest_message`, `managed_bot`, `subscription` and `stopped_message_generation`.
+- `BotBuilder::withRetry()`.
+- Unit tests (97% of lines, at least 95% required by CI), an end-to-end suite against the real API (`--testsuite e2e`), PHPStan at level 10 with strict rules, and runnable examples.
 - GitHub workflows: tests with coverage, PHPStan, code style (PHP-CS-Fixer, PER-CS 2.0), workflow linting (actionlint, zizmor), documentation link check, `composer audit`, Docker image build and smoke test, on-demand end-to-end tests, and releases from `v*` tags with notes from this file.
 
 ### Changed
@@ -51,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rarely used optional parameters moved into the `$options` array (see the migration notes).
 - `editMessageReplyMarkup()` without a markup removes the inline keyboard.
 - `downloadFile()` streams to the destination file, which only appears once complete. Without a destination it refuses files over 20 MB.
+- The CLI writes errors to stderr, and finds the autoloader through Composer's `$_composer_autoload_path`.
+- `Logger` writes to stderr by default instead of `/tmp/bot.log`.
 - `CurlTransport` keeps its connection open between requests. `TransportInterface` gains `download()`.
 - The debug log escapes line breaks and redacts `secret_token` and `provider_token`.
 - cURL does not follow redirects and only allows HTTP and HTTPS.

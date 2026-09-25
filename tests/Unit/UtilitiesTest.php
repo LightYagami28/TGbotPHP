@@ -6,9 +6,11 @@ namespace TGbotPHP\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use TGbotPHP\Core\UpdateParser;
+use TGbotPHP\Framework\EventDispatcher;
 use TGbotPHP\Framework\Routing\Command;
 use TGbotPHP\Framework\Routing\Pattern;
 use TGbotPHP\Tests\Support\Updates;
+use TGbotPHP\Types\InputFile;
 use TGbotPHP\Utilities\Formatter;
 use TGbotPHP\Utilities\InlineKeyboard;
 use TGbotPHP\Utilities\Keyboard;
@@ -152,5 +154,115 @@ final class UtilitiesTest extends TestCase
         $this->expectException(\JsonException::class);
 
         UpdateParser::parse('[1, 2]');
+    }
+
+    public function testFormatterTags(): void
+    {
+        self::assertSame('<i>a&lt;b</i>', Formatter::italic('a<b'));
+        self::assertSame('<u>u</u>', Formatter::underline('u'));
+        self::assertSame('<s>s</s>', Formatter::strike('s'));
+        self::assertSame('<tg-spoiler>x</tg-spoiler>', Formatter::spoiler('x'));
+        self::assertSame('<code>&lt;?php</code>', Formatter::code('<?php'));
+        self::assertSame('<pre>a &amp; b</pre>', Formatter::pre('a & b'));
+        self::assertSame('<blockquote>q</blockquote>', Formatter::quote('q'));
+        self::assertSame('<blockquote expandable>q</blockquote>', Formatter::quote('q', expandable: true));
+    }
+
+    public function testInlineKeyboardButtonKinds(): void
+    {
+        $keyboard = InlineKeyboard::make()
+            ->switchInline('Share', 'cats')
+            ->switchInline('Here', currentChat: true)
+            ->row()
+            ->copyText('Copy', 'PROMO-42')
+            ->pay('Pay')
+            ->raw(['text' => 'Game', 'callback_game' => new \stdClass()]);
+
+        self::assertSame(
+            '{"inline_keyboard":[[{"text":"Share","switch_inline_query":"cats"},{"text":"Here","switch_inline_query_current_chat":""}],'
+            . '[{"text":"Copy","copy_text":{"text":"PROMO-42"}},{"text":"Pay","pay":true},{"text":"Game","callback_game":{}}]]}',
+            json_encode($keyboard, JSON_UNESCAPED_SLASHES),
+        );
+    }
+
+    public function testUpdateParserPresenceHelpers(): void
+    {
+        $message = UpdateParser::fromArray(Updates::message('hi'));
+        $callback = UpdateParser::fromArray(Updates::callback('x'));
+        $inline = UpdateParser::fromArray(Updates::inlineQuery('q'));
+
+        self::assertTrue(UpdateParser::hasMessage($message));
+        self::assertFalse(UpdateParser::hasMessage($callback));
+        self::assertTrue(UpdateParser::hasCallbackQuery($callback));
+        self::assertTrue(UpdateParser::hasInlineQuery($inline));
+        self::assertNull(UpdateParser::getChat($inline));
+
+        $empty = UpdateParser::fromArray(['update_id' => 1]);
+        self::assertNull(UpdateParser::getType($empty));
+        self::assertNull(UpdateParser::getPayload($empty));
+        self::assertNull(UpdateParser::getChat($empty));
+        self::assertNull(UpdateParser::getUser($empty));
+
+        $poll = UpdateParser::fromArray(['update_id' => 2, 'poll' => ['id' => 'p']]);
+        self::assertNull(UpdateParser::getUser($poll));
+    }
+
+    public function testInputFile(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($path);
+
+        try {
+            $file = InputFile::fromPath($path, 'photo.jpg', 'image/jpeg')->toCurlFile();
+            self::assertInstanceOf(\CURLFile::class, $file);
+            self::assertSame('photo.jpg', $file->getPostFilename());
+            self::assertSame('image/jpeg', $file->getMimeType());
+            self::assertSame(basename($path), InputFile::fromPath($path)->getFilename());
+        } finally {
+            unlink($path);
+        }
+
+        $contents = InputFile::fromContents('a,b', 'data.csv', 'text/csv')->toCurlFile();
+        self::assertInstanceOf(\CURLStringFile::class, $contents);
+        self::assertSame('a,b', $contents->data);
+        self::assertSame('text/csv', $contents->mime);
+    }
+
+    public function testInputFileRejectsMissingFilesAndEmptyNames(): void
+    {
+        try {
+            InputFile::fromPath('/nonexistent/file.jpg');
+            self::fail('Accepted a missing file');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('/nonexistent/file.jpg', $e->getMessage());
+        }
+
+        $this->expectException(\InvalidArgumentException::class);
+        InputFile::fromContents('x', '');
+    }
+
+    public function testEventDispatcher(): void
+    {
+        $dispatcher = new EventDispatcher();
+        $received = [];
+        $listener = static function (mixed ...$data) use (&$received): void {
+            $received[] = $data;
+        };
+
+        $dispatcher->listen('a', $listener);
+        $dispatcher->listen('b', $listener);
+        $dispatcher->dispatch('a', 1, 2);
+
+        self::assertSame([[1, 2]], $received);
+        self::assertSame([$listener], $dispatcher->getListeners('a'));
+        self::assertTrue($dispatcher->hasListeners('b'));
+
+        $dispatcher->clear('a');
+        self::assertFalse($dispatcher->hasListeners('a'));
+        self::assertTrue($dispatcher->hasListeners('b'));
+
+        $dispatcher->clear();
+        self::assertFalse($dispatcher->hasListeners('b'));
+        self::assertSame([], $dispatcher->getListeners('b'));
     }
 }

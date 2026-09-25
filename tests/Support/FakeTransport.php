@@ -15,7 +15,7 @@ final class FakeTransport implements TransportInterface
     /** @var array<int, array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}> */
     public array $requests = [];
 
-    /** @var HttpResponse[] */
+    /** @var list<HttpResponse|\Throwable> */
     private array $queue = [];
 
     /** Result returned when the queue is empty (null: guessed from the method name) */
@@ -53,6 +53,26 @@ final class FakeTransport implements TransportInterface
         return $this;
     }
 
+    /**
+     * Throw instead of answering, like a transport that cannot reach Telegram
+     */
+    public function queueException(\Throwable $exception): self
+    {
+        $this->queue[] = $exception;
+        return $this;
+    }
+
+    private function next(): ?HttpResponse
+    {
+        $next = array_shift($this->queue);
+
+        if ($next instanceof \Throwable) {
+            throw $next;
+        }
+
+        return $next;
+    }
+
     #[\Override]
     public function post(string $url, array $fields, bool $multipart, int $timeout): HttpResponse
     {
@@ -64,7 +84,7 @@ final class FakeTransport implements TransportInterface
             'timeout' => $timeout,
         ];
 
-        return array_shift($this->queue)
+        return $this->next()
             ?? new HttpResponse(200, json_encode(['ok' => true, 'result' => $this->defaultResultFor($url)], JSON_THROW_ON_ERROR));
     }
 
@@ -89,7 +109,7 @@ final class FakeTransport implements TransportInterface
     {
         $this->requests[] = ['url' => $url, 'method' => 'GET', 'fields' => [], 'multipart' => false, 'timeout' => $timeout];
 
-        return array_shift($this->queue) ?? new HttpResponse(404, '');
+        return $this->next() ?? new HttpResponse(404, '');
     }
 
     #[\Override]

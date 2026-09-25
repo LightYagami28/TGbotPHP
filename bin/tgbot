@@ -4,21 +4,27 @@
 declare(strict_types=1);
 
 /**
- * TGbotPHP CLI Tool
- *
- * Manage Telegram bots with ease
+ * TGbotPHP command line tool: webhook and bot management
  */
 
 $autoloaders = [
+    $GLOBALS['_composer_autoload_path'] ?? null, // set by Composer's bin proxy
     dirname(__DIR__) . '/vendor/autoload.php',   // running from the repository
     dirname(__DIR__, 3) . '/autoload.php',       // installed as a Composer dependency
 ];
 
+$loaded = false;
 foreach ($autoloaders as $autoloader) {
-    if (is_file($autoloader)) {
+    if (is_string($autoloader) && is_file($autoloader)) {
         require_once $autoloader;
+        $loaded = true;
         break;
     }
+}
+
+if (!$loaded) {
+    fwrite(STDERR, "Error: Composer autoloader not found. Run composer install.\n");
+    exit(1);
 }
 
 use TGbotPHP\CLI\Console;

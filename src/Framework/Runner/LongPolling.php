@@ -32,7 +32,18 @@ final class LongPolling
 
     private int $failures = 0;
 
-    public function __construct(private readonly Bot $bot) {}
+    /** @var \Closure(int): void */
+    private readonly \Closure $sleep;
+
+    /**
+     * @param (\Closure(int): void)|null $sleep Waits between retries (sleep() by default)
+     */
+    public function __construct(private readonly Bot $bot, ?\Closure $sleep = null)
+    {
+        $this->sleep = $sleep ?? static function (int $seconds): void {
+            sleep($seconds);
+        };
+    }
 
     /**
      * @param string[]|null $allowedUpdates
@@ -74,7 +85,7 @@ final class LongPolling
 
             return $updates;
         } catch (TooManyRequestsException $e) {
-            sleep(max(1, $e->getRetryAfter()));
+            ($this->sleep)(max(1, $e->getRetryAfter()));
         } catch (ApiException $e) {
             $this->recover($e, fatal: in_array($e->getCode(), self::FATAL_ERRORS, true));
         } catch (NetworkException $e) {
@@ -91,7 +102,7 @@ final class LongPolling
         }
 
         $this->bot->getEvents()->dispatch('error', $e, null, $this->bot);
-        sleep(min(self::MAX_BACKOFF, 2 ** min($this->failures++, 5)));
+        ($this->sleep)(min(self::MAX_BACKOFF, 2 ** min($this->failures++, 5)));
     }
 
     /**

@@ -71,7 +71,7 @@ For each method:
 
 | Workflow | Runs on | Checks |
 |---|---|---|
-| `tests.yml` | push, pull request | PHPUnit on PHP 8.4 (with coverage in the job summary), 8.5, and 8.6 (in development, non-blocking) |
+| `tests.yml` | push, pull request | PHPUnit on PHP 8.4 (with coverage in the job summary, at least 95% of lines), 8.5, and 8.6 (in development, non-blocking) |
 | `analysis.yml` | push, pull request | PHPStan level 10 |
 | `lint.yml` | push, pull request | Code style, workflows (actionlint, zizmor), links between Markdown files |
 | `security.yml` | push to main, pull request, daily | `composer audit` of every locked package |

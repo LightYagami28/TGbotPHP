@@ -6,6 +6,7 @@ namespace TGbotPHP\Utilities;
 
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Core\Config;
+use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Http\TransportInterface;
 use TGbotPHP\Plugin\PluginInterface;
@@ -27,6 +28,7 @@ class BotBuilder
     private string $apiBaseUrl = Config::DEFAULT_API_URL;
     private bool $enforceHttps = true;
     private int $timeout = 10;
+    private RetryPolicy $retry;
     private ?TransportInterface $transport = null;
     private ?CacheInterface $conversationCache = null;
     private int $conversationTtl = 3600;
@@ -64,6 +66,7 @@ class BotBuilder
     public function __construct(string $token)
     {
         $this->token = $token;
+        $this->retry = new RetryPolicy();
     }
 
     /**
@@ -102,6 +105,15 @@ class BotBuilder
     public function withTimeout(int $seconds): self
     {
         $this->timeout = $seconds;
+        return $this;
+    }
+
+    /**
+     * How requests answered with 429 Too Many Requests are retried
+     */
+    public function withRetry(RetryPolicy $retry): self
+    {
+        $this->retry = $retry;
         return $this;
     }
 
@@ -186,6 +198,7 @@ class BotBuilder
             apiBaseUrl: $this->apiBaseUrl,
             enforceHttps: $this->enforceHttps,
             timeout: $this->timeout,
+            retry: $this->retry,
             debug: $this->debug,
         );
 

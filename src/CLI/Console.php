@@ -23,14 +23,19 @@ class Console
     /** @var resource */
     private $output;
 
+    /** @var resource */
+    private $errors;
+
     /**
      * @param (callable(string): Bot)|null $botFactory
      * @param resource|null $output
+     * @param resource|null $errors Error messages (STDERR by default)
      */
-    public function __construct(?callable $botFactory = null, $output = null)
+    public function __construct(?callable $botFactory = null, $output = null, $errors = null)
     {
         $this->botFactory = $botFactory ?? static fn(string $token): Bot => new Bot($token);
         $this->output = $output ?? STDOUT;
+        $this->errors = $errors ?? STDERR;
     }
 
     /**
@@ -54,7 +59,7 @@ class Console
                 default => $this->unknown($command),
             };
         } catch (Throwable $e) {
-            $this->write('Error: ' . $e->getMessage());
+            $this->error($e->getMessage());
             return 1;
         }
     }
@@ -131,7 +136,7 @@ EOF);
         $url = $this->getOption($argv, 'url');
 
         if ($url === null || $url === '') {
-            $this->write('Error: --url is required');
+            $this->error('--url is required');
             return 1;
         }
 
@@ -206,8 +211,7 @@ EOF);
 
     private function unknown(string $command): int
     {
-        $this->write("Unknown command: $command");
-        $this->showHelp();
+        $this->error("Unknown command: $command. Run tgbot help to list the commands.");
         return 1;
     }
 
@@ -250,5 +254,10 @@ EOF);
     private function write(string $line): void
     {
         fwrite($this->output, $line . PHP_EOL);
+    }
+
+    private function error(string $message): void
+    {
+        fwrite($this->errors, 'Error: ' . $message . PHP_EOL);
     }
 }

@@ -15,7 +15,10 @@ class Logger
     private bool $enabled;
     private int $minLevel;
 
-    public function __construct(string $logFile = '/tmp/bot.log', bool $enabled = true, string $minLevel = 'DEBUG')
+    /**
+     * @param string $logFile A file path or a stream such as php://stderr (the default, collected by Docker and systemd)
+     */
+    public function __construct(string $logFile = 'php://stderr', bool $enabled = true, string $minLevel = 'DEBUG')
     {
         $this->logFile = $logFile;
         $this->enabled = $enabled;
