@@ -52,14 +52,14 @@ final class ApiClientTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        new Config(Updates::TOKEN, apiBaseUrl: 'http://localhost:8081');
+        self::assertInstanceOf(Config::class, new Config(Updates::TOKEN, apiBaseUrl: 'http://localhost:8081'));
     }
 
     public function testRejectsMalformedToken(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        new Config('12345/../../evil:token');
+        self::assertInstanceOf(Config::class, new Config('12345/../../evil:token'));
     }
 
     public function testPreparesFields(): void

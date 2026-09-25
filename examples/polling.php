@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Utilities\Formatter;
@@ -59,7 +59,7 @@ $bot->hears('/^(hi|hello|ciao)\b/i', fn(stdClass $message, Bot $bot) => $bot->re
 
 $bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, Formatter::escape($message->text)));
 
-$bot->onError(function (Throwable $e, ?stdClass $update): void {
+$bot->onError(function (Throwable $e): void {
     fwrite(STDERR, '[error] ' . $e->getMessage() . PHP_EOL);
 });
 

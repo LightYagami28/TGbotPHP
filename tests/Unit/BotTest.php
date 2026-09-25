@@ -31,7 +31,7 @@ final class BotTest extends TestCase
     {
         $this->expectException(InvalidTokenException::class);
 
-        new Bot('invalid');
+        self::assertInstanceOf(Bot::class, new Bot('invalid'));
     }
 
     public function testCommandRegisteredWithoutSlashMatches(): void
