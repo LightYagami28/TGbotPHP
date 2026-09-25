@@ -181,6 +181,27 @@ final class CacheTest extends TestCase
         }
     }
 
+    public function testFileCacheFilesAreOnlyReadableByTheOwner(): void
+    {
+        $directory = self::$directory . '-perm';
+        @mkdir($directory, 0755);
+        chmod($directory, 0755);
+        $cache = new FileCache($directory);
+
+        $cache->put('secret', 'value');
+        $cache->update('secret', static fn(mixed $value): mixed => $value);
+
+        $files = glob("$directory/*");
+        self::assertIsArray($files);
+        self::assertNotEmpty($files);
+
+        foreach ($files as $file) {
+            self::assertSame('0600', substr(sprintf('%o', fileperms($file)), -4), basename($file));
+            unlink($file);
+        }
+        rmdir($directory);
+    }
+
     public function testFileCacheDoesNotRestoreObjects(): void
     {
         $cache = new FileCache(self::$directory);

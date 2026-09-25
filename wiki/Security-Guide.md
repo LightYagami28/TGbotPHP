@@ -103,8 +103,8 @@ Pass `publicKey: WebhookValidator::WEB_APP_TEST_PUBLIC_KEY` for bots of the test
 
 ## Storage
 
-- `FileCache` stores values with `serialize()` but never restores objects, so a tampered cache file cannot inject objects. Keep the cache directory outside the web root and readable only by the bot.
-- The debug log contains messages. It replaces `secret_token` and `provider_token` with `<redacted>`, but keep it private and off in production.
+- `FileCache` stores values with `serialize()` but never restores objects, so a tampered cache file cannot inject objects. Its files are created readable by the bot's user only (0600). Keep the cache directory outside the web root.
+- The debug log contains messages. It is created readable by the bot's user only, replaces `secret_token` and `provider_token` with `<redacted>`, but keep it private and off in production.
 
 ## The library itself
 

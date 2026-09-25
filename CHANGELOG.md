@@ -66,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MessageParser::parseArguments()` only unescapes `\"` and `\\` inside quotes.
 - `Logger` writes to stderr by default instead of `/tmp/bot.log`.
 - `CurlTransport` keeps its connection open between requests. `TransportInterface` gains `download()`.
+- `FileCache` entries, its lock files and the debug log are created readable by their owner only (0600), whatever the umask.
 - The debug log escapes line breaks and redacts `secret_token` and `provider_token`.
 - cURL does not follow redirects and only allows HTTP and HTTPS.
 - GitHub Actions are pinned to commit SHAs and run with read-only permissions. The Docker image runs as an unprivileged user and only contains the files the bot needs.

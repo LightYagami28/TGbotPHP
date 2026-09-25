@@ -416,6 +416,16 @@ trait HttpClientTrait
         return (string) json_encode($described, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
+    /**
+     * The debug log contains messages: create it readable by the bot only
+     */
+    private static function createPrivateFile(string $path): void
+    {
+        if (!str_contains($path, '://') && !file_exists($path) && @touch($path)) {
+            @chmod($path, 0600);
+        }
+    }
+
     private function debugLog(string $line): void
     {
         if (!$this->config->debug) {
@@ -426,6 +436,7 @@ trait HttpClientTrait
         $line = '[' . date('Y-m-d H:i:s') . '] ' . str_replace(["\r", "\n"], ['\\r', '\\n'], $line) . PHP_EOL;
 
         if ($this->config->debugFile !== false) {
+            self::createPrivateFile($this->config->debugFile);
             error_log($line, 3, $this->config->debugFile);
         } else {
             error_log(rtrim($line));

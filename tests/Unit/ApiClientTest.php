@@ -60,6 +60,19 @@ final class ApiClientTest extends TestCase
         }
     }
 
+    public function testDebugLogIsCreatedPrivate(): void
+    {
+        $log = sys_get_temp_dir() . '/tgbotphp-debug-' . bin2hex(random_bytes(4)) . '.log';
+
+        try {
+            new ApiClient(new Config(Updates::TOKEN, debug: $log), $this->transport)->getMe();
+
+            self::assertSame('0600', substr(sprintf('%o', fileperms($log)), -4));
+        } finally {
+            @unlink($log);
+        }
+    }
+
     public function testConfigIsImmutable(): void
     {
         foreach ((new \ReflectionClass(Config::class))->getProperties() as $property) {
