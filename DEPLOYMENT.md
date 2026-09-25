@@ -22,44 +22,48 @@ composer install --no-dev --optimize-autoloader
 
 ### Step 3: Create Webhook Handler
 
-Create `public/webhook.php`:
+Create `public/webhook.php` (see [`examples/webhook.php`](examples/webhook.php) for a complete bot):
 
 ```php
 <?php
+declare(strict_types=1);
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use TGbotPHP\Utilities\BotBuilder;
+use TGbotPHP\Core\Config;
+use TGbotPHP\Framework\Bot;
 
-$bot = (new BotBuilder(getenv('BOT_TOKEN')))
-    ->addCommand('start', function($bot, $msg) {
-        $bot->sendMessage(
-            chatId: $msg['chat']['id'],
-            text: 'Welcome!'
-        );
-    })
-    ->build();
+$bot = new Bot(new Config(
+    token: getenv('TELEGRAM_BOT_TOKEN'),
+    secretToken: getenv('TELEGRAM_SECRET_TOKEN'),
+));
+$bot->setUsername(getenv('TELEGRAM_BOT_USERNAME') ?: null);
+
+$bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Welcome!'));
 
 $bot->handle();
 ```
 
 ### Step 4: Configure Environment
 
-Create `.env`:
+Set the variables in your hosting panel or web server configuration. Keep them out of the web root.
 
 ```
-BOT_TOKEN=your_bot_token_here
-WEBHOOK_URL=https://example.com/webhook.php
-DEBUG=false
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_SECRET_TOKEN=a_long_random_string
+TELEGRAM_BOT_USERNAME=your_bot
 ```
 
 ### Step 5: Set Webhook
 
 ```bash
-curl -X POST https://api.telegram.org/botYOUR_TOKEN/setWebhook \
-  -d url=https://example.com/webhook.php
+TELEGRAM_BOT_TOKEN=... vendor/bin/tgbot webhook:set \
+  --url=https://example.com/webhook.php --secret="$TELEGRAM_SECRET_TOKEN"
 ```
 
 ## Docker Deployment
+
+The image runs the long polling example by default. It needs no public HTTPS endpoint.
 
 ### Step 1: Build Image
 
@@ -70,23 +74,15 @@ docker build -t tgbotphp:latest .
 ### Step 2: Run Container
 
 ```bash
-docker run -d \
-  -e BOT_TOKEN=your_token \
-  -e WEBHOOK_URL=https://example.com/webhook.php \
-  -p 8000:8000 \
+docker run -d --restart unless-stopped \
+  -e TELEGRAM_BOT_TOKEN=your_token \
   --name tgbot \
-  tgbotphp:latest
-```
-
-### Step 3: Docker Compose
-
-```bash
-docker-compose up -d
+  tgbotphp:latest php examples/polling.php
 ```
 
 ## VPS/Cloud Deployment
 
-### Using Systemd Service
+### Using Systemd Service (long polling)
 
 Create `/etc/systemd/system/tgbot.service`:
 
@@ -99,7 +95,8 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/var/www/tgbot
-ExecStart=/usr/bin/php -S 0.0.0.0:8000 -t public/
+Environment=TELEGRAM_BOT_TOKEN=your_token
+ExecStart=/usr/bin/php bot.php
 Restart=on-failure
 RestartSec=10
 
@@ -198,10 +195,16 @@ tail -f /var/log/tgbot.log
 ### Health Check
 
 ```php
-$bot->on('update', function($update) {
-    error_log('[UPDATE] ' . json_encode($update));
+$bot->on('update.received', function (stdClass $update) {
+    error_log('[UPDATE] ' . $update->update_id);
+});
+
+$bot->onError(function (Throwable $e, ?stdClass $update) {
+    error_log('[ERROR] ' . $e->getMessage());
 });
 ```
+
+Check delivery errors reported by Telegram with `vendor/bin/tgbot webhook:info`.
 
 ## Security Hardening
 
@@ -217,10 +220,14 @@ curl -X POST https://api.telegram.org/botTOKEN/setWebhook \
 
 ### 2. Validate Requests
 
+`$bot->handle()` validates the `X-Telegram-Bot-Api-Secret-Token` header when `Config::$secretToken` is set. It answers 403 otherwise. To check the source IP as well:
+
 ```php
-$xToken = $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? null;
-if (!WebhookValidator::validate($body, $secretToken, $xToken)) {
-    exit('Unauthorized');
+use TGbotPHP\Security\WebhookValidator;
+
+if (!WebhookValidator::isTelegramIp($_SERVER['REMOTE_ADDR'] ?? '')) {
+    http_response_code(403);
+    exit;
 }
 ```
 
@@ -233,7 +240,7 @@ chmod 600 .env
 ```
 
 ```php
-$token = getenv('BOT_TOKEN');
+$token = getenv('TELEGRAM_BOT_TOKEN');
 ```
 
 ### 4. Firewall Rules
@@ -266,12 +273,9 @@ server {
 }
 ```
 
-### Redis Caching
+### Shared Cache
 
-```php
-$cache = new RedisCache(new Redis());
-$limiter = new RateLimiter($cache);
-```
+With several instances, `FileCache` is not shared between servers. Implement `TGbotPHP\Cache\CacheInterface` on top of Redis or your database, then pass it to `RateLimiter` and `useConversations()`.
 
 ## Troubleshooting
 
@@ -284,8 +288,8 @@ $limiter = new RateLimiter($cache);
 
 ### Bot Not Responding
 
-1. Verify BOT_TOKEN is correct
-2. Check webhook status: `curl https://api.telegram.org/botTOKEN/getWebhookInfo`
+1. Verify the token: `vendor/bin/tgbot bot:info`
+2. Check webhook status: `vendor/bin/tgbot webhook:info`
 3. Review error logs
 
 ### High Memory Usage
@@ -310,8 +314,8 @@ mysqldump -u user -p tgbot > backup.sql
 
 ## Performance Tips
 
-1. Enable Zstandard compression in Composer
-2. Use Redis for caching
+1. Run `composer install --no-dev --optimize-autoloader`
+2. Use a shared cache for multi-server setups
 3. Implement session persistence
 4. Optimize database queries
 5. Use CDN for static files

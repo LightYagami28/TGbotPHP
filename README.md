@@ -4,27 +4,33 @@ Professional Telegram Bot Framework for PHP 8.2+
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)]()
-[![Version](https://img.shields.io/badge/Version-2.0.0-blue)]()
-[![Maintenance](https://img.shields.io/badge/Maintenance-Active-green)]()
+[![Tests](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml)
+[![Code Analysis](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml)
+[![Version](https://img.shields.io/badge/Version-2.1.0-blue)](CHANGELOG.md)
 
-Fork of a (https://github.com/OpenTelegramFiles/TGbotPHP)
+Fork of [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotPHP)
 
-> Production-ready. Feature-complete. Security-first.
+> Production-ready. Tested. Security-first. Zero runtime dependencies.
 
-## Quick Overview
+## Features
 
-TGbotPHP is a comprehensive framework implementing 120+ Telegram Bot API methods with modern PHP practices.
-
-**Features:**
-- Complete Telegram Bot API (120+ methods)
-- Security hardened (webhooks, validation, rate limiting)
-- Professional architecture (PSR-4, traits, middleware)
-- Plugin system & extensibility
-- Comprehensive documentation
-- Zero external dependencies
+- **Complete Bot API client**: 115+ typed methods, plus `call()` for anything else. Sending and editing methods take an `$options` array for optional or newer parameters.
+- **Uploads that work**: `InputFile` for local files and in-memory contents, including media groups and sticker sets (`attach://` is handled for you).
+- **Routing**: commands (with `/cmd@bot` and deep-link payloads), text patterns, callback and inline query patterns (exact, `wildcard:*` or regex), any update type.
+- **Webhooks and long polling**: `$bot->handle()` checks the secret token; `$bot->poll()` retries with backoff.
+- **Middleware**: simple (`return false` to stop) or onion style (`$next()`).
+- **Conversations**: multi-step dialogs with per-user state.
+- **Reliability**: 429 flood-control retries, typed exceptions (`ApiException`, `TooManyRequestsException`, `NetworkException`), errors sent to an `onError` handler.
+- **Security**: webhook secret token, Telegram IP ranges, Mini App `initData` validation, HTML/MarkdownV2 escaping, a rate-limiting middleware.
+- **Tooling**: persistent `FileCache`, keyboard builders, `tgbot` CLI, PHPUnit test suite, PHPStan.
 
 ## Installation
+
+```bash
+composer require lightyagami28/tgbotphp
+```
+
+or from source:
 
 ```bash
 git clone https://github.com/LightYagami28/TGbotPHP.git
@@ -36,49 +42,78 @@ composer install
 
 ```php
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
-use TGbotPHP\Utilities\BotBuilder;
+use TGbotPHP\Framework\Bot;
+use TGbotPHP\Utilities\Formatter;
+use TGbotPHP\Utilities\Keyboard;
 
-$bot = (new BotBuilder('YOUR_BOT_TOKEN'))
-    ->addCommand('start', function($bot, $message) {
-        $bot->sendMessage(
-            chatId: $message['chat']['id'],
-            text: 'Welcome to TGbotPHP'
-        );
-    })
-    ->build();
+$bot = new Bot(getenv('TELEGRAM_BOT_TOKEN'));
 
-$bot->handle();
+// Handlers receive the update payload (stdClass), the bot, then route data
+$bot->command('start', function (stdClass $message, Bot $bot, string $payload) {
+    $bot->reply($message, 'Hello ' . Formatter::bold($message->from->first_name) . '!', [
+        'reply_markup' => Keyboard::inline(['👍' => 'vote:up', '👎' => 'vote:down']),
+    ]);
+});
+
+$bot->callback('vote:*', function (stdClass $callback, Bot $bot, array $matches) {
+    $bot->answer($callback, "You voted {$matches[1]}");
+});
+
+$bot->hears('/^ping$/i', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'pong'));
+
+$bot->poll();      // long polling, no web server needed
+// $bot->handle(); // or: webhook entry point
+```
+
+More in [`examples/`](examples): a [long polling bot](examples/polling.php) and a [webhook bot](examples/webhook.php) with conversations and rate limiting.
+
+## Webhooks
+
+```php
+use TGbotPHP\Core\Config;
+use TGbotPHP\Framework\Bot;
+
+$bot = new Bot(new Config(
+    token: getenv('TELEGRAM_BOT_TOKEN'),
+    secretToken: getenv('TELEGRAM_SECRET_TOKEN'),
+));
+$bot->setUsername('my_bot'); // ignore /commands@other_bot in groups
+
+// ... handlers ...
+
+$bot->handle(); // 403 on a wrong secret token, 400 on invalid JSON
+```
+
+```bash
+TELEGRAM_BOT_TOKEN=... vendor/bin/tgbot webhook:set \
+    --url=https://example.com/webhook.php --secret="$TELEGRAM_SECRET_TOKEN"
 ```
 
 ## Documentation
 
-- **[Getting Started](docs/INSTALLATION.md)** - Setup and first bot
-- **[API Reference](docs/API_REFERENCE.md)** - Complete method documentation
-- **[Security Guide](docs/SECURITY.md)** - Security best practices
-- **[Deployment](docs/DEPLOYMENT.md)** - Production deployment
-- **[Advanced Features](docs/ADVANCED_FEATURES.md)** - Plugins, caching, sessions
-- **[Wiki](https://github.com/LightYagami28/TGbotPHP/wiki)** - Tutorials and guides
+- **[Installation](INSTALLATION.md)**: setup and your first bot
+- **[API Reference](API_REFERENCE.md)**: framework and method reference
+- **[Advanced Features](ADVANCED_FEATURES.md)**: middleware, conversations, caching, plugins
+- **[Security Guide](SECURITY.md)**: security best practices
+- **[Deployment](DEPLOYMENT.md)**: production deployment
+- **[Testing](TESTING.md)**: running and writing tests
+- **[Changelog](CHANGELOG.md)**
 
 ## Requirements
 
 - PHP 8.2 or higher
-- cURL extension
-- HTTPS enabled server (for webhooks)
+- cURL and JSON extensions
+- An HTTPS server (webhooks only)
 
-## Project Stats
+## Development
 
-- **API Methods:** 120+
-- **Code:** 8,000+ lines
-- **PSR Standards:** PSR-1, PSR-2, PSR-4, PSR-12
-- **Test Coverage:** Comprehensive
-- **License:** MIT
-
-## Repository
-
-- **GitHub:** https://github.com/LightYagami28/TGbotPHP
-- **Issues:** https://github.com/LightYagami28/TGbotPHP/issues
+```bash
+composer install
+composer test      # PHPUnit
+composer phpstan   # static analysis
+```
 
 ## Author
 

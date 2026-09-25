@@ -1,155 +1,187 @@
 # Advanced Features Guide
 
-## Plugin System
+## Middleware
 
-Extend TGbotPHP functionality with plugins:
+Middleware runs before routing, in the order it was registered.
 
 ```php
-use TGbotPHP\Plugin\PluginInterface;
-use TGbotPHP\Plugin\PluginManager;
+use TGbotPHP\Core\UpdateParser;
+use TGbotPHP\Framework\Bot;
 
-class MyPlugin implements PluginInterface {
-    public function getName(): string { return 'MyPlugin'; }
-    public function getVersion(): string { return '1.0.0'; }
-    public function activate(): void { /* ... */ }
-    public function deactivate(): void { /* ... */ }
-}
+// Simple middleware: return false to drop the update
+$bot->middleware(function (stdClass $update, Bot $bot): bool {
+    return UpdateParser::getChat($update)?->type === 'private';
+});
 
-$manager = new PluginManager();
-$manager->register('my-plugin', new MyPlugin());
+// Onion middleware: wraps everything after it
+$bot->middleware(function (stdClass $update, Bot $bot, callable $next): void {
+    $bot->sendChatAction(UpdateParser::getChat($update)->id, 'typing');
+    $next();
+});
+```
+
+## Conversations
+
+Multi-step dialogs keep a state per chat and user. In webhook mode, use a persistent cache.
+
+```php
+use TGbotPHP\Cache\FileCache;
+
+$bot->useConversations(new FileCache('/var/lib/mybot/cache'), ttl: 900);
+
+$bot->command('order', function (stdClass $message, Bot $bot) {
+    $bot->setState($message, 'order:product');
+    $bot->reply($message, 'What would you like?');
+});
+
+$bot->state('order:product', function (stdClass $message, Bot $bot) {
+    $bot->setState($message, 'order:quantity', ['product' => $message->text]);
+    $bot->reply($message, 'How many?');
+});
+
+$bot->state('order:quantity', function (stdClass $message, Bot $bot, array $data) {
+    $bot->clearState($message);
+    $bot->reply($message, "Ordered {$message->text} × " . Formatter::escape($data['product']));
+});
+
+// Commands are routed before states, so /cancel always works
+$bot->command('cancel', function (stdClass $message, Bot $bot) {
+    $bot->clearState($message);
+    $bot->reply($message, 'Cancelled');
+});
 ```
 
 ## Caching
 
-Use in-memory caching for performance:
+| Cache | Use |
+|---|---|
+| `ArrayCache` | Long polling, tests: lost when the process ends |
+| `FileCache` | Webhooks on a single server: persists between requests |
+| your own `CacheInterface` | Redis, Memcached, a database... |
 
 ```php
-use TGbotPHP\Cache\ArrayCache;
+use TGbotPHP\Cache\FileCache;
 
-$cache = new ArrayCache();
-$cache->put('key', 'value', ttl: 300);
-$value = $cache->get('key');
+$cache = new FileCache('/var/lib/mybot/cache'); // keep it outside the web root
+$cache->put('key', ['any' => 'array'], ttl: 300);
+$value = $cache->get('key', default: null);
+$cache->prune(); // delete expired entries (e.g. from a cron job)
 ```
+
+`FileCache` never unserializes objects. Store scalars and arrays.
 
 ## Rate Limiting
 
-Protect your bot from abuse:
-
 ```php
 use TGbotPHP\Rate\RateLimiter;
-use TGbotPHP\Cache\ArrayCache;
 
-$limiter = new RateLimiter(new ArrayCache());
+$limiter = new RateLimiter($cache);
 
-if ($limiter->limit("user:{$userId}", maxRequests: 10, windowSeconds: 60)) {
-    // Allow request
-} else {
-    // Rate limit exceeded
+// As middleware: 10 updates per user every 60 seconds
+$bot->middleware($limiter->middleware(10, 60, function (stdClass $update, Bot $bot) {
+    // optional: called for dropped updates
+}));
+
+// Manually
+if (!$limiter->limit("search:$userId", maxRequests: 3, windowSeconds: 60)) {
+    $bot->reply($message, 'Slow down! Try again in ' . $limiter->availableIn("search:$userId") . 's');
 }
 ```
 
-## Session Management
-
-Manage user sessions:
+## Plugins
 
 ```php
-use TGbotPHP\Session\SessionManager;
+use TGbotPHP\Framework\Bot;
+use TGbotPHP\Plugin\BotPluginInterface;
 
-$sessions = new SessionManager(new ArrayCache());
-$sessionId = $sessions->startSession($userId);
-$sessions->setSessionData($sessionId, 'state', 'waiting_input');
+final class AdminPlugin implements BotPluginInterface
+{
+    public function __construct(private array $admins) {}
+
+    public function getName(): string { return 'admin'; }
+    public function getVersion(): string { return '1.0.0'; }
+    public function activate(): void {}
+    public function deactivate(): void {}
+
+    public function boot(Bot $bot): void
+    {
+        $bot->command('stats', function (stdClass $message, Bot $bot) {
+            if (in_array($message->from->id, $this->admins, true)) {
+                $bot->reply($message, 'Stats: ...');
+            }
+        });
+    }
+}
+
+$bot->plugin(new AdminPlugin([123456]));
 ```
 
-## Webhook Validation
+`PluginManager` also provides priority-ordered hooks (`addHook()` and `executeHook()`) for plugins that need to talk to each other.
 
-Secure webhook handling:
+## Error Handling
+
+```php
+use TGbotPHP\Exceptions\ApiException;
+use TGbotPHP\Exceptions\TooManyRequestsException;
+
+$bot->onError(function (Throwable $e, ?stdClass $update, Bot $bot) {
+    if ($e instanceof ApiException && $e->getCode() === 403) {
+        return; // the user blocked the bot
+    }
+
+    error_log($e);
+});
+
+try {
+    $bot->sendMessage($groupId, 'Hi');
+} catch (ApiException $e) {
+    if ($newId = $e->getMigrateToChatId()) {
+        $bot->sendMessage($newId, 'Hi'); // group upgraded to supergroup
+    }
+}
+```
+
+429 errors are retried automatically (`Config::$maxRetries`, `Config::$maxRetryDelay`).
+
+## Local Bot API server
+
+```php
+$bot = new Bot(new Config(
+    token: $token,
+    apiBaseUrl: 'http://localhost:8081',
+    enforceHttps: false,
+    timeout: 120,
+));
+```
+
+## Custom HTTP transport
+
+Implement `TGbotPHP\Http\TransportInterface` to use another HTTP client, or to fake Telegram in tests:
+
+```php
+$bot = new Bot($token, transport: new MyTransport());
+```
+
+## Mini Apps
 
 ```php
 use TGbotPHP\Security\WebhookValidator;
 
-$secretToken = getenv('TELEGRAM_SECRET_TOKEN');
-$xToken = WebhookValidator::getSecretToken();
-
-if (WebhookValidator::validate($body, $secretToken, $xToken)) {
-    // Process update
+$data = WebhookValidator::validateWebAppData($_POST['initData'], $token, maxAge: 3600);
+if ($data === null) {
+    http_response_code(403);
+    exit;
 }
-```
-
-## Message Parsing
-
-Extract entities from messages:
-
-```php
-use TGbotPHP\Utilities\MessageParser;
-
-$command = MessageParser::parseCommand($text);
-$mentions = MessageParser::extractMentions($text);
-$hashtags = MessageParser::extractHashtags($text);
-$urls = MessageParser::extractUrls($text);
+$user = json_decode($data['user'], true);
 ```
 
 ## Logging
 
-Comprehensive logging system:
-
 ```php
 use TGbotPHP\Utilities\Logger;
 
-$logger = new Logger('/path/to/logs.log');
-$logger->info('User started bot', ['user_id' => 123]);
-$logger->warning('Rate limit approaching');
-$logger->error('API error', ['error' => $e->getMessage()]);
+$logger = new Logger('/var/log/mybot.log', minLevel: 'INFO');
+$logger->info('User {id} started the bot', ['id' => $userId]);
 ```
 
-## Keyboard Helpers
-
-Build complex keyboards easily:
-
-```php
-use TGbotPHP\Utilities\Keyboard;
-
-// Inline buttons
-Keyboard::inline(['Yes' => 'yes', 'No' => 'no']);
-
-// Grid layout (2 columns)
-Keyboard::grid(['Btn1' => 'b1', 'Btn2' => 'b2', 'Btn3' => 'b3'], cols: 2);
-
-// Menu with custom layout
-Keyboard::menu(['Profile' => 'p', 'Settings' => 's'], itemsPerRow: 1);
-```
-
-## BotBuilder Pattern
-
-Fluent bot configuration:
-
-```php
-use TGbotPHP\Utilities\BotBuilder;
-
-$bot = (new BotBuilder($token))
-    ->withDebug('/tmp/bot.log')
-    ->withSecretToken('secret')
-    ->addCommand('start', function($bot, $msg) { /* ... */ })
-    ->addCallback('action', function($bot, $cb) { /* ... */ })
-    ->addMiddleware(function($update) { /* ... */ })
-    ->addEventListener('error', function($error) { /* ... */ })
-    ->build();
-
-$bot->handle();
-```
-
-## Security Best Practices
-
-1. **Always validate webhook signatures** when using secret tokens
-2. **Enable rate limiting** to prevent abuse
-3. **Use HTTPS** for webhook URLs
-4. **Validate user input** before processing
-5. **Log sensitive actions** for audit trails
-6. **Implement session management** for multi-step flows
-
-## Performance Tips
-
-1. Cache frequently accessed data (user profiles, settings)
-2. Use rate limiting to prevent API throttling
-3. Batch API calls when possible
-4. Use webhooks instead of polling when available
-5. Implement proper error handling and retries
+The logger escapes line breaks in messages, so user input cannot forge log entries.

@@ -1,204 +1,71 @@
 # TGbotPHP Architecture
 
-Modular structure supporting all Telegram Bot API methods.
+## Layers
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ Framework\Bot                                              │
+│  handle() / poll() → EventDispatcher → MiddlewarePipeline  │
+│                    → Router → your handlers                │
+├────────────────────────────────────────────────────────────┤
+│ Core\ApiClient                                             │
+│  Methods\* traits (sendMessage, banChatMember, ...)        │
+│  Traits\HttpClientTrait: encoding, errors, 429 retries     │
+├────────────────────────────────────────────────────────────┤
+│ Http\TransportInterface → Http\CurlTransport (or your own) │
+└────────────────────────────────────────────────────────────┘
+```
+
+- **`Core\ApiClient`** is a plain API client. Use it without the framework when you only need to send messages.
+- **`Framework\Bot`** extends it with update handling.
+- **`Http\TransportInterface`** is the only I/O boundary. Tests swap it for `tests/Support/FakeTransport.php`.
 
 ## Directory Structure
 
 ```
-TGbotPHP/
-├── src/
-│   ├── Core/              # Core functionality
-│   │   ├── Bot.php        # Main Bot class
-│   │   ├── Config.php     # Configuration
-│   │   └── UpdateParser.php
-│   ├── Methods/           # API Methods (100+)
-│   │   ├── MessageMethods.php
-│   │   ├── ChatMethods.php
-│   │   ├── FileMethods.php
-│   │   ├── StickerMethods.php
-│   │   ├── InlineMethods.php
-│   │   ├── PaymentMethods.php
-│   │   ├── GameMethods.php
-│   │   ├── WebAppMethods.php
-│   │   └── AdminMethods.php
-│   ├── Handlers/          # Update handlers
-│   │   ├── MessageHandler.php
-│   │   ├── CallbackHandler.php
-│   │   └── InlineHandler.php
-│   ├── Exceptions/        # Custom exceptions
-│   │   ├── TelegramException.php
-│   │   ├── InvalidTokenException.php
-│   │   └── ApiException.php
-│   ├── Traits/            # Shared functionality
-│   │   ├── HttpClientTrait.php
-│   │   ├── LoggerTrait.php
-│   │   └── ValidatorTrait.php
-│   └── Utilities/         # Helpers
-│       ├── Keyboard.php
-│       ├── InlineQueryBuilder.php
-│       └── FileValidator.php
-├── botlib.php             # Legacy single-file support
-├── bot-complete.php       # Full example
-└── composer.json          # PSR-4 autoloading
+src/
+├── Cache/        CacheInterface, ArrayCache (in memory), FileCache (persistent)
+├── CLI/          Console (bin/tgbot)
+├── Core/         ApiClient, Config, UpdateParser
+├── Exceptions/   TelegramException → ApiException → TooManyRequestsException
+│                                  → InvalidTokenException, NetworkException
+├── Framework/    Bot, Router, MiddlewarePipeline, EventDispatcher
+├── Http/         TransportInterface, CurlTransport, HttpResponse
+├── Methods/      one trait per API area (Message, Media, Chat, Admin, Sticker, ...)
+├── Plugin/       PluginInterface, BotPluginInterface, PluginManager
+├── Rate/         RateLimiter (+ middleware)
+├── Security/     WebhookValidator (secret token, IP ranges, Mini App data)
+├── Session/      SessionManager, ConversationManager
+├── Traits/       HttpClientTrait
+├── Types/        InputFile
+└── Utilities/    Keyboard, InlineKeyboard, Formatter, MessageParser, Logger, BotBuilder
 ```
 
-## Usage
+## Request lifecycle (outgoing)
 
-### PSR-4 Namespace
+1. A method trait builds the parameter array and merges the caller's `$options` into it.
+2. `HttpClientTrait::prepareFields()` encodes the parameters:
+   - `null` values are dropped
+   - booleans become `"true"` / `"false"`
+   - arrays and `JsonSerializable` objects are JSON encoded
+   - `InputFile` objects become `CURLFile` uploads. Nested ones become `attach://fileN` references, and the request switches to `multipart/form-data`.
+3. The transport sends the request. The response is decoded whatever the HTTP status, so Telegram's error `description` is never lost.
+4. `ok: false` throws `ApiException`, or `TooManyRequestsException` for 429. A 429 is retried after `retry_after` seconds, up to `Config::$maxRetries` times.
+5. The `result` field is returned.
 
-```php
-use TGbotPHP\Core\Bot;
-use TGbotPHP\Methods\MessageMethods;
-use TGbotPHP\Exceptions\ApiException;
+## Update lifecycle (incoming)
 
-$bot = new Bot(getenv('TELEGRAM_BOT_TOKEN'));
-```
+1. `handle()` validates the secret token and parses the JSON. `poll()` calls `getUpdates` and tracks the offset.
+2. `processUpdate()` dispatches `update.received`, then runs the middleware pipeline.
+3. The router picks a handler:
+   - **message**: command, then conversation state, then `hears` pattern, then `fallback`
+   - **callback_query** and **inline_query**: exact data, then wildcard and regex patterns
+   - **anything else**, or nothing matched: `onUpdate($type)` handlers
+4. `update.processed` is dispatched. If anything throws, the exception goes to `error` listeners, or is re-thrown when there are none.
 
-### Legacy Support
+## Design choices
 
-```php
-require_once 'botlib.php';
-use TGbotPHP\botTG;
-
-$bot = new botTG(token: $token, updates: $updates);
-```
-
-## Method Categories
-
-### 1. MessageMethods.php
-- sendMessage
-- forwardMessage
-- copyMessage
-- editMessageText
-- editMessageCaption
-- deleteMessage
-- sendPhoto, sendAudio, sendDocument, sendVideo
-- sendAnimation, sendVoice
-- sendMediaGroup
-- sendChatAction
-- etc. (30+ methods)
-
-### 2. ChatMethods.php
-- getChat
-- getChatMember, getChatMembers
-- setChatTitle, setChatDescription
-- setChatPermissions
-- pinMessage, unpinMessage
-- leaveChat
-- etc. (20+ methods)
-
-### 3. FileMethods.php
-- getFile
-- downloadFile
-- uploadStickerFile
-- etc. (5+ methods)
-
-### 4. StickerMethods.php
-- sendSticker
-- getStickerSet
-- uploadStickerFile
-- createNewStickerSet
-- addStickerToSet
-- etc. (15+ methods)
-
-### 5. InlineMethods.php
-- answerInlineQuery
-- answerWebAppQuery
-- etc. (2 methods)
-
-### 6. PaymentMethods.php
-- sendInvoice
-- answerShippingQuery
-- answerPreCheckoutQuery
-- etc. (3 methods)
-
-### 7. GameMethods.php
-- sendGame
-- setGameScore
-- getGameHighScores
-- etc. (3 methods)
-
-### 8. WebAppMethods.php
-- answerWebAppQuery
-- etc. (1 method)
-
-### 9. AdminMethods.php
-- kickChatMember
-- banChatMember
-- unbanChatMember
-- restrictChatMember
-- etc. (10+ methods)
-
-## Total Coverage
-
-✅ 100+ Telegram Bot API methods  
-✅ Webhook + Long polling support  
-✅ All media types (photos, videos, audio, documents, stickers, animations)  
-✅ Full keyboard support (inline, reply, web app)  
-✅ Payment processing  
-✅ Games  
-✅ Inline queries  
-✅ Chat administration  
-
-## Interface
-
-All methods follow consistent patterns:
-
-```php
-// List/Get methods return arrays
-$chat = $bot->getChat($chatId);
-
-// Send methods return response
-$response = $bot->sendMessage($chatId, "Hello");
-
-// Action methods return boolean
-$success = $bot->pinMessage($chatId, $messageId);
-
-// Complex operations use builders
-$keyboard = $bot->keyboard()
-    ->inline()
-    ->button("Click", "callback_data")
-    ->build();
-```
-
-## Security
-
-✅ HTTPS enforcement  
-✅ Input validation  
-✅ Output escaping  
-✅ Path traversal protection  
-✅ Webhook signature verification  
-✅ IP validation  
-✅ SSL/TLS verification  
-
-## Type Safety
-
-- Full type hints (PHP 8.4+)
-- PHPStan level 5
-- Strict types everywhere
-- Return type declarations
-
-## Error Handling
-
-```php
-try {
-    $bot->sendMessage($chatId, "Hello");
-} catch (ApiException $e) {
-    echo "API error: " . $e->getMessage();
-    echo "Response: " . json_encode($e->getApiResponse());
-}
-```
-
-## Backwards Compatibility
-
-Legacy `botlib.php` still works:
-```php
-require_once 'botlib.php';
-$bot = new botTG(token: $token, updates: $updates);
-```
-
-But new code should use PSR-4:
-```php
-use TGbotPHP\Core\Bot;
-$bot = new Bot($token);
-```
+- **No runtime dependencies**: only ext-curl and ext-json.
+- **Payloads stay `stdClass`**: updates are not mapped to classes, so new API fields work immediately.
+- **Forward compatible**: `$options` on methods, `call()` for new methods, `onUpdate()` for new update types.
+- **Backwards compatible**: deprecated method names are thin aliases, and handlers written as `function ($message)` keep working.

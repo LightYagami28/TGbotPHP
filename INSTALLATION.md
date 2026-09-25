@@ -2,9 +2,9 @@
 
 ## Requirements
 
-- PHP 7.0+ (8.4+ recommended)
-- cURL extension enabled
-- HTTPS support for webhooks
+- PHP 8.2 or higher
+- cURL and JSON extensions
+- An HTTPS server, for webhooks only (long polling works anywhere)
 
 ## Installation via Composer
 
@@ -14,155 +14,114 @@ composer require lightyagami28/tgbotphp
 
 ## Setup
 
-### 1. Get Telegram Bot Token
+### 1. Get a bot token
 
-- Open Telegram and chat with [@BotFather](https://t.me/botfather)
-- Send `/newbot`
-- Follow the instructions
-- Copy your token
+1. Open [@BotFather](https://t.me/botfather) in Telegram
+2. Send `/newbot` and follow the instructions
+3. Copy the token (`123456789:AA...`) and keep it secret
 
-### 2. Environment Configuration
+### 2. Configure the environment
 
-Create `.env` file:
-
-```env
-TELEGRAM_BOT_TOKEN=your_bot_token_here
-DEBUG_MODE=false
-DEBUG_LOG_FILE=/var/log/telegram-bot.log
-TELEGRAM_SECRET_TOKEN=optional_secret
+```bash
+export TELEGRAM_BOT_TOKEN=123456789:AA...
+export TELEGRAM_SECRET_TOKEN=$(openssl rand -hex 32)   # webhooks only
 ```
 
-### 3. Create Webhook Script
+### 3a. Long polling (simplest)
 
-`webhook.php`:
+`bot.php`:
 
 ```php
 <?php
 declare(strict_types=1);
 
-use TGbotPHP\Framework\Bot;
+require __DIR__ . '/vendor/autoload.php';
 
-require_once 'vendor/autoload.php';
+use TGbotPHP\Framework\Bot;
 
 $bot = new Bot(getenv('TELEGRAM_BOT_TOKEN'));
 
-// Register handlers
-$bot->command('/start', fn($u) => 
-    $bot->sendMessage($u->message->chat->id, "Hello!")
-);
+$bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hello!'));
+$bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, 'You said: ' . htmlspecialchars($message->text)));
 
-// Handle update
-$bot->handleUpdate(file_get_contents('php://input'));
+$bot->poll();
 ```
-
-### 4. Register Webhook
 
 ```bash
-curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
-  -d "url=https://your-domain.com/webhook.php"
+php bot.php
 ```
 
-### 5. Verify Setup
+### 3b. Webhook
 
-```bash
-curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
-```
-
-## Long Polling Alternative
-
-```php
-use TGbotPHP\Core\ApiClient;
-use TGbotPHP\Core\Config;
-
-$config = new Config(getenv('TELEGRAM_BOT_TOKEN'));
-$client = new ApiClient($config);
-
-while (true) {
-    $updates = $client->getUpdates();
-    
-    foreach ($updates as $update) {
-        // Process update
-    }
-    
-    sleep(1);
-}
-```
-
-## Directory Structure
-
-```
-your-project/
-├── .env
-├── webhook.php
-├── vendor/
-└── your-bot-code.php
-```
-
-## Quick Example
+`webhook.php`, served over HTTPS:
 
 ```php
 <?php
+declare(strict_types=1);
+
+require __DIR__ . '/vendor/autoload.php';
+
+use TGbotPHP\Core\Config;
 use TGbotPHP\Framework\Bot;
 
-$bot = new Bot($_ENV['TELEGRAM_BOT_TOKEN']);
+$bot = new Bot(new Config(
+    token: getenv('TELEGRAM_BOT_TOKEN'),
+    secretToken: getenv('TELEGRAM_SECRET_TOKEN'),
+));
 
-$bot->command('/start', function($update) use ($bot) {
-    $bot->sendMessage(
-        $update->message->chat->id,
-        "Welcome to my bot!"
-    );
-});
+$bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hello!'));
 
-$bot->callback('my_button', function($update) use ($bot) {
+$bot->callback('my_button', function (stdClass $callback, Bot $bot) {
+    $bot->answer($callback);
     $bot->editMessageText(
-        $update->callback_query->message->chat->id,
-        $update->callback_query->message->message_id,
-        "Button clicked!"
+        $callback->message->chat->id,
+        $callback->message->message_id,
+        'Button clicked!'
     );
 });
 
-$bot->handleUpdate(file_get_contents('php://input'));
+$bot->handle();
+```
+
+Register the webhook with the same secret:
+
+```bash
+vendor/bin/tgbot webhook:set --url=https://your-domain.com/webhook.php --secret="$TELEGRAM_SECRET_TOKEN"
+vendor/bin/tgbot webhook:info
 ```
 
 ## Security
 
-- Store token in environment variables
-- Never commit `.env` file
-- Always use HTTPS for webhooks
-- Validate webhook IP addresses
-- Use secret tokens for extra security
+- Keep the token in environment variables, never in the repository
+- Always configure a webhook secret token
+- Escape user input in HTML messages with `Formatter::escape()`
+- Use HTTPS for webhooks
 
 ## Troubleshooting
 
-### Bot not responding
+### The bot does not respond
 
-1. Check webhook URL is HTTPS
-2. Verify token is correct
-3. Check server error logs
-4. Ensure cURL extension is installed
+1. `vendor/bin/tgbot bot:info` checks the token
+2. `vendor/bin/tgbot webhook:info` shows the last webhook delivery error
+3. Long polling fails with `409 Conflict` while a webhook is set. Run `vendor/bin/tgbot webhook:delete` first.
+4. Check the PHP error log. Handler exceptions are logged there when no `onError` handler is set.
 
-### Webhook issues
-
-```bash
-# Check webhook status
-curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
-
-# Reset webhook
-curl -X POST "https://api.telegram.org/bot<TOKEN>/deleteWebhook"
-```
-
-### Enable debug mode
+### Debug mode
 
 ```php
-$bot = new Bot(
+use TGbotPHP\Core\Config;
+use TGbotPHP\Framework\Bot;
+
+$bot = new Bot(new Config(
     token: $token,
     debug: true,
-    debugFile: '/var/log/telegram-bot.log'
-);
+    debugFile: '/var/log/telegram-bot.log', // every request and response
+));
 ```
 
 ## Next Steps
 
-- Read [API Reference](https://github.com/LightYagami28/TGbotPHP/wiki/API-Reference)
-- Check [Examples](https://github.com/LightYagami28/TGbotPHP/wiki/Examples)
-- Review [Security Guide](https://github.com/LightYagami28/TGbotPHP/wiki/Security-Guide)
+- [API Reference](API_REFERENCE.md)
+- [Advanced Features](ADVANCED_FEATURES.md)
+- [Examples](examples)
+- [Security Guide](SECURITY.md)

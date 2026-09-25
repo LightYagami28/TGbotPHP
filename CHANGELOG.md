@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-09-24
+
+### Fixed
+- Methods returning `True` (`deleteMessage`, `banChatMember`, `setWebhook`, ...) no longer throw a `TypeError` under `strict_types`. The same fix covers `getChatMemberCount`, which returns an integer.
+- File uploads now work: requests with files are sent as `multipart/form-data` instead of carrying a wrong `x-www-form-urlencoded` header, and plain requests are properly URL-encoded.
+- `file_id`s and URLs can be passed to `sendPhoto`, `sendDocument`, ... Before, every string was wrapped in `CURLFile`.
+- Telegram error descriptions are kept on HTTP 4xx responses. Before, they were replaced by a generic "HTTP 400" message.
+- Commands registered as `start` now match `/start`. `/cmd@botname` is handled properly, and commands addressed to other bots are ignored once the username is known.
+- `null` parameters are no longer sent as empty strings.
+- `RateLimiter` used a window that slid forward on every hit. It now uses a real fixed window.
+- `ArrayCache::has()` returned `false` for stored `null` values.
+- `composer.json` required PHP ≥ 7.0 although the code needs 8.2. The `test` script pointed to a missing file, and CI ignored failures (`|| true`).
+- The CLI used a wrong autoloader path when installed as a dependency, and always exited with status 0.
+
+### Added
+- `Bot::handle()`: webhook entry point with secret token validation (403) and JSON validation (400).
+- `Bot::poll()`: long polling loop with backoff, 429 handling, `stop()` and `polling.*` events.
+- Routing: `hears()`, `inlineQuery()`, `onUpdate()` for any update type, `fallback()`, `onUnknownCommand()`, and wildcard and regex patterns for callbacks and inline queries. Command arguments and deep-link payloads are passed to handlers.
+- Handlers receive the `Bot` as second argument.
+- Onion middleware (`$next`). A simple middleware can return `false` to stop processing.
+- Conversations: `useConversations()`, `state()`, `setState()`, `updateStateData()`, `clearState()`, `ConversationManager`.
+- `Bot::reply()` (same chat and forum topic), `Bot::answer()`, `onError()`, plugins with `BotPluginInterface::boot()`.
+- `InputFile::fromPath()` and `InputFile::fromContents()`, with automatic `attach://` handling for media groups and sticker sets.
+- `Http\TransportInterface` and `CurlTransport` for custom HTTP clients and testing.
+- 429 retries (`Config::$maxRetries`, `$maxRetryDelay`), local Bot API server support (`Config::$apiBaseUrl`) and a configurable timeout.
+- `TooManyRequestsException` and `NetworkException`. `ApiException` gains `getApiMethod()`, `getParameters()` and `getMigrateToChatId()`.
+- New methods: `answerCallbackQuery`, `editMessageCaption`, `editMessageMedia`, `editMessageReplyMarkup`, `deleteMessages`, `forwardMessages`, `copyMessages`, `stopPoll`, `pinChatMessage`, `unpinChatMessage`, `getChatMemberCount`, `setChatPhoto`, `deleteChatPhoto`, `setChatPermissions`, invite links, join requests, chat sticker sets, `banChatSenderChat`, `unbanChatSenderChat`, `setMyName`, `setMyDescription`, `setMyShortDescription` and their getters, `setChatMenuButton`, `getChatMenuButton`, default administrator rights, `getForumTopicIconStickers`, `unpinAllGeneralForumTopicMessages`, `createInvoiceLink`, `refundStarPayment`, `getStarTransactions`, current sticker set methods, `logOut`, `close`, `getUserChatBoosts`, `getFileUrl`, `downloadFile`.
+- A trailing `$options` array on sending and editing methods, for any optional or newer API parameter.
+- `FileCache`: a persistent cache for webhooks that does not unserialize objects.
+- `RateLimiter::middleware()` and `RateLimiter::availableIn()`.
+- `WebhookValidator::isTelegramIp()` and `WebhookValidator::validateWebAppData()`.
+- `Formatter`: HTML and MarkdownV2 escaping and formatting helpers.
+- `InlineKeyboard` fluent builder, and `Keyboard::reply()`, `remove()`, `forceReply()` and `pagination()`.
+- `UpdateParser::getType()`, `getPayload()`, `getChat()`, `getUser()` and `fromArray()`.
+- `MessageParser::parseArguments()`.
+- CLI: `commands:list`, `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
+- A PHPUnit test suite (83 tests), PHPStan configuration, and runnable examples in `examples/`.
+
+### Changed
+- Requires PHP 8.2+ with ext-curl and ext-json.
+- `disableWebPagePreview` is sent as `link_preview_options`, and `switchPmText` as the `button` object of `answerInlineQuery`.
+- `parse_mode` is only sent with a caption when there is a caption.
+- `Config` validates the token format (`<digits>:<secret>`) and the secret token charset.
+- The Dockerfile runs as a non-root user and starts the long polling example.
+
+### Deprecated
+- `kickChatMember`, `pinMessage`, `unpinMessage` and `getChatMembersCount`. They are aliases of the current method names.
+
+### Breaking changes
+- Local files must be wrapped in `InputFile::fromPath()`. A plain string is now sent as a `file_id` or URL.
+- `createNewStickerSet()` and `addStickerToSet()` follow the current API: they take a list of `InputSticker` objects.
+- `uploadStickerFile()` and `setChatPhoto()` take an `InputFile`.
+- `getMessageReactions()` was removed. It is not a Bot API method and always failed.
+- Methods that returned `array|null` now return `array`. Errors always throw.
+- `Bot::command()`, `callback()`, `middleware()` and `on()` return the bot for chaining instead of `void`.
+- An exception thrown by a handler goes to `error` listeners when there are any. It is re-thrown only when there are none.
+
 ## [2.0.0] - 2026-08-17
 
 ### ✨ Major Release - Secure by Default
