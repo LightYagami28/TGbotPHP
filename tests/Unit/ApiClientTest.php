@@ -36,6 +36,32 @@ final class ApiClientTest extends TestCase
         self::assertSame('https://api.telegram.org/bot' . Updates::TOKEN . '/getMe', $this->transport->lastRequest()['url']);
     }
 
+    public function testDebugLogRedactsSecrets(): void
+    {
+        $log = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($log);
+
+        try {
+            $client = new ApiClient(new Config(Updates::TOKEN, debug: true, debugFile: $log), $this->transport);
+            $client->setWebhook('https://example.com/hook', secretToken: 'super-secret-value');
+
+            $contents = (string) file_get_contents($log);
+            self::assertStringContainsString('setWebhook', $contents);
+            self::assertStringContainsString('<redacted>', $contents);
+            self::assertStringNotContainsString('super-secret-value', $contents);
+            self::assertStringNotContainsString(Updates::TOKEN, $contents);
+        } finally {
+            unlink($log);
+        }
+    }
+
+    public function testConfigIsImmutable(): void
+    {
+        foreach ((new \ReflectionClass(Config::class))->getProperties() as $property) {
+            self::assertTrue($property->isReadOnly(), "Config::\${$property->getName()} must be readonly");
+        }
+    }
+
     public function testCustomApiServer(): void
     {
         $client = new ApiClient(
@@ -52,14 +78,16 @@ final class ApiClientTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        self::assertInstanceOf(Config::class, new Config(Updates::TOKEN, apiBaseUrl: 'http://localhost:8081'));
+        $config = new Config(Updates::TOKEN, apiBaseUrl: 'http://localhost:8081');
+        self::fail('Accepted plain HTTP API server: ' . $config->apiBaseUrl);
     }
 
     public function testRejectsMalformedToken(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        self::assertInstanceOf(Config::class, new Config('12345/../../evil:token'));
+        $config = new Config('12345/../../evil:token');
+        self::fail('Accepted malformed token: ' . $config->token);
     }
 
     public function testPreparesFields(): void
@@ -94,6 +122,25 @@ final class ApiClientTest extends TestCase
 
         self::assertTrue($this->client->deleteMessage(42, 1));
         self::assertTrue($this->client->answerCallbackQuery('abc', 'Done'));
+    }
+
+    public function testUnexpectedResultTypeThrows(): void
+    {
+        $this->transport->queueResult(['unexpected' => 'object']);
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('Unexpected result from deleteMessage: expected a boolean, got array');
+
+        $this->client->deleteMessage(42, 1);
+    }
+
+    public function testListResultIsValidated(): void
+    {
+        $this->transport->queueResult(['not' => 'a list']);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->getUpdates();
     }
 
     public function testIntegerResult(): void

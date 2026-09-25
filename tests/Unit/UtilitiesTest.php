@@ -80,6 +80,8 @@ final class UtilitiesTest extends TestCase
     public function testFormatterEscapesUserInput(): void
     {
         self::assertSame('<b>&lt;script&gt; &amp; co</b>', Formatter::bold('<script> & co'));
+        // Telegram rejects &apos;: only &lt; &gt; &amp; &quot; and numeric entities are supported
+        self::assertSame('it&#039;s &quot;ok&quot;', Formatter::escape('it\'s "ok"'));
         self::assertSame('<a href="https://x.y/?a=1&amp;b=2">x</a>', Formatter::link('x', 'https://x.y/?a=1&b=2'));
         self::assertSame('<a href="tg://user?id=5">Ada</a>', Formatter::mention(5, 'Ada'));
         self::assertSame('<pre><code class="language-php">echo 1;</code></pre>', Formatter::pre('echo 1;', 'php'));

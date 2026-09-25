@@ -13,6 +13,10 @@ final class Updates
 
     private static int $nextId = 1000;
 
+    /**
+     * @param array<string, mixed> $extra
+     * @return array<string, mixed>
+     */
     public static function message(string $text, int $chatId = 42, int $userId = 7, array $extra = []): array
     {
         return [
@@ -27,6 +31,9 @@ final class Updates
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function callback(string $data, int $chatId = 42, int $userId = 7): array
     {
         return [
@@ -45,6 +52,9 @@ final class Updates
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function inlineQuery(string $query, int $userId = 7): array
     {
         return [
@@ -58,6 +68,9 @@ final class Updates
         ];
     }
 
+    /**
+     * @param array<string, mixed> $update
+     */
     public static function json(array $update): string
     {
         return json_encode($update, JSON_THROW_ON_ERROR);

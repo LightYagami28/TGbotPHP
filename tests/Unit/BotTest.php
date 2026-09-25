@@ -12,6 +12,7 @@ use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\InvalidTokenException;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Plugin\BotPluginInterface;
+use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Utilities\BotBuilder;
@@ -31,7 +32,8 @@ final class BotTest extends TestCase
     {
         $this->expectException(InvalidTokenException::class);
 
-        self::assertInstanceOf(Bot::class, new Bot('invalid'));
+        $bot = new Bot('invalid');
+        self::fail('Accepted invalid token: ' . $bot->getToken());
     }
 
     public function testCommandRegisteredWithoutSlashMatches(): void
@@ -91,13 +93,13 @@ final class BotTest extends TestCase
     {
         $log = [];
         $this->bot->hears('/^my name is (\w+)$/i', function ($message, $bot, array $matches) use (&$log): void {
-            $log[] = 'name:' . $matches[1];
+            $log[] = 'name:' . Value::string($matches[1]);
         });
         $this->bot->hears('hello', function () use (&$log): void {
             $log[] = 'hello';
         });
         $this->bot->fallback(function (stdClass $message) use (&$log): void {
-            $log[] = 'fallback:' . $message->text;
+            $log[] = 'fallback:' . Value::string(Value::path($message, 'text'));
         });
 
         $this->bot->handleUpdate(Updates::message('My name is Ada'));
@@ -126,10 +128,10 @@ final class BotTest extends TestCase
             $log[] = 'menu';
         });
         $this->bot->callback('page:*', function ($cb, $bot, array $m) use (&$log): void {
-            $log[] = 'page ' . $m[1];
+            $log[] = 'page ' . Value::string($m[1]);
         });
         $this->bot->callback('#^item:(\d+):(\w+)$#', function ($cb, $bot, array $m) use (&$log): void {
-            $log[] = "item {$m[1]} {$m[2]}";
+            $log[] = 'item ' . Value::string($m[1]) . ' ' . Value::string($m[2]);
         });
 
         $this->bot->handleUpdate(Updates::callback('menu'));
@@ -138,6 +140,72 @@ final class BotTest extends TestCase
         $this->bot->handleUpdate(Updates::callback('unhandled'));
 
         self::assertSame(['menu', 'page 3', 'item 7 buy'], $log);
+    }
+
+    public function testNumericCallbackDataAndCommands(): void
+    {
+        // PHP turns numeric-string array keys into integers: routing must still work
+        $log = [];
+        $this->bot->callback('123', function () use (&$log): void {
+            $log[] = 'callback';
+        });
+        $this->bot->command('2024', function () use (&$log): void {
+            $log[] = 'command';
+        });
+
+        $this->bot->handleUpdate(Updates::callback('123'));
+        $this->bot->handleUpdate(Updates::message('/2024'));
+
+        self::assertSame(['callback', 'command'], $log);
+    }
+
+    public function testNumericCallbackDataThroughBuilder(): void
+    {
+        $log = [];
+        $bot = (new BotBuilder(Updates::TOKEN))
+            ->withTransport($this->transport)
+            ->addCallback('42', function () use (&$log): void {
+                $log[] = 'callback';
+            })
+            ->build();
+
+        $bot->handleUpdate(Updates::callback('42'));
+
+        self::assertSame(['callback'], $log);
+    }
+
+    public function testEditMessageOfCallbackQuery(): void
+    {
+        $this->bot->callback('edit', fn(stdClass $callback, Bot $bot) => $bot->edit($callback, 'Edited', [
+            'reply_markup' => ['inline_keyboard' => []],
+        ]));
+
+        $this->bot->handleUpdate(Updates::callback('edit', chatId: 99));
+
+        $request = $this->transport->lastRequest();
+        self::assertSame('editMessageText', $request['method']);
+        self::assertSame('99', $request['fields']['chat_id'] ?? null);
+        self::assertSame('5', $request['fields']['message_id'] ?? null);
+        self::assertSame('Edited', $request['fields']['text'] ?? null);
+        self::assertSame('{"inline_keyboard":[]}', $request['fields']['reply_markup'] ?? null);
+    }
+
+    public function testEditInlineMessageOfCallbackQuery(): void
+    {
+        $this->transport->queueResult(true);
+        $update = Updates::callback('edit');
+        $callback = Value::map($update['callback_query']);
+        unset($callback['message']);
+        $callback['inline_message_id'] = 'inline-1';
+        $update['callback_query'] = $callback;
+
+        $this->bot->callback('edit', fn(stdClass $callback, Bot $bot) => $bot->edit($callback, 'Edited'));
+        $this->bot->handleUpdate($update);
+
+        $fields = $this->transport->lastRequest()['fields'];
+        self::assertSame('inline-1', $fields['inline_message_id'] ?? null);
+        self::assertArrayNotHasKey('chat_id', $fields);
+        self::assertArrayNotHasKey('message_id', $fields);
     }
 
     public function testInlineQueryCatchAll(): void
@@ -185,25 +253,23 @@ final class BotTest extends TestCase
 
     public function testSimpleMiddlewareCanStopProcessing(): void
     {
-        $handled = false;
-        $processed = false;
-        $this->bot->middleware(fn(stdClass $update) => $update->message->from->id !== 666);
-        $this->bot->command('start', function () use (&$handled): void {
-            $handled = true;
+        /** @var \ArrayObject<int, string> $log */
+        $log = new \ArrayObject();
+        $this->bot->middleware(fn(stdClass $update) => Value::path($update, 'message', 'from', 'id') !== 666);
+        $this->bot->command('start', function () use ($log): void {
+            $log[] = 'handled';
         });
-        $this->bot->on('update.processed', function () use (&$processed): void {
-            $processed = true;
+        $this->bot->on('update.processed', function () use ($log): void {
+            $log[] = 'processed';
         });
 
         $this->bot->handleUpdate(Updates::message('/start', userId: 666));
 
-        self::assertFalse($handled);
-        self::assertFalse($processed);
+        self::assertSame([], $log->getArrayCopy());
 
         $this->bot->handleUpdate(Updates::message('/start'));
 
-        self::assertTrue($handled);
-        self::assertTrue($processed);
+        self::assertSame(['handled', 'processed'], $log->getArrayCopy());
     }
 
     public function testOnionMiddlewareWrapsHandlers(): void
@@ -241,23 +307,23 @@ final class BotTest extends TestCase
     {
         $this->transport->queueError(403, 'Forbidden: bot was blocked by the user');
         $errors = [];
-        $this->bot->command('start', fn($message, Bot $bot) => $bot->reply($message, 'hi'));
+        $this->bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'hi'));
         $this->bot->on('error.api', function (ApiException $e) use (&$errors): void {
             $errors[] = 'api';
         });
         $this->bot->onError(function (\Throwable $e, ?stdClass $update, Bot $bot) use (&$errors): void {
-            $errors[] = $e->getMessage() . ' #' . $update?->update_id;
+            $errors[] = $e->getMessage() . ' #' . Value::int(Value::path($update, 'update_id'));
         });
 
         $update = Updates::message('/start');
         $this->bot->handleUpdate($update);
 
-        self::assertSame(['api', 'Forbidden: bot was blocked by the user #' . $update['update_id']], $errors);
+        self::assertSame(['api', 'Forbidden: bot was blocked by the user #' . Value::int($update['update_id'])], $errors);
     }
 
     public function testReplySendsToSameChatAndTopic(): void
     {
-        $this->bot->command('start', fn($message, Bot $bot) => $bot->reply($message, '<b>Hi</b>', [
+        $this->bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, '<b>Hi</b>', [
             'reply_markup' => ['remove_keyboard' => true],
         ]));
 
@@ -301,11 +367,11 @@ final class BotTest extends TestCase
             $bot->setState($message, 'ask_age', ['name' => $message->text]);
         });
         $this->bot->state('ask_age', function (stdClass $message, Bot $bot, array $data) use (&$log): void {
-            $log[] = "{$data['name']} is {$message->text}";
+            $log[] = Value::string($data['name'] ?? null) . ' is ' . Value::string(Value::path($message, 'text'));
             $bot->clearState($message);
         });
         $this->bot->fallback(function (stdClass $message) use (&$log): void {
-            $log[] = 'fallback:' . $message->text;
+            $log[] = 'fallback:' . Value::string(Value::path($message, 'text'));
         });
 
         $this->bot->handleUpdate(Updates::message('/register'));
@@ -326,10 +392,10 @@ final class BotTest extends TestCase
         $states = [];
         $this->bot->command('go', fn(stdClass $m, Bot $bot) => $bot->setState($m, 'waiting'));
         $this->bot->state('waiting', function (stdClass $m) use (&$states): void {
-            $states[] = $m->from->id;
+            $states[] = Value::path($m, 'from', 'id');
         });
         $this->bot->fallback(function (stdClass $m) use (&$states): void {
-            $states[] = 'fallback:' . $m->from->id;
+            $states[] = 'fallback:' . Value::int(Value::path($m, 'from', 'id'));
         });
 
         $this->bot->handleUpdate(Updates::message('/go', chatId: 1, userId: 10));
@@ -397,7 +463,7 @@ final class BotTest extends TestCase
         self::assertSame(['start', 'hello'], $seen);
         self::assertSame('poll_bot', $this->bot->getUsername());
         self::assertSame(['getMe', 'getUpdates', 'getUpdates'], $this->transport->methods());
-        self::assertSame((string) ($second['update_id'] + 1), $this->transport->lastRequest()['fields']['offset']);
+        self::assertSame((string) (Value::int($second['update_id']) + 1), $this->transport->lastRequest()['fields']['offset']);
         self::assertFalse($this->bot->isRunning());
     }
 
@@ -455,7 +521,7 @@ final class BotTest extends TestCase
 
             public function boot(Bot $bot): void
             {
-                $bot->command('ping', fn($message, Bot $bot) => $bot->reply($message, 'pong'));
+                $bot->command('ping', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'pong'));
             }
         };
 

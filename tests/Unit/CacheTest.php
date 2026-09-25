@@ -9,10 +9,11 @@ use PHPUnit\Framework\TestCase;
 use TGbotPHP\Cache\ArrayCache;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Cache\FileCache;
+use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Rate\RateLimiter;
 use TGbotPHP\Session\ConversationManager;
 use TGbotPHP\Session\SessionManager;
-use TGbotPHP\Core\UpdateParser;
+use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\Updates;
 
 final class CacheTest extends TestCase
@@ -26,7 +27,9 @@ final class CacheTest extends TestCase
 
     public static function tearDownAfterClass(): void
     {
-        foreach (glob(self::$directory . '/*') ?: [] as $file) {
+        $files = glob(self::$directory . '/*');
+
+        foreach ($files === false ? [] : $files as $file) {
             unlink($file);
         }
         @rmdir(self::$directory);
@@ -47,6 +50,9 @@ final class CacheTest extends TestCase
         ];
     }
 
+    /**
+     * @param callable(): CacheInterface $factory
+     */
     #[DataProvider('caches')]
     public function testStoresValues(callable $factory): void
     {
@@ -69,6 +75,9 @@ final class CacheTest extends TestCase
         self::assertFalse($cache->has('null'));
     }
 
+    /**
+     * @param callable(): CacheInterface $factory
+     */
     #[DataProvider('caches')]
     public function testExpiresValues(callable $factory): void
     {
@@ -113,8 +122,8 @@ final class CacheTest extends TestCase
     public function testRateLimiterMiddleware(): void
     {
         $limited = [];
-        $middleware = (new RateLimiter(new ArrayCache()))->middleware(1, 60, function ($update) use (&$limited): void {
-            $limited[] = $update->update_id;
+        $middleware = (new RateLimiter(new ArrayCache()))->middleware(1, 60, function (\stdClass $update) use (&$limited): void {
+            $limited[] = Value::int(Value::path($update, 'update_id'));
         });
 
         $first = UpdateParser::fromArray(Updates::message('a'));
@@ -152,7 +161,7 @@ final class CacheTest extends TestCase
         $id = $sessions->startSession(7);
         $sessions->setSessionData($id, 'lang', 'it');
 
-        self::assertSame(7, $sessions->getSession($id)['user_id']);
+        self::assertSame(7, $sessions->getSession($id)['user_id'] ?? null);
         self::assertSame('it', $sessions->getSessionData($id, 'lang'));
 
         $sessions->endSession($id);

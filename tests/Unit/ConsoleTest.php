@@ -22,7 +22,9 @@ final class ConsoleTest extends TestCase
     protected function setUp(): void
     {
         $this->transport = new FakeTransport();
-        $this->output = fopen('php://memory', 'w+');
+        $output = fopen('php://memory', 'w+');
+        self::assertIsResource($output);
+        $this->output = $output;
         $this->console = new Console(fn(string $token) => new Bot($token, transport: $this->transport), $this->output);
     }
 

@@ -16,32 +16,33 @@ use TGbotPHP\Cache\FileCache;
 use TGbotPHP\Core\Config;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Rate\RateLimiter;
+use TGbotPHP\Support\Value;
 use TGbotPHP\Utilities\Formatter;
 use TGbotPHP\Utilities\Keyboard;
 
 $config = new Config(
-    token: (string) getenv('TELEGRAM_BOT_TOKEN'),
-    secretToken: getenv('TELEGRAM_SECRET_TOKEN') ?: false,
+    token: Value::env('TELEGRAM_BOT_TOKEN') ?? '',
+    secretToken: Value::env('TELEGRAM_SECRET_TOKEN') ?? false,
 );
 
 // Webhook requests run in separate PHP processes: state must live in a persistent cache
 $cache = new FileCache(sys_get_temp_dir() . '/tgbotphp-cache');
 
 $bot = new Bot($config);
-$bot->setUsername(getenv('TELEGRAM_BOT_USERNAME') ?: null);
+$bot->setUsername(Value::env('TELEGRAM_BOT_USERNAME'));
 $bot->useConversations($cache);
 
 // At most 20 updates per user per minute
 $bot->middleware((new RateLimiter($cache))->middleware(20, 60));
 
 $bot->command('start', function (stdClass $message, Bot $bot): void {
-    $bot->reply($message, 'Hi ' . Formatter::bold($message->from->first_name ?? 'there') . '! What should I call you?');
+    $bot->reply($message, 'Hi ' . Formatter::bold(Value::string(Value::path($message, 'from', 'first_name'), 'there')) . '! What should I call you?');
     $bot->setState($message, 'ask_name');
 });
 
 $bot->state('ask_name', function (stdClass $message, Bot $bot): void {
     $bot->clearState($message);
-    $bot->reply($message, 'Nice to meet you, ' . Formatter::escape($message->text ?? '') . '!', [
+    $bot->reply($message, 'Nice to meet you, ' . Formatter::escape(Value::string($message->text ?? null)) . '!', [
         'reply_markup' => Keyboard::inline(['👍 Like' => 'like', '👎 Dislike' => 'dislike']),
     ]);
 });

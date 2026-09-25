@@ -11,11 +11,12 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use TGbotPHP\Framework\Bot;
+use TGbotPHP\Support\Value;
 use TGbotPHP\Utilities\Formatter;
 use TGbotPHP\Utilities\InlineKeyboard;
 use TGbotPHP\Utilities\Keyboard;
 
-$bot = new Bot((string) getenv('TELEGRAM_BOT_TOKEN'));
+$bot = new Bot(Value::env('TELEGRAM_BOT_TOKEN') ?? '');
 
 $bot->setMyCommands([
     'start' => 'Start the bot',
@@ -43,21 +44,18 @@ $bot->command('menu', function (stdClass $message, Bot $bot): void {
 });
 
 $bot->callback('page:*', function (stdClass $callback, Bot $bot, array $matches): void {
-    $page = (int) $matches[1];
+    $page = Value::int($matches[1] ?? null, 1);
     $bot->answer($callback);
-    $bot->editMessageText(
-        $callback->message->chat->id,
-        $callback->message->message_id,
-        "You are on page $page",
-        replyMarkup: Keyboard::pagination($page, 5)
-    );
+    $bot->edit($callback, "You are on page $page", [
+        'reply_markup' => Keyboard::pagination($page, 5),
+    ]);
 });
 
-$bot->command('dice', fn(stdClass $message, Bot $bot) => $bot->sendDice($message->chat->id));
+$bot->command('dice', fn(stdClass $message, Bot $bot) => $bot->sendDice($bot->chatId($message)));
 
 $bot->hears('/^(hi|hello|ciao)\b/i', fn(stdClass $message, Bot $bot) => $bot->reply($message, '👋'));
 
-$bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, Formatter::escape($message->text)));
+$bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, Formatter::escape(Value::string($message->text ?? null))));
 
 $bot->onError(function (Throwable $e): void {
     fwrite(STDERR, '[error] ' . $e->getMessage() . PHP_EOL);
