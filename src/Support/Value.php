@@ -25,14 +25,41 @@ final class Value
         return self::nullableInt($value) ?? $default;
     }
 
+    /**
+     * Integers, integral floats and decimal strings; null for anything that
+     * does not fit an int exactly (1.5, "9999999999999999999", "12abc")
+     */
     public static function nullableInt(mixed $value): ?int
     {
         return match (true) {
             is_int($value) => $value,
-            is_float($value) && is_finite($value) => (int) $value,
-            is_string($value) && preg_match('/^-?\d{1,19}\z/', $value) === 1 => (int) $value,
+            is_float($value) => self::integralFloat($value),
+            is_string($value) => self::decimalString($value),
             default => null,
         };
+    }
+
+    private static function integralFloat(float $value): ?int
+    {
+        // 2^63 is the first float outside the int range
+        return is_finite($value) && floor($value) === $value && abs($value) < 9.2233720368547758E18 ? (int) $value : null;
+    }
+
+    private static function decimalString(string $value): ?int
+    {
+        if (preg_match('/^(-?)0*(\d+)\z/', $value, $match) !== 1) {
+            return null;
+        }
+
+        // Compare the digits with the int limits instead of letting (int) saturate
+        $limit = $match[1] === '-' ? '9223372036854775808' : '9223372036854775807';
+        $digits = $match[2];
+
+        if (strlen($digits) > 19 || (strlen($digits) === 19 && strcmp($digits, $limit) > 0)) {
+            return null;
+        }
+
+        return (int) $value;
     }
 
     public static function string(mixed $value, string $default = ''): string

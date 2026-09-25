@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Formatter::escape()` produced `&apos;`, which Telegram rejects.
 - The token and secret token checks accepted a trailing newline.
 - `null` parameters were sent as empty strings.
+- Arrays with gaps in their keys (after `array_filter()` or `unset()`) were sent as JSON objects, so Telegram rejected keyboards, poll options or price lists built that way.
+- Long polling delivered updates re-encoded from arrays, so empty JSON objects such as `callback_game` became arrays, unlike with webhooks.
+- `Value::int()` turned numbers too large for an integer into `PHP_INT_MAX`, and dropped fractions.
 - `RateLimiter` used a window that slid forward on every hit.
 - `ArrayCache::has()` returned `false` for stored `null` values.
 - Conversation data, session data and rate limit counters could lose updates when two webhook requests from the same user ran at the same time.
@@ -42,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MessageParser::entities()`, the text of the entities Telegram detected, with UTF-16 offsets handled.
 - CLI commands `commands:list` and `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
 - `tools/bot-api.json`, the methods and parameters of the Bot API extracted from the official documentation by `tools/bot-api-spec.php`. A test checks every method against it, and a weekly workflow reports new API versions.
+- `fetchUpdates()`: `getUpdates` with the updates decoded as objects, like webhook updates. `poll()` uses it.
 - `CacheInterface::update()`, an atomic read-change-write; `FileCache` locks the entry meanwhile.
 - The update types of Bot API 10.3: `guest_message`, `managed_bot`, `subscription` and `stopped_message_generation`.
 - `BotBuilder::withRetry()`.

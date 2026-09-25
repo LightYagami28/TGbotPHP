@@ -133,7 +133,7 @@ trait LocationMethods
     }
 
     /**
-     * @param list<string|array<string, mixed>> $answers Answer texts or InputPollOption objects
+     * @param array<int, string|array<string, mixed>> $answers Answer texts or InputPollOption objects
      * @param string|null $type "regular" or "quiz"
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options allows_multiple_answers, correct_option_id, explanation, open_period...

@@ -39,6 +39,28 @@ trait UpdateMethods
     }
 
     /**
+     * getUpdates, with the updates decoded as objects, exactly as a webhook receives them
+     *
+     * Bot::handleUpdate() and processUpdate() accept these updates as they are.
+     *
+     * @param string[]|null $allowedUpdates
+     * @return list<\stdClass>
+     */
+    public function fetchUpdates(
+        ?int $offset = null,
+        ?int $limit = null,
+        ?int $timeout = null,
+        ?array $allowedUpdates = null,
+    ): array {
+        return $this->apiCallObjects('getUpdates', [
+            'offset' => $offset,
+            'limit' => $limit,
+            'timeout' => $timeout,
+            'allowed_updates' => $allowedUpdates !== null ? array_values($allowedUpdates) : null,
+        ]);
+    }
+
+    /**
      * Set webhook URL for receiving updates
      *
      * @param string[]|null $allowedUpdates

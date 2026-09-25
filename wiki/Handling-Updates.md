@@ -184,4 +184,4 @@ $replyTo  = Value::nullableInt(Value::path($message, 'reply_to_message', 'messag
 
 `poll()` handles network errors and rate limits by itself, and stops with `$bot->stop()` (from a handler or a signal handler). Details in [Deployment](Deployment).
 
-You can also process an update yourself, for example from a queue: `$bot->handleUpdate($json)` accepts JSON, an array or a decoded object.
+You can also process an update yourself, for example from a queue: `$bot->handleUpdate($json)` accepts JSON, an array or a decoded object. To poll by hand, `fetchUpdates()` returns the updates as objects, exactly as a webhook receives them; `getUpdates()` returns them as arrays.

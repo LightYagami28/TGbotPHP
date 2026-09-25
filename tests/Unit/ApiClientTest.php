@@ -12,6 +12,7 @@ use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
+use TGbotPHP\Support\Value;
 use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Types\InputFile;
@@ -393,5 +394,42 @@ final class ApiClientTest extends TestCase
         } finally {
             unlink($source);
         }
+    }
+
+    public function testListsWithGapsAreSentAsJsonArrays(): void
+    {
+        $row = array_filter([['text' => 'A', 'callback_data' => 'a'], null, ['text' => 'C', 'callback_data' => 'c']]);
+
+        $this->client->sendMessage(1, 'x', replyMarkup: ['inline_keyboard' => [$row]]);
+        $this->client->sendPoll(1, 'Q', array_filter(['Yes', '', 'No']));
+
+        self::assertSame(
+            '{"inline_keyboard":[[{"text":"A","callback_data":"a"},{"text":"C","callback_data":"c"}]]}',
+            $this->transport->requests[0]['fields']['reply_markup'],
+        );
+        self::assertSame('[{"text":"Yes"},{"text":"No"}]', $this->transport->requests[1]['fields']['options']);
+
+        [$fields] = ApiClient::prepareFields(['object' => ['a' => 1, 5 => 2]]);
+        self::assertSame('{"a":1,"5":2}', $fields['object']);
+    }
+
+    public function testFetchUpdatesDecodesObjectsLikeWebhooks(): void
+    {
+        $this->transport->queueRaw('{"ok":true,"result":[{"update_id":7,"callback_query":{"id":"q","data":"x","message":{"reply_markup":{"inline_keyboard":[[{"text":"Play","callback_game":{}}]]}}}}]}');
+
+        $updates = $this->client->fetchUpdates();
+
+        self::assertCount(1, $updates);
+        self::assertSame(7, $updates[0]->update_id);
+        self::assertInstanceOf(\stdClass::class, Value::path($updates[0], 'callback_query', 'message', 'reply_markup', 'inline_keyboard', '0', '0', 'callback_game'));
+    }
+
+    public function testFetchUpdatesRejectsUnexpectedResults(): void
+    {
+        $this->transport->queueResult([1, 2]);
+
+        $this->expectException(ApiException::class);
+
+        $this->client->fetchUpdates();
     }
 }

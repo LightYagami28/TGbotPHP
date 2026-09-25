@@ -28,6 +28,12 @@ trait CallsApi
 
     /**
      * @param array<string, mixed> $params
+     * @return list<\stdClass>
+     */
+    abstract protected function apiCallObjects(string $method, array $params = []): array;
+
+    /**
+     * @param array<string, mixed> $params
      * @param array<string, mixed> $options
      * @return array<string, mixed>|bool
      */

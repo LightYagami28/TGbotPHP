@@ -15,12 +15,27 @@ final class ValueTest extends TestCase
     {
         self::assertSame(5, Value::int(5));
         self::assertSame(-12, Value::int('-12'));
-        self::assertSame(3, Value::int(3.9));
+        self::assertSame(3, Value::int(3.0));
+        // A fraction is not silently dropped
+        self::assertSame(0, Value::int(3.9));
+        self::assertSame(7, Value::int('007'));
         self::assertSame(7, Value::int('abc', 7));
         self::assertSame(0, Value::int(['1']));
         self::assertSame(0, Value::int(INF));
         self::assertNull(Value::nullableInt('1e3'));
         self::assertNull(Value::nullableInt('99999999999999999999'));
+        self::assertNull(Value::nullableInt(1e30));
+    }
+
+    public function testIntLimitsAreExact(): void
+    {
+        self::assertSame(PHP_INT_MAX, Value::nullableInt('9223372036854775807'));
+        self::assertSame(PHP_INT_MIN, Value::nullableInt('-9223372036854775808'));
+
+        // (int) would saturate to PHP_INT_MAX: a wrong id is worse than no id
+        self::assertNull(Value::nullableInt('9223372036854775808'));
+        self::assertNull(Value::nullableInt('-9223372036854775809'));
+        self::assertNull(Value::nullableInt(' 5'));
     }
 
     public function testString(): void

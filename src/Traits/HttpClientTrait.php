@@ -43,6 +43,7 @@ trait HttpClientTrait
      * Make HTTP request to Telegram API
      *
      * @param array<string, mixed> $data
+     * @param bool $objects Decode JSON objects as stdClass instead of arrays
      * @return mixed The "result" field of the API response, or null when $returnResponse is false
      *
      * @throws ApiException
@@ -51,6 +52,7 @@ trait HttpClientTrait
         string $method,
         array $data = [],
         bool $returnResponse = false,
+        bool $objects = false,
     ): mixed {
         [$fields, $multipart] = self::prepareFields($data);
 
@@ -67,7 +69,7 @@ trait HttpClientTrait
             $this->debugLog("← $method [{$response->statusCode}] " . substr($response->body, 0, 1000));
 
             try {
-                return $this->parseResponse($method, $response->statusCode, $response->body, $returnResponse);
+                return $this->parseResponse($method, $response->statusCode, $response->body, $returnResponse, $objects);
             } catch (TooManyRequestsException $e) {
                 $retryAfter = $e->getRetryAfter();
 
@@ -212,6 +214,33 @@ trait HttpClientTrait
         return $result;
     }
 
+    /**
+     * Call a method returning an array of objects, decoded as stdClass like webhook updates
+     *
+     * @param array<string, mixed> $params
+     * @return list<\stdClass>
+     *
+     * @throws ApiException
+     */
+    protected function apiCallObjects(string $method, array $params = []): array
+    {
+        $result = $this->httpRequest($method, $params, returnResponse: true, objects: true);
+
+        if (!is_array($result) || !array_is_list($result)) {
+            throw self::unexpectedResult($method, 'an array of objects', $result);
+        }
+
+        $objects = [];
+        foreach ($result as $item) {
+            if (!$item instanceof \stdClass) {
+                throw self::unexpectedResult($method, 'an array of objects', $result);
+            }
+            $objects[] = $item;
+        }
+
+        return $objects;
+    }
+
     private static function unexpectedResult(string $method, string $expected, mixed $result): ApiException
     {
         return new ApiException(
@@ -227,8 +256,17 @@ trait HttpClientTrait
      *
      * @throws ApiException
      */
-    private function parseResponse(string $method, int $statusCode, string $body, bool $returnResponse): mixed
+    private function parseResponse(string $method, int $statusCode, string $body, bool $returnResponse, bool $objects = false): mixed
     {
+        if ($objects) {
+            $response = $body !== '' ? json_decode($body) : null;
+
+            if ($response instanceof \stdClass && ($response->ok ?? false) === true) {
+                return $returnResponse ? ($response->result ?? null) : null;
+            }
+            // Errors are read as arrays below
+        }
+
         $decoded = $body !== '' ? json_decode($body, true) : null;
 
         if (!is_array($decoded)) {
@@ -317,13 +355,30 @@ trait HttpClientTrait
             return 'attach://' . $name;
         }
 
-        if (is_array($value)) {
-            foreach ($value as $key => $item) {
-                $value[$key] = self::extractAttachments($item, $files);
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        foreach ($value as $key => $item) {
+            $value[$key] = self::extractAttachments($item, $files);
+        }
+
+        // [0 => a, 2 => b] (after array_filter or unset) must stay a JSON array: Telegram rejects {"0": a, "2": b}
+        return self::hasOnlyIntegerKeys($value) ? array_values($value) : $value;
+    }
+
+    /**
+     * @param array<mixed> $value
+     */
+    private static function hasOnlyIntegerKeys(array $value): bool
+    {
+        foreach (array_keys($value) as $key) {
+            if (!is_int($key)) {
+                return false;
             }
         }
 
-        return $value;
+        return true;
     }
 
     /**

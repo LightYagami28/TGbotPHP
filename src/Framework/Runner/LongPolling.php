@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Framework\Runner;
 
-use TGbotPHP\Core\UpdateParser;
+use stdClass;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
@@ -75,12 +75,12 @@ final class LongPolling
 
     /**
      * @param string[]|null $allowedUpdates
-     * @return list<array<string, mixed>>
+     * @return list<stdClass>
      */
     private function fetch(int $timeout, ?array $allowedUpdates, ?int $limit): array
     {
         try {
-            $updates = $this->bot->getUpdates($this->offset, $limit, $timeout, $allowedUpdates);
+            $updates = $this->bot->fetchUpdates($this->offset, $limit, $timeout, $allowedUpdates);
             $this->failures = 0;
 
             return $updates;
@@ -106,31 +106,28 @@ final class LongPolling
     }
 
     /**
-     * @param list<array<string, mixed>> $updates
+     * @param list<stdClass> $updates
      */
     private function processBatch(array $updates): void
     {
-        foreach ($updates as $data) {
+        foreach ($updates as $update) {
             if (!$this->running) {
                 return;
             }
 
-            $updateId = Value::nullableInt($data['update_id'] ?? null);
+            $updateId = Value::nullableInt($update->update_id ?? null);
 
             if ($updateId !== null) {
                 $this->offset = $updateId + 1;
-                $this->process($data);
+                $this->process($update);
             }
         }
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function process(array $data): void
+    private function process(stdClass $update): void
     {
         try {
-            $this->bot->processUpdate(UpdateParser::fromArray($data));
+            $this->bot->processUpdate($update);
         } catch (Throwable $e) {
             error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
         }
