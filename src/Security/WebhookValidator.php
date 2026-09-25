@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Security;
 
+use TGbotPHP\Support\Value;
+
 /**
  * Webhook request validation helpers
  */
@@ -91,23 +93,41 @@ class WebhookValidator
      */
     public static function validateWebAppData(string $initData, string $botToken, int $maxAge = 86400): ?array
     {
-        parse_str($initData, $data);
+        $parsed = self::parseInitData($initData);
 
-        $hash = $data['hash'] ?? null;
-        if (!is_string($hash) || $hash === '') {
+        if ($parsed === null) {
             return null;
         }
 
+        [$fields, $hash] = $parsed;
+        $valid = hash_equals(self::initDataHash($fields, $botToken), strtolower($hash))
+            && ($maxAge === 0 || time() - (int) ($fields['auth_date'] ?? 0) <= $maxAge);
+
+        return $valid ? $fields : null;
+    }
+
+    /**
+     * @return array{array<string, string>, string}|null The fields without the hash, and the hash
+     */
+    private static function parseInitData(string $initData): ?array
+    {
+        parse_str($initData, $data);
+        $hash = $data['hash'] ?? null;
         unset($data['hash']);
 
-        /** @var array<string, string> $fields */
-        $fields = [];
-        foreach ($data as $key => $value) {
-            if (!is_string($value)) {
-                return null;
-            }
-            $fields[(string) $key] = $value;
-        }
+        $fields = array_filter(Value::map($data), is_string(...));
+
+        // Nested values (field[]=...) are not part of the Telegram format
+        $wellFormed = is_string($hash) && $hash !== '' && count($fields) === count($data);
+
+        return $wellFormed ? [$fields, $hash] : null;
+    }
+
+    /**
+     * @param array<string, string> $fields
+     */
+    private static function initDataHash(array $fields, string $botToken): string
+    {
         ksort($fields);
 
         $lines = [];
@@ -116,16 +136,7 @@ class WebhookValidator
         }
 
         $secretKey = hash_hmac('sha256', $botToken, 'WebAppData', true);
-        $expected = hash_hmac('sha256', implode("\n", $lines), $secretKey);
 
-        if (!hash_equals($expected, strtolower($hash))) {
-            return null;
-        }
-
-        if ($maxAge > 0 && (time() - (int) ($fields['auth_date'] ?? 0)) > $maxAge) {
-            return null;
-        }
-
-        return $fields;
+        return hash_hmac('sha256', implode("\n", $lines), $secretKey);
     }
 }

@@ -32,21 +32,21 @@ final class PatternTable
     }
 
     /**
-     * @return array{callable, array<int|string, string>}|null The handler and the captured groups
+     * The handler of the first matching pattern, with the captured groups as argument
      */
-    public function find(string $value): ?array
+    public function find(string $value): ?Route
     {
         $handler = $this->exact["=$value"] ?? null;
 
         if ($handler !== null) {
-            return [$handler, [$value]];
+            return new Route($handler, [[$value]]);
         }
 
         foreach ($this->patterns as [$pattern, $candidate]) {
             $matches = $pattern->match($value);
 
             if ($matches !== null) {
-                return [$candidate, $matches];
+                return new Route($candidate, [$matches]);
             }
         }
 

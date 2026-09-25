@@ -257,10 +257,12 @@ final class BotTest extends TestCase
 
     public function testUpdateTypeHandlers(): void
     {
-        $received = null;
-        $this->bot->onUpdate('pre_checkout_query', function (stdClass $query, Bot $bot, stdClass $update) use (&$received): void {
+        /** @var \ArrayObject<string, mixed> $received */
+        $received = new \ArrayObject();
+        $this->bot->onUpdate('pre_checkout_query', function (stdClass $query, Bot $bot, stdClass $update) use ($received): void {
             self::assertSame($this->bot, $bot);
-            $received = [$query->id, $update->update_id];
+            $received['query'] = $query->id;
+            $received['update'] = $update->update_id;
         });
 
         $this->bot->handleUpdate([
@@ -268,7 +270,7 @@ final class BotTest extends TestCase
             'pre_checkout_query' => ['id' => 'pcq', 'from' => ['id' => 1], 'currency' => 'XTR', 'total_amount' => 1, 'invoice_payload' => 'p'],
         ]);
 
-        self::assertSame(['pcq', 99], $received);
+        self::assertSame(['query' => 'pcq', 'update' => 99], $received->getArrayCopy());
     }
 
     public function testMessageTypeHandlerRunsWhenNoRouteMatched(): void

@@ -32,7 +32,7 @@ src/
 │                                    StorageException, PluginException
 ├── Framework/    Bot, Kernel, Router, MiddlewarePipeline, EventDispatcher
 │   ├── Concerns/ RegistersHandlers, RespondsToUpdates, ManagesConversations
-│   ├── Routing/  Command, Pattern, PatternTable
+│   ├── Routing/  MessageRoutes, Command, Pattern, PatternTable, Route
 │   └── Runner/   WebhookHandler, LongPolling
 ├── Http/         TransportInterface, CurlTransport, HttpResponse
 ├── Methods/      one trait per API area (Message, Media, Chat, Admin, Sticker, ...)
@@ -63,7 +63,7 @@ src/
 1. `handle()` validates the secret token and parses the JSON. `poll()` calls `getUpdates` and tracks the offset.
 2. `processUpdate()` dispatches `update.received`, then runs the middleware pipeline.
 3. The router picks a handler:
-   - **message**: command, then conversation state, then `hears` pattern, then `fallback`
+   - **message** (`Routing\MessageRoutes`): command, then conversation state, then `hears` pattern, then `fallback`
    - **callback_query** and **inline_query**: exact data, then wildcard and regex patterns
    - **anything else**, or nothing matched: `onUpdate($type)` handlers
 4. `update.processed` is dispatched. If anything throws, the exception goes to `error` listeners, or is re-thrown when there are none.

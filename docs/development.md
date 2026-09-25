@@ -11,7 +11,7 @@ TGbotPHP/
 │   ├── Exceptions/   # TelegramException hierarchy
 │   ├── Framework/    # Bot (facade), Kernel, Router, MiddlewarePipeline, EventDispatcher
 │   │   ├── Concerns/ # Bot traits: handler registration, replies, conversations
-│   │   ├── Routing/  # Command, Pattern, PatternTable
+│   │   ├── Routing/  # MessageRoutes, Command, Pattern, PatternTable, Route
 │   │   └── Runner/   # WebhookHandler, LongPolling
 │   ├── Http/         # TransportInterface, CurlTransport
 │   ├── Methods/      # Bot API method traits

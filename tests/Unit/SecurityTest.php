@@ -59,6 +59,17 @@ final class SecurityTest extends TestCase
         self::assertNull(WebhookValidator::validateWebAppData('auth_date=1', Updates::TOKEN));
     }
 
+    public function testMalformedWebAppDataIsRejected(): void
+    {
+        $secret = hash_hmac('sha256', Updates::TOKEN, 'WebAppData', true);
+        $hash = hash_hmac('sha256', 'auth_date=' . time(), $secret);
+
+        self::assertNotNull(WebhookValidator::validateWebAppData('auth_date=' . time() . "&hash=$hash", Updates::TOKEN));
+        self::assertNull(WebhookValidator::validateWebAppData('auth_date=' . time() . "&user[]=x&hash=$hash", Updates::TOKEN), 'Nested values');
+        self::assertNull(WebhookValidator::validateWebAppData('auth_date=' . time() . "&0=x&hash=$hash", Updates::TOKEN), 'Numeric keys');
+        self::assertNull(WebhookValidator::validateWebAppData('auth_date=' . time() . '&hash=', Updates::TOKEN), 'Empty hash');
+    }
+
     public function testExpiredWebAppDataIsRejected(): void
     {
         $data = ['auth_date' => (string) (time() - 7200), 'query_id' => 'q'];
