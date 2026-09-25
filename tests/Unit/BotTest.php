@@ -14,6 +14,7 @@ use TGbotPHP\Framework\Bot;
 use TGbotPHP\Plugin\BotPluginInterface;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\FakeTransport;
+use TGbotPHP\Tests\Support\HandlerFailure;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Utilities\BotBuilder;
 
@@ -39,20 +40,24 @@ final class BotTest extends TestCase
 
     public function testCommandRegisteredWithoutSlashMatches(): void
     {
-        $received = null;
+        $received = [];
         $this->bot->command('start', function (stdClass $message, Bot $bot, string $args) use (&$received): void {
-            $received = [$message->text, $bot, $args];
+            $received = ['text' => $message->text, 'bot' => $bot, 'args' => $args];
         });
 
         $this->bot->handleUpdate(Updates::json(Updates::message('/start ref_42')));
 
-        self::assertSame(['/start ref_42', $this->bot, 'ref_42'], $received);
+        self::assertSame('/start ref_42', $received['text'] ?? null);
+        self::assertSame($this->bot, $received['bot'] ?? null);
+        self::assertSame('ref_42', $received['args'] ?? null);
     }
 
     public function testCommandsAreCaseInsensitiveAndAcceptMultilineArgs(): void
     {
         $args = null;
-        $this->bot->command('/Echo', function ($message, $bot, string $a) use (&$args): void {
+        $this->bot->command('/Echo', function (stdClass $message, Bot $bot, string $a) use (&$args): void {
+            self::assertSame($this->bot, $bot);
+            self::assertStringStartsWith('/ECHO', Value::string(Value::path($message, 'text')));
             $args = $a;
         });
 
@@ -93,8 +98,9 @@ final class BotTest extends TestCase
     public function testHearsWithRegexAndFallback(): void
     {
         $log = [];
-        $this->bot->hears('/^my name is (\w+)$/i', function ($message, $bot, array $matches) use (&$log): void {
-            $log[] = 'name:' . Value::string($matches[1]);
+        $this->bot->hears('/^my name is (\w+)$/i', function (stdClass $message, Bot $bot, array $matches) use (&$log): void {
+            self::assertSame($this->bot, $bot);
+            $log[] = 'name:' . Value::string($matches[1]) . ' in ' . Value::string(Value::path($message, 'chat', 'type'));
         });
         $this->bot->hears('hello', function () use (&$log): void {
             $log[] = 'hello';
@@ -107,7 +113,7 @@ final class BotTest extends TestCase
         $this->bot->handleUpdate(Updates::message('hello'));
         $this->bot->handleUpdate(Updates::message('something else'));
 
-        self::assertSame(['name:Ada', 'hello', 'fallback:something else'], $log);
+        self::assertSame(['name:Ada in private', 'hello', 'fallback:something else'], $log);
     }
 
     public function testFallbackIgnoresMessagesWithoutText(): void
@@ -126,12 +132,16 @@ final class BotTest extends TestCase
     {
         $log = [];
         $this->bot->callback('menu', function (stdClass $cb) use (&$log): void {
-            $log[] = 'menu';
+            $log[] = Value::string(Value::path($cb, 'data'));
         });
-        $this->bot->callback('page:*', function ($cb, $bot, array $m) use (&$log): void {
+        $this->bot->callback('page:*', function (stdClass $cb, Bot $bot, array $m) use (&$log): void {
+            self::assertSame($this->bot, $bot);
+            self::assertSame('cbq-1', Value::path($cb, 'id'));
             $log[] = 'page ' . Value::string($m[1]);
         });
-        $this->bot->callback('#^item:(\d+):(\w+)$#', function ($cb, $bot, array $m) use (&$log): void {
+        $this->bot->callback('#^item:(\d+):(\w+)$#', function (stdClass $cb, Bot $bot, array $m) use (&$log): void {
+            self::assertSame($this->bot, $bot);
+            self::assertSame(Value::path($cb, 'data'), $m[0]);
             $log[] = 'item ' . Value::string($m[1]) . ' ' . Value::string($m[2]);
         });
 
@@ -249,6 +259,7 @@ final class BotTest extends TestCase
     {
         $received = null;
         $this->bot->onUpdate('pre_checkout_query', function (stdClass $query, Bot $bot, stdClass $update) use (&$received): void {
+            self::assertSame($this->bot, $bot);
             $received = [$query->id, $update->update_id];
         });
 
@@ -267,13 +278,13 @@ final class BotTest extends TestCase
             $types[] = 'command';
         });
         $this->bot->onUpdate('message', function (stdClass $message) use (&$types): void {
-            $types[] = 'any';
+            $types[] = isset($message->sticker) ? 'sticker' : 'other';
         });
 
         $this->bot->handleUpdate(Updates::message('/start'));
         $this->bot->handleUpdate(Updates::message('', extra: ['text' => null, 'sticker' => ['file_id' => 's']]));
 
-        self::assertSame(['command', 'any'], $types);
+        self::assertSame(['command', 'sticker'], $types);
     }
 
     public function testSimpleMiddlewareCanStopProcessing(): void
@@ -301,7 +312,8 @@ final class BotTest extends TestCase
     {
         $log = [];
         $this->bot->middleware(function (stdClass $update, Bot $bot, callable $next) use (&$log): void {
-            $log[] = 'before';
+            self::assertSame($this->bot, $bot);
+            $log[] = 'before ' . Value::string(Value::path($update, 'message', 'text'));
             $next();
             $log[] = 'after';
         });
@@ -314,16 +326,16 @@ final class BotTest extends TestCase
 
         $this->bot->handleUpdate(Updates::message('/start'));
 
-        self::assertSame(['before', 'simple', 'handler', 'after'], $log);
+        self::assertSame(['before /start', 'simple', 'handler', 'after'], $log);
     }
 
     public function testErrorsAreRethrownWithoutListeners(): void
     {
         $this->bot->command('boom', function (): void {
-            throw new \RuntimeException('boom');
+            throw new HandlerFailure('boom');
         });
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(HandlerFailure::class);
 
         $this->bot->handleUpdate(Updates::message('/boom'));
     }
@@ -334,16 +346,17 @@ final class BotTest extends TestCase
         $errors = [];
         $this->bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'hi'));
         $this->bot->on('error.api', function (ApiException $e) use (&$errors): void {
-            $errors[] = 'api';
+            $errors[] = 'api ' . $e->getCode();
         });
         $this->bot->onError(function (\Throwable $e, ?stdClass $update, Bot $bot) use (&$errors): void {
+            self::assertSame($this->bot, $bot);
             $errors[] = $e->getMessage() . ' #' . Value::int(Value::path($update, 'update_id'));
         });
 
         $update = Updates::message('/start');
         $this->bot->handleUpdate($update);
 
-        self::assertSame(['api', 'Forbidden: bot was blocked by the user #' . Value::int($update['update_id'])], $errors);
+        self::assertSame(['api 403', 'Forbidden: bot was blocked by the user #' . Value::int($update['update_id'])], $errors);
     }
 
     public function testReplySendsToSameChatAndTopic(): void
@@ -389,6 +402,7 @@ final class BotTest extends TestCase
             $log[] = 'cancelled';
         });
         $this->bot->state('ask_name', function (stdClass $message, Bot $bot, array $data): void {
+            self::assertSame([], $data);
             $bot->setState($message, 'ask_age', ['name' => $message->text]);
         });
         $this->bot->state('ask_age', function (stdClass $message, Bot $bot, array $data) use (&$log): void {
@@ -454,7 +468,7 @@ final class BotTest extends TestCase
     public function testHandleSwallowsHandlerErrors(): void
     {
         $this->bot->command('boom', function (): void {
-            throw new \RuntimeException('boom');
+            throw new HandlerFailure('boom');
         });
 
         $previous = ini_set('error_log', '/dev/null');
@@ -498,7 +512,8 @@ final class BotTest extends TestCase
         $this->transport->queueResult([Updates::message('/stop'), Updates::message('/stop')]);
 
         $count = 0;
-        $this->bot->command('stop', function ($message, Bot $bot) use (&$count): void {
+        $this->bot->command('stop', function (stdClass $message, Bot $bot) use (&$count): void {
+            self::assertSame('/stop', Value::path($message, 'text'));
             $count++;
             $bot->stop();
         });

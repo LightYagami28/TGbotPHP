@@ -17,6 +17,7 @@ final class Value
 {
     private function __construct()
     {
+        // Static helpers only
     }
 
     public static function int(mixed $value, int $default = 0): int
@@ -29,7 +30,7 @@ final class Value
         return match (true) {
             is_int($value) => $value,
             is_float($value) && is_finite($value) => (int) $value,
-            is_string($value) && preg_match('/^-?\d{1,19}$/', $value) === 1 => (int) $value,
+            is_string($value) && preg_match('/^-?\d{1,19}\z/', $value) === 1 => (int) $value,
             default => null,
         };
     }

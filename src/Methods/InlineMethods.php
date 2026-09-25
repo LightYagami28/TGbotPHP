@@ -78,13 +78,8 @@ trait InlineMethods
     }
 
     /**
-     * Answer inline query
-     *
-     * `$switchPmText`/`$switchPmParameter` are converted to the current
-     * InlineQueryResultsButton format.
-     *
-     * @param array<int, array<string, mixed>> $results
-     * @param array<string, mixed> $options
+     * @param list<array<string, mixed>> $results
+     * @param array<string, mixed> $options button (InlineQueryResultsButton)...
      *
      * @see https://core.telegram.org/bots/api#answerinlinequery
      */
@@ -94,28 +89,18 @@ trait InlineMethods
         ?int $cacheTime = null,
         bool $isPersonal = false,
         ?string $nextOffset = null,
-        ?string $switchPmText = null,
-        ?string $switchPmParameter = null,
         array $options = []
     ): bool {
-        $button = null;
-        if ($switchPmText !== null) {
-            $button = ['text' => $switchPmText, 'start_parameter' => $switchPmParameter ?? ''];
-        }
-
         return $this->apiCallBool('answerInlineQuery', [
             'inline_query_id' => $inlineQueryId,
-            'results' => array_values($results),
+            'results' => $results,
             'cache_time' => $cacheTime,
             'is_personal' => $isPersonal ? true : null,
             'next_offset' => $nextOffset,
-            'button' => $button,
         ], $options);
     }
 
     /**
-     * Answer web app query
-     *
      * @param array<string, mixed> $result InlineQueryResult
      * @return array<string, mixed> SentWebAppMessage
      *

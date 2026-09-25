@@ -6,18 +6,15 @@ namespace TGbotPHP\Framework;
 
 use stdClass;
 use TGbotPHP\Core\UpdateParser;
+use TGbotPHP\Framework\Routing\Command;
+use TGbotPHP\Framework\Routing\PatternTable;
 use TGbotPHP\Support\Value;
 
 /**
- * Command, text, callback, inline query and update routing
+ * Routes updates to handlers
  *
- * Patterns used by callbacks, inline queries and hears() can be:
- * - an exact string:            'menu'
- * - a wildcard pattern:         'page:*'          (captures what "*" matched)
- * - a regular expression:       '/^page:(\d+)$/'  (delimiters / # or ~)
- *
- * Handlers receive the update payload first, then the Bot (when the router
- * is driven by a Bot) and route specific data:
+ * Handlers receive the payload, the Bot (when a Bot drives the router), then
+ * route data:
  *
  *     command:  fn(stdClass $message, Bot $bot, string $args)
  *     hears:    fn(stdClass $message, Bot $bot, array $matches)
@@ -26,36 +23,40 @@ use TGbotPHP\Support\Value;
  *     state:    fn(stdClass $message, Bot $bot, array $stateData)
  *     update:   fn(stdClass $payload, Bot $bot, stdClass $update)
  *     default:  fn(stdClass $message, Bot $bot)
+ *
+ * See Routing\Pattern for the pattern syntax.
  */
 final class Router
 {
-    /** @var array<int|string, callable> Numeric-string keys become integers */
+    /** @var array<string, callable> Keyed by "/name" so numeric names stay strings */
     private array $commands = [];
 
-    /** @var array<int|string, callable> Numeric-string keys become integers */
-    private array $callbacks = [];
+    /** @var array<string, callable> Keyed by "#state" so numeric names stay strings */
+    private array $states = [];
 
-    /** @var array<int|string, callable> Numeric-string keys become integers */
-    private array $inlineHandlers = [];
-
-    /** @var array<int|string, callable> Numeric-string keys become integers */
-    private array $textHandlers = [];
-
-    /** @var array<int|string, callable> Numeric-string keys become integers */
-    private array $stateHandlers = [];
-
-    /** @var array<string, callable[]> */
+    /** @var array<string, list<callable>> */
     private array $updateHandlers = [];
 
-    /** @var callable|null */
-    private $defaultHandler = null;
+    private readonly PatternTable $callbacks;
+    private readonly PatternTable $inlineQueries;
+    private readonly PatternTable $texts;
 
     /** @var callable|null */
-    private $unknownCommandHandler = null;
+    private $fallback = null;
+
+    /** @var callable|null */
+    private $unknownCommand = null;
 
     private ?string $botUsername = null;
 
     private ?Bot $bot = null;
+
+    public function __construct()
+    {
+        $this->callbacks = new PatternTable();
+        $this->inlineQueries = new PatternTable();
+        $this->texts = new PatternTable();
+    }
 
     /**
      * Bot passed to every handler as second argument
@@ -79,49 +80,41 @@ final class Router
     }
 
     /**
-     * Register command handler ("start", "/start" and "START" are equivalent)
+     * "start", "/start" and "START" are the same command
      */
     public function registerCommand(string $command, callable $handler): void
     {
-        $this->commands[$this->normalizeCommand($command)] = $handler;
+        $this->commands['/' . Command::normalizeName($command)] = $handler;
     }
 
-    /**
-     * Register callback query handler
-     */
-    public function registerCallback(string $data, callable $handler): void
+    public function registerCallback(string $pattern, callable $handler): void
     {
-        $this->callbacks[$data] = $handler;
+        $this->callbacks->add($pattern, $handler);
     }
 
-    /**
-     * Register inline query handler
-     */
-    public function registerInlineQuery(string $query, callable $handler): void
+    public function registerInlineQuery(string $pattern, callable $handler): void
     {
-        $this->inlineHandlers[$query] = $handler;
+        $this->inlineQueries->add($pattern, $handler);
     }
 
     /**
-     * Register handler for text messages (or media captions) matching a pattern
+     * Handler for text messages, or media captions, matching a pattern
      */
     public function registerText(string $pattern, callable $handler): void
     {
-        $this->textHandlers[$pattern] = $handler;
+        $this->texts->add($pattern, $handler);
     }
 
     /**
-     * Register handler for messages received while a conversation is in the given state
+     * Handler for messages received while a conversation is in the given state
      */
     public function registerState(string $state, callable $handler): void
     {
-        $this->stateHandlers[$state] = $handler;
+        $this->states['#' . $state] = $handler;
     }
 
     /**
-     * Register handler for an update type ("message", "chat_member", "pre_checkout_query", ...)
-     *
-     * Type handlers run when no more specific route handled the update.
+     * Handler for an update type ("chat_member", "pre_checkout_query", ...), run when no other route matched
      */
     public function registerUpdate(string $type, callable $handler): void
     {
@@ -129,38 +122,28 @@ final class Router
     }
 
     /**
-     * Set handler for text messages that match no other route
+     * Handler for text messages that match no other route
      */
     public function setDefaultHandler(callable $handler): void
     {
-        $this->defaultHandler = $handler;
+        $this->fallback = $handler;
     }
 
-    /**
-     * Set handler for commands that are not registered
-     */
     public function setUnknownCommandHandler(callable $handler): void
     {
-        $this->unknownCommandHandler = $handler;
+        $this->unknownCommand = $handler;
     }
 
     /**
-     * Route a complete update
-     *
      * @param array<string, mixed> $stateData
-     * @return bool Whether a handler was found
+     * @return bool Whether a handler ran
      */
     public function dispatch(stdClass $update, ?string $state = null, array $stateData = []): bool
     {
         $type = UpdateParser::getType($update);
+        $payload = $type !== null ? Value::object($update->$type) : null;
 
-        if ($type === null) {
-            return false;
-        }
-
-        $payload = Value::object($update->$type);
-
-        if ($payload === null) {
+        if ($type === null || $payload === null) {
             return false;
         }
 
@@ -171,227 +154,129 @@ final class Router
             default => false,
         };
 
-        if ($handled || !isset($this->updateHandlers[$type])) {
-            return $handled;
-        }
-
-        foreach ($this->updateHandlers[$type] as $handler) {
-            $this->invoke($handler, $payload, $update);
-        }
-
-        return true;
+        return $handled || $this->runUpdateHandlers($type, $payload, $update);
     }
 
     /**
-     * Handle message routing
-     *
-     * Order: commands, conversation state, text patterns, default handler.
+     * Order: commands, conversation state, text patterns, fallback
      *
      * @param array<string, mixed> $stateData
      */
     public function handleMessage(stdClass $message, ?string $state = null, array $stateData = []): bool
     {
-        $text = isset($message->text) && is_string($message->text) ? $message->text : null;
+        $text = Value::nullableString(Value::path($message, 'text'));
+        $content = $text ?? Value::nullableString(Value::path($message, 'caption'));
+        $command = $text !== null ? $this->routeCommand($text, $message) : null;
 
-        if ($text !== null && str_starts_with($text, '/')) {
-            $result = $this->handleCommand($text, $message);
-            if ($result !== null) {
-                return $result;
-            }
+        if ($command !== null) {
+            return $command;
         }
 
-        if ($state !== null && isset($this->stateHandlers[$state])) {
-            $this->invoke($this->stateHandlers[$state], $message, $stateData);
-            return true;
-        }
-
-        $content = $text ?? (isset($message->caption) && is_string($message->caption) ? $message->caption : null);
-
-        if ($content !== null) {
-            foreach ($this->textHandlers as $pattern => $handler) {
-                $matches = self::match((string) $pattern, $content);
-                if ($matches !== null) {
-                    $this->invoke($handler, $message, $matches);
-                    return true;
-                }
-            }
-        }
-
-        if ($text !== null && $this->defaultHandler !== null) {
-            $this->invoke($this->defaultHandler, $message);
-            return true;
-        }
-
-        return false;
+        return $this->routeState($message, $state, $stateData)
+            || $this->routeText($message, $content)
+            || $this->routeFallback($message, $text);
     }
 
-    /**
-     * Handle callback routing
-     */
     public function handleCallback(stdClass $callback): bool
     {
-        $data = Value::string(Value::path($callback, 'data'));
-
-        return $this->routeByPattern($this->callbacks, $data, $callback);
+        return $this->routeByPattern($this->callbacks, Value::string(Value::path($callback, 'data')), $callback);
     }
 
-    /**
-     * Handle inline query routing
-     */
     public function handleInlineQuery(stdClass $query): bool
     {
-        $text = Value::string(Value::path($query, 'query'));
-
-        return $this->routeByPattern($this->inlineHandlers, $text, $query);
+        return $this->routeByPattern($this->inlineQueries, Value::string(Value::path($query, 'query')), $query);
     }
 
     /**
-     * Match a value against an exact, wildcard or regex pattern
-     *
-     * @return array<int|string, string>|null Captured groups (index 0 is the full match), or null
+     * @return list<string> Registered command names
      */
-    public static function match(string $pattern, string $value): ?array
+    public function getCommands(): array
     {
-        if (self::isRegex($pattern)) {
-            return preg_match($pattern, $value, $matches) === 1 ? $matches : null;
-        }
-
-        if (str_contains($pattern, '*')) {
-            $regex = '/^' . str_replace('\*', '(.*)', preg_quote($pattern, '/')) . '$/su';
-
-            return preg_match($regex, $value, $matches) === 1 ? $matches : null;
-        }
-
-        return $pattern === $value ? [$value] : null;
+        return array_map(static fn(string $key): string => substr($key, 1), array_keys($this->commands));
     }
 
     /**
-     * Parse a command message
-     *
-     * @return array{command: string, username: ?string, args: string}|null
+     * @return bool|null true when handled, false when addressed to another bot, null to try the next routes
      */
-    public static function parseCommand(string $text): ?array
+    private function routeCommand(string $text, stdClass $message): ?bool
     {
-        if (preg_match('/^\/([A-Za-z0-9_]{1,64})(?:@([A-Za-z0-9_]{3,}))?(?:\s+(.*))?$/su', $text, $matches) !== 1) {
+        $command = Command::parse($text);
+
+        if ($command === null) {
             return null;
         }
 
-        return [
-            'command' => strtolower($matches[1]),
-            'username' => ($matches[2] ?? '') !== '' ? strtolower($matches[2]) : null,
-            'args' => trim($matches[3] ?? ''),
-        ];
-    }
-
-    /**
-     * @param array<int|string, callable> $handlers
-     */
-    private function routeByPattern(array $handlers, string $value, stdClass $payload): bool
-    {
-        if (isset($handlers[$value])) {
-            $this->invoke($handlers[$value], $payload, [$value]);
-            return true;
-        }
-
-        foreach ($handlers as $pattern => $handler) {
-            $pattern = (string) $pattern;
-            if (!self::isRegex($pattern) && !str_contains($pattern, '*')) {
-                continue;
-            }
-
-            $matches = self::match($pattern, $value);
-            if ($matches !== null) {
-                $this->invoke($handler, $payload, $matches);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Handle command parsing and routing
-     *
-     * @return bool|null null when the message should continue through the other routes
-     */
-    private function handleCommand(string $text, stdClass $message): ?bool
-    {
-        $parsed = self::parseCommand($text);
-
-        if ($parsed === null) {
-            return null;
-        }
-
-        // Command explicitly addressed to another bot
-        if ($parsed['username'] !== null && $this->botUsername !== null && $parsed['username'] !== $this->botUsername) {
+        if (!$command->isAddressedTo($this->botUsername)) {
             return false;
         }
 
-        if (isset($this->commands[$parsed['command']])) {
-            $this->invoke($this->commands[$parsed['command']], $message, $parsed['args']);
-            return true;
+        $handler = $this->commands['/' . $command->name] ?? $this->unknownCommand;
+
+        if ($handler !== null) {
+            $this->invoke($handler, $message, $command->args);
         }
 
-        if ($this->unknownCommandHandler !== null) {
-            $this->invoke($this->unknownCommandHandler, $message, $parsed['args']);
-            return true;
+        return $handler !== null ? true : null;
+    }
+
+    /**
+     * @param array<string, mixed> $stateData
+     */
+    private function routeState(stdClass $message, ?string $state, array $stateData): bool
+    {
+        $handler = $state !== null ? $this->states['#' . $state] ?? null : null;
+
+        if ($handler !== null) {
+            $this->invoke($handler, $message, $stateData);
         }
 
-        return null;
+        return $handler !== null;
+    }
+
+    private function routeText(stdClass $message, ?string $content): bool
+    {
+        return $content !== null && $this->routeByPattern($this->texts, $content, $message);
+    }
+
+    private function routeFallback(stdClass $message, ?string $text): bool
+    {
+        if ($text === null || $this->fallback === null) {
+            return false;
+        }
+
+        $this->invoke($this->fallback, $message);
+
+        return true;
+    }
+
+    private function routeByPattern(PatternTable $table, string $value, stdClass $payload): bool
+    {
+        $route = $table->find($value);
+
+        if ($route !== null) {
+            $this->invoke($route[0], $payload, $route[1]);
+        }
+
+        return $route !== null;
+    }
+
+    private function runUpdateHandlers(string $type, stdClass $payload, stdClass $update): bool
+    {
+        $handlers = $this->updateHandlers[$type] ?? [];
+
+        foreach ($handlers as $handler) {
+            $this->invoke($handler, $payload, $update);
+        }
+
+        return $handlers !== [];
     }
 
     private function invoke(callable $handler, stdClass $payload, mixed ...$extra): void
     {
         if ($this->bot !== null) {
             $handler($payload, $this->bot, ...$extra);
-            return;
+        } else {
+            $handler($payload, ...$extra);
         }
-
-        $handler($payload, ...$extra);
-    }
-
-    private static function isRegex(string $pattern): bool
-    {
-        if (strlen($pattern) < 3 || !in_array($pattern[0], ['/', '#', '~'], true)) {
-            return false;
-        }
-
-        $end = strrpos($pattern, $pattern[0]);
-        if ($end === false || $end === 0 || preg_match('/^[imsxuUXJD]*$/', substr($pattern, $end + 1)) !== 1) {
-            return false;
-        }
-
-        return @preg_match($pattern, '') !== false;
-    }
-
-    /**
-     * Normalize command name
-     */
-    private function normalizeCommand(string $command): string
-    {
-        $command = strtolower(ltrim(trim($command), '/'));
-        $at = strpos($command, '@');
-
-        return $at === false ? $command : substr($command, 0, $at);
-    }
-
-    /**
-     * Get all registered commands
-     *
-     * @return array<int|string, callable>
-     */
-    public function getCommands(): array
-    {
-        return $this->commands;
-    }
-
-    /**
-     * Get all registered callbacks
-     *
-     * @return array<int|string, callable>
-     */
-    public function getCallbacks(): array
-    {
-        return $this->callbacks;
     }
 }

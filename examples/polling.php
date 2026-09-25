@@ -22,8 +22,7 @@ $debugLog = Value::env('TGBOTPHP_DEBUG_LOG');
 
 $bot = new Bot(new Config(
     token: Value::env('TELEGRAM_BOT_TOKEN') ?? '',
-    debug: $debugLog !== null,
-    debugFile: $debugLog ?? false,
+    debug: $debugLog ?? false,
 ));
 
 $bot->setMyCommands([

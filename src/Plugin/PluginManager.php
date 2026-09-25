@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace TGbotPHP\Plugin;
+use TGbotPHP\Exceptions\PluginException;
 
 /**
  * Plugin registry and priority-ordered hooks
@@ -18,7 +19,7 @@ class PluginManager
     public function register(string $name, PluginInterface $plugin): void
     {
         if (isset($this->plugins[$name])) {
-            throw new \RuntimeException("Plugin '$name' already registered");
+            throw new PluginException("Plugin '$name' already registered");
         }
 
         $this->plugins[$name] = $plugin;

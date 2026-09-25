@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Utilities;
 
-use TGbotPHP\Framework\Router;
+use TGbotPHP\Framework\Routing\Command;
 
 class MessageParser
 {
@@ -15,16 +15,16 @@ class MessageParser
      */
     public static function parseCommand(string $text): ?array
     {
-        $parsed = Router::parseCommand($text);
+        $command = Command::parse($text);
 
-        if ($parsed === null) {
+        if ($command === null) {
             return null;
         }
 
         return [
-            'command' => $parsed['command'],
-            'args' => $parsed['args'],
-            'username' => $parsed['username'],
+            'command' => $command->name,
+            'args' => $command->args,
+            'username' => $command->username,
         ];
     }
 

@@ -8,104 +8,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.0.0] - 2026-09-25
 
 ### Fixed
-- Methods returning `True` (`deleteMessage`, `banChatMember`, `setWebhook`, ...) no longer throw a `TypeError` under `strict_types`. The same fix covers `getChatMemberCount`, which returns an integer.
-- File uploads now work: requests with files are sent as `multipart/form-data` instead of carrying a wrong `x-www-form-urlencoded` header, and plain requests are properly URL-encoded.
-- `file_id`s and URLs can be passed to `sendPhoto`, `sendDocument`, ... Before, every string was wrapped in `CURLFile`.
-- Telegram error descriptions are kept on HTTP 4xx responses. Before, they were replaced by a generic "HTTP 400" message.
-- Commands registered as `start` now match `/start`. `/cmd@botname` is handled properly, and commands addressed to other bots are ignored once the username is known.
-- `null` parameters are no longer sent as empty strings.
-- `RateLimiter` used a window that slid forward on every hit. It now uses a real fixed window.
+- Methods returning `True` or an integer (`deleteMessage`, `banChatMember`, `getChatMemberCount`...) threw a `TypeError` under `strict_types`.
+- File uploads were sent with a wrong `Content-Type`, and every string was treated as a local file, so file_ids and URLs could not be sent.
+- Commands registered as `start` never matched `/start`; `/cmd@botname` was not handled.
+- Telegram error descriptions were replaced by a generic "HTTP 400" message.
+- `answerCallbackQuery` was missing, so buttons kept loading on the client.
+- Numeric callback data, commands and keyboard labels (`'123'`) broke routing, because PHP turns such array keys into integers.
+- `Formatter::escape()` produced `&apos;`, which Telegram rejects.
+- The token and secret token checks accepted a trailing newline.
+- `null` parameters were sent as empty strings.
+- `RateLimiter` used a window that slid forward on every hit.
 - `ArrayCache::has()` returned `false` for stored `null` values.
-- `composer.json` required PHP ≥ 7.0 although the code needs 8.2. The `test` script pointed to a missing file, and CI ignored failures (`|| true`).
 - The CLI used a wrong autoloader path when installed as a dependency, and always exited with status 0.
-- `Formatter::escape()` produced `&apos;`, which Telegram rejects ("can't parse entities"). Quotes are now escaped as `&quot;` and `&#039;`.
-- Numeric callback data, commands and keyboard labels (`'123'`) no longer break routing. PHP turns such array keys into integers.
-- `UpdateParser::getType()` could return an integer for numeric property names.
+- `composer.json` and the README declared the MIT license, but `LICENSE` (inherited from the Apache-licensed upstream repository) is the Apache License 2.0. The metadata now says Apache-2.0.
 
 ### Added
-- `Bot::handle()`: webhook entry point with secret token validation (403) and JSON validation (400).
-- `Bot::poll()`: long polling loop with backoff, 429 handling, `stop()` and `polling.*` events.
-- Routing: `hears()`, `inlineQuery()`, `onUpdate()` for any update type, `fallback()`, `onUnknownCommand()`, and wildcard and regex patterns for callbacks and inline queries. Command arguments and deep-link payloads are passed to handlers.
-- Handlers receive the `Bot` as second argument.
-- Onion middleware (`$next`). A simple middleware can return `false` to stop processing.
-- Conversations: `useConversations()`, `state()`, `setState()`, `updateStateData()`, `clearState()`, `ConversationManager`.
-- `Bot::reply()` (same chat and forum topic), `Bot::answer()`, `onError()`, plugins with `BotPluginInterface::boot()`.
-- `InputFile::fromPath()` and `InputFile::fromContents()`, with automatic `attach://` handling for media groups and sticker sets.
-- `Http\TransportInterface` and `CurlTransport` for custom HTTP clients and testing.
-- 429 retries (`Config::$maxRetries`, `$maxRetryDelay`), local Bot API server support (`Config::$apiBaseUrl`) and a configurable timeout.
-- `TooManyRequestsException` and `NetworkException`. `ApiException` gains `getApiMethod()`, `getParameters()` and `getMigrateToChatId()`.
-- New methods: `answerCallbackQuery`, `editMessageCaption`, `editMessageMedia`, `editMessageReplyMarkup`, `deleteMessages`, `forwardMessages`, `copyMessages`, `stopPoll`, `pinChatMessage`, `unpinChatMessage`, `getChatMemberCount`, `setChatPhoto`, `deleteChatPhoto`, `setChatPermissions`, invite links, join requests, chat sticker sets, `banChatSenderChat`, `unbanChatSenderChat`, `setMyName`, `setMyDescription`, `setMyShortDescription` and their getters, `setChatMenuButton`, `getChatMenuButton`, default administrator rights, `getForumTopicIconStickers`, `unpinAllGeneralForumTopicMessages`, `createInvoiceLink`, `refundStarPayment`, `getStarTransactions`, current sticker set methods, `logOut`, `close`, `getUserChatBoosts`, `getFileUrl`, `downloadFile`.
-- A trailing `$options` array on sending and editing methods, for any optional or newer API parameter.
-- `FileCache`: a persistent cache for webhooks that does not unserialize objects.
-- `RateLimiter::middleware()` and `RateLimiter::availableIn()`.
-- `WebhookValidator::isTelegramIp()` and `WebhookValidator::validateWebAppData()`.
-- `Formatter`: HTML and MarkdownV2 escaping and formatting helpers.
-- `InlineKeyboard` fluent builder, and `Keyboard::reply()`, `remove()`, `forceReply()` and `pagination()`.
-- `UpdateParser::getType()`, `getPayload()`, `getChat()`, `getUser()` and `fromArray()`.
-- `MessageParser::parseArguments()`.
-- CLI: `commands:list`, `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
-- A PHPUnit test suite (109 unit tests) and runnable examples in `examples/`.
-- An end-to-end suite against the real Telegram API (`tests/E2E`, `--testsuite e2e`), enabled by `TELEGRAM_BOT_TOKEN` and `TELEGRAM_TEST_CHAT_ID`.
-- PHPStan **level 10** (max) with `phpstan-strict-rules` and `phpstan-phpunit`, on `src/`, `tests/`, `examples/` and `bin/`, with no baseline and no ignored errors.
-- Every API result is validated against the type the method declares (`apiCallObject()`, `apiCallList()`, `apiCallBool()`, ...). An unexpected payload throws `ApiException` instead of a `TypeError` deep in your handler.
-- `Support\Value`: type-safe readers for decoded JSON and update payloads (`Value::int()`, `string()`, `id()`, `path()`, `map()`, `env()`).
-- `Bot::edit()` edits the message a callback button belongs to, including inline messages. `Bot::chatId()` returns the chat id of any payload.
-
-### Security
-- The debug log redacts `secret_token` and `provider_token`. The bot token never appears in it.
-- `Config` is immutable: its properties are `readonly`, so the token and API URL cannot be changed after validation.
-- cURL never follows redirects and only speaks HTTP(S).
-- Update payloads are read through `Support\Value`: malformed input can no longer be cast to `"Array"` strings or accidental integers.
+- `Bot::handle()` for webhooks (secret token check, 403/400 responses) and `Bot::poll()` for long polling (backoff, 429 handling, `stop()`).
+- Routing: `hears()`, `inlineQuery()`, `onUpdate()` for any update type, `fallback()`, `onUnknownCommand()`, and exact, `prefix:*` or regex patterns for callbacks and inline queries. Handlers receive the `Bot` and the route data.
+- Middleware can stop processing (`return false`) or wrap it (`$next`).
+- Conversations: `useConversations()`, `state()`, `setState()`, `updateStateData()`, `clearState()`.
+- `Bot::reply()`, `edit()` (returns `false` when the content did not change), `answer()`, `chatId()`, `onError()`, and plugins with `BotPluginInterface::boot()`.
+- `InputFile` for uploads, with automatic `attach://` references for albums and sticker sets. `downloadFile()` and `getFileUrl()`.
+- About 40 API methods, including `answerCallbackQuery`, `editMessageCaption`, `editMessageMedia`, `deleteMessages`, `copyMessages`, invite links, join requests, bot profile methods, Telegram Stars payments and the current sticker set methods.
+- API results are checked against the declared return type; a mismatch throws `ApiException`.
+- `TooManyRequestsException`, `NetworkException`, `StorageException` and `PluginException`. `ApiException` gains `getApiMethod()`, `getParameters()`, `getMigrateToChatId()` and `isMessageNotModified()`.
+- `Http\TransportInterface`, to use another HTTP client or a fake one in tests. Support for a local Bot API server.
+- `FileCache`, a persistent cache for webhooks that never unserializes objects. `RateLimiter::middleware()`.
+- `WebhookValidator::isTelegramIp()` and `validateWebAppData()` (Mini Apps).
+- `Formatter` (HTML and MarkdownV2 escaping), the `InlineKeyboard` builder, `Keyboard::reply()`, `remove()`, `forceReply()` and `pagination()`.
+- `Support\Value` and `Support\Payload` to read update payloads with types.
+- CLI commands `commands:list` and `commands:delete`, `webhook:set --secret --drop-pending`, and the `TELEGRAM_BOT_TOKEN` environment variable.
+- Unit tests, an end-to-end suite against the real API (`--testsuite e2e`), PHPStan at level 10 with strict rules, and runnable examples.
 
 ### Changed
-- Requires **PHP 8.4+** with ext-curl and ext-json. CI tests PHP 8.4 and 8.5, plus 8.6 (in development) as a non-blocking job.
-- Uses PHP 8.3 and 8.4 features: typed class constants, `#[\Override]`, and PHPUnit 13.
-- `Bot::edit()` returns `false` instead of throwing when the new content equals the current one ("message is not modified"). `ApiException::isMessageNotModified()` detects that case.
-- `editMessageReplyMarkup()` with a `null` markup explicitly removes the inline keyboard.
-- `disableWebPagePreview` is sent as `link_preview_options`, and `switchPmText` as the `button` object of `answerInlineQuery`.
-- `parse_mode` is only sent with a caption when there is a caption.
-- `Config` validates the token format (`<digits>:<secret>`) and the secret token charset.
-- The Dockerfile runs as a non-root user and starts the long polling example.
+- Requires PHP 8.4. CI runs on PHP 8.4 and 8.5, and on 8.6 (in development) without blocking.
+- `Bot` is split into `Kernel`, `Router`, `Runner\WebhookHandler`, `Runner\LongPolling` and three traits; its public methods are unchanged.
+- Rarely used optional parameters moved into the `$options` array (see the migration notes).
+- `editMessageReplyMarkup()` without a markup removes the inline keyboard.
+- The debug log escapes line breaks and redacts `secret_token` and `provider_token`.
+- cURL does not follow redirects and only allows HTTP and HTTPS.
+- GitHub Actions are pinned to commit SHAs and run with read-only permissions. The Docker image runs as an unprivileged user and only contains the files the bot needs.
 
 ### Deprecated
-- `kickChatMember`, `pinMessage`, `unpinMessage` and `getChatMembersCount`. They are aliases of the current method names.
+- `kickChatMember`, `pinMessage`, `unpinMessage` and `getChatMembersCount`, now aliases of the current method names.
 
-### Breaking changes
-- Local files must be wrapped in `InputFile::fromPath()`. A plain string is now sent as a `file_id` or URL.
-- `createNewStickerSet()` and `addStickerToSet()` follow the current API: they take a list of `InputSticker` objects.
-- `uploadStickerFile()` and `setChatPhoto()` take an `InputFile`.
-- `getMessageReactions()` was removed. It is not a Bot API method and always failed.
-- Methods that returned `array|null` now return `array`. Errors always throw.
-- `Bot::command()`, `callback()`, `middleware()` and `on()` return the bot for chaining instead of `void`.
-- An exception thrown by a handler goes to `error` listeners when there are any. It is re-thrown only when there are none.
+### Removed
+- `getMessageReactions()`: it is not a Bot API method.
+- `ApiClient::getBotToken()`: use `getToken()`.
+- `Router::match()` and `Router::parseCommand()`: use `Routing\Pattern` and `Routing\Command`.
+- `config.example.php`, unused by the library.
+
+### Migrating from 2.x
+- Wrap local files in `InputFile::fromPath()`; a plain string is sent as a file_id or URL.
+- `new Bot($token, $debug, $debugFile, $secretToken)` becomes `new Bot(new Config($token, secretToken: ..., debug: ...))`. `debug` takes `true` or a log file path.
+- `Config`: `maxRetries`/`maxRetryDelay` become `retry: new RetryPolicy(maxRetries, maxDelay)`. Its properties are read-only.
+- `WebhookValidator::validate($body, $secret, $header)` becomes `validate($secret, $header)`.
+- Optional parameters now passed through `$options`:
+  - `sendLocation`/`editMessageLiveLocation`: `horizontal_accuracy`, `live_period`, `heading`, `proximity_alert_radius`
+  - `sendVenue`: `foursquare_*`, `google_place_*`
+  - `sendPoll`: everything except `type` (the answers argument is now named `$answers`)
+  - `sendAnimation`, `sendVideo`: `duration`, `width`, `height`, `thumbnail`, `supports_streaming`
+  - `sendInvoice`: `provider_token`, `max_tip_amount`, `suggested_tip_amounts`
+  - `answerInlineQuery`: `button` replaces `switchPmText`/`switchPmParameter`
+- `promoteChatMember()` takes the rights as an array: `['can_delete_messages' => true]`.
+- `createNewStickerSet()` and `addStickerToSet()` take `InputSticker` objects, as in the current API.
+- Methods return `array` or `bool` instead of `array|null`; errors always throw.
+- A handler exception goes to `onError()` listeners when there are any, and is re-thrown otherwise.
 
 ## [2.0.0] - 2026-08-17
 
-### ✨ Major Release - Secure by Default
-
-**Complete rewrite with security hardening and PHP 8.4 features.**
-
-### Security Fixes ✅
-- ✅ HTTPS enforcement integrated
-- ✅ Path traversal protection (directory validation)
-- ✅ XSS protection (output escaping)
-- ✅ JSON injection prevention (strict parsing)
-- ✅ Webhook secret token verification (hash_equals)
-- ✅ Telegram IP anti-spoofing validation
-- ✅ File resource leak fixed
-- ✅ SSL/TLS certificate verification
-- ✅ All OWASP vulnerabilities addressed
-
-### Added
-- PHP 8.4+ features (typed properties, named arguments, match expressions, null-safe operators)
-- Webhook signature verification support
-- HTTPS enforcement at class level
-- Input validation and sanitization
-- Output escaping and template safety
-- Comprehensive error handling
-- File path validation for media
-- URL validation for links
-- Complete security documentation
+### Changed
+- Rewrote the single-file `botTG` class as a PSR-4 package: `ApiClient` with one trait per API area, `Bot`, router, middleware, events, cache, sessions and a CLI.
+- Uses typed properties, named arguments and `match`.
+- API requests verify TLS certificates.
+- Webhook secret tokens are compared with `hash_equals()`.
 
 ## [1.0.0] - 2024
 
@@ -146,78 +122,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `checkIp()` - Validate Telegram IP
 
 ### Examples
-- `botesempio.php` - Feature-complete example bot
+- `botesempio.php` - Example bot using every feature
 - `echobot.php` - Simple echo bot with IP validation
 
 ### Known Issues
-- ❌ Token exposure via GET parameter in examples
-- ❌ No HTTPS enforcement
-- ❌ Path traversal vulnerability in photo handling
-- ❌ Insufficient input validation
-- ❌ File resource leak (line 400)
-- ❌ No rate limiting
-- ❌ No security headers
-
-## Version History
-
-### Development Status
-This library is actively developed and marked as "W.I.P. (Work in Progress)" in original documentation.
-
-- Ready for small projects
-- Actively maintained and updated
-- Use in production with caution (see SECURITY.md)
-
----
-
-## Upgrade Guide
-
-### From Version < 1.0.0
-
-If you're upgrading from earlier versions:
-
-1. Review SECURITY.md for critical issues
-2. Update token handling (don't use GET parameter)
-3. Add HTTPS enforcement to webhook
-4. Implement input validation
-5. Consider implementing rate limiting
-6. Update error handling
-
-## Future Roadmap
-
-### Version 1.1.0 (Planned)
-- [ ] Fix file resource leak
-- [ ] Add security headers
-- [ ] Implement webhook signature validation
-- [ ] Add rate limiting utilities
-- [ ] Improve error handling
-- [ ] Add inline query support
-
-### Version 1.2.0 (Planned)
-- [ ] Add more Telegram Bot API methods
-- [ ] Support for inline mode
-- [ ] Payment handling
-- [ ] Game scores
-- [ ] Sticker pack management
-
-### Version 2.0.0 (Future)
-- [ ] Namespace support
-- [ ] PSR-4 autoloading
-- [ ] Async request support
-- [ ] Improved type hinting
-- [ ] Event-based architecture
-
-## Deprecations
-
-Currently no deprecations.
-
-## Security
-
-For security vulnerabilities, see [SECURITY.md](SECURITY.md).
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-**Note:** This changelog is maintained starting from version 1.0.0. Earlier development history may be incomplete.
+- Token exposed through a GET parameter in the examples
+- No HTTPS enforcement
+- Path traversal in photo handling
+- Insufficient input validation
+- File handle leak
+- No rate limiting

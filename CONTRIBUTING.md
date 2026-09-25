@@ -1,28 +1,21 @@
-# Contributing to TGbotPHP
+# Contributing
 
-Thank you for your interest in contributing!
+1. Fork the repository and create a branch.
+2. Make your change, with tests.
+3. Run the checks:
 
-## Getting Started
+   ```bash
+   composer install
+   composer check   # PHPUnit + PHPStan level 10
+   ```
 
-1. Fork the repository
-2. Clone your fork
-3. Create a feature branch: `git checkout -b feature/your-feature`
-4. Make your changes
-5. Commit: `git commit -m "feat: description"`
-6. Push: `git push origin feature/your-feature`
-7. Open a Pull Request
+4. Open a pull request describing what changed and why.
 
 ## Guidelines
 
-- Follow PSR-12 coding standards
-- Add tests for new features
-- Update documentation
-- Keep commits atomic and descriptive
+- PSR-12 code style, `declare(strict_types=1)` in every file.
+- PHPStan must pass at level 10 without baseline entries or `@phpstan-ignore`.
+- New API methods follow [docs/development.md](docs/development.md#adding-an-api-method).
+- User-facing changes go in [CHANGELOG.md](CHANGELOG.md).
 
-## Code of Conduct
-
-Be respectful and professional.
-
-## Questions?
-
-Open an issue or discussion.
+Report security problems privately, as described in [SECURITY.md](SECURITY.md).

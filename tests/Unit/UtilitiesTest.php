@@ -6,7 +6,8 @@ namespace TGbotPHP\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use TGbotPHP\Core\UpdateParser;
-use TGbotPHP\Framework\Router;
+use TGbotPHP\Framework\Routing\Command;
+use TGbotPHP\Framework\Routing\Pattern;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Utilities\Formatter;
 use TGbotPHP\Utilities\InlineKeyboard;
@@ -103,12 +104,31 @@ final class UtilitiesTest extends TestCase
 
     public function testRouterPatternMatching(): void
     {
-        self::assertSame(['exact'], Router::match('exact', 'exact'));
-        self::assertNull(Router::match('exact', 'other'));
-        self::assertSame(['page:12', '12'], Router::match('page:*', 'page:12'));
-        self::assertSame(['id=7', '7'], Router::match('/^id=(\d+)$/', 'id=7'));
-        self::assertNull(Router::match('/^id=(\d+)$/', 'id=x'));
-        self::assertSame(['/[a/'], Router::match('/[a/', '/[a/'), 'Invalid regexes are matched literally');
+        self::assertSame(['exact'], new Pattern('exact')->match('exact'));
+        self::assertNull(new Pattern('exact')->match('other'));
+        self::assertSame(['page:12', '12'], new Pattern('page:*')->match('page:12'));
+        self::assertSame(["page:1\n2", "1\n2"], new Pattern('page:*')->match("page:1\n2"));
+        self::assertSame(['id=7', '7'], new Pattern('/^id=(\d+)$/')->match('id=7'));
+        self::assertNull(new Pattern('/^id=(\d+)$/')->match('id=x'));
+        self::assertSame(['/[a/'], new Pattern('/[a/')->match('/[a/'), 'Invalid regexes are matched literally');
+        self::assertTrue(new Pattern('menu')->isExact());
+        self::assertFalse(new Pattern('page:*')->isExact());
+    }
+
+    public function testCommandParsing(): void
+    {
+        $command = Command::parse("/Start@My_Bot  deep link\npayload");
+        self::assertNotNull($command);
+        self::assertSame('start', $command->name);
+        self::assertSame('my_bot', $command->username);
+        self::assertSame("deep link\npayload", $command->args);
+        self::assertTrue($command->isAddressedTo('my_bot'));
+        self::assertTrue($command->isAddressedTo(null));
+        self::assertFalse($command->isAddressedTo('other_bot'));
+
+        self::assertNull(Command::parse('/start-now'));
+        self::assertNull(Command::parse('/énorme'));
+        self::assertSame('start', Command::normalizeName(' /START@my_bot '));
     }
 
     public function testUpdateParserHelpers(): void

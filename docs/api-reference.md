@@ -1,4 +1,4 @@
-# TGbotPHP API Reference
+# API reference
 
 ## Bot
 
@@ -8,8 +8,9 @@
 use TGbotPHP\Core\Config;
 use TGbotPHP\Framework\Bot;
 
-$bot = new Bot('123456:ABC...');                        // token
-$bot = new Bot(new Config('123456:ABC...', timeout: 20)); // or a Config
+$bot = new Bot('123456:ABC...');                          // token
+$bot = new Bot(new Config('123456:ABC...', timeout: 20));   // or a Config
+$bot = new Bot('123456:ABC...', new MyTransport());         // custom HTTP transport
 ```
 
 ### Handlers
@@ -90,24 +91,28 @@ $bot->on('update.received', fn(stdClass $update) => ...);
 ## Config
 
 ```php
+use TGbotPHP\Core\Config;
+use TGbotPHP\Core\RetryPolicy;
+
 new Config(
     token: '123456:ABC...',
-    debug: false,                 // log every request and response
-    debugFile: false,             // log file (false: PHP error log)
     secretToken: false,           // webhook secret token (1-256 chars: A-Z a-z 0-9 _ -)
-    enforceHttps: true,
-    apiBaseUrl: 'https://api.telegram.org', // local Bot API server
+    apiBaseUrl: Config::DEFAULT_API_URL, // or a local Bot API server
+    enforceHttps: true,           // set to false only for a local server over plain HTTP
     timeout: 10,                  // seconds; long polling adds its own timeout on top
-    maxRetries: 1,                // retries after a 429 error
-    maxRetryDelay: 30,            // never wait longer than this for a retry
+    retry: new RetryPolicy(maxRetries: 1, maxDelay: 30), // retries after a 429 error
+    debug: false,                 // true: PHP error log; a string: log file path
 );
+```
+
+`Config` is immutable: its properties are read-only.
 ```
 
 ## ApiClient methods
 
-Methods return the decoded `result`: an array for objects, `bool` for actions. Errors throw an exception.
+Methods return the decoded `result`: an array for objects, `bool` for actions. A response of the wrong type, or an error, throws an exception.
 
-Sending and editing methods accept a trailing `array $options` merged into the request, for example:
+Methods take the required parameters and the common optional ones as arguments. Every other optional parameter goes in the trailing `array $options`, using the names from the Telegram documentation:
 
 ```php
 $bot->sendMessage($chatId, 'Hi', options: [
@@ -115,7 +120,14 @@ $bot->sendMessage($chatId, 'Hi', options: [
     'reply_parameters' => ['message_id' => 42],
     'protect_content' => true,
 ]);
+
+$bot->sendPoll($chatId, 'Lunch?', ['Pizza', 'Sushi'], type: 'regular', options: ['allows_multiple_answers' => true]);
+$bot->sendLocation($chatId, 45.46, 9.19, options: ['live_period' => 600]);
+$bot->promoteChatMember($chatId, $userId, ['can_delete_messages' => true, 'can_pin_messages' => true]);
+$bot->sendInvoice($chatId, 'Pro plan', 'One month', 'order-42', 'XTR', [['label' => 'Pro', 'amount' => 100]]);
 ```
+
+A parameter Telegram adds in the future works right away through `$options`.
 
 Parameter conversion is automatic. `null` values are dropped, booleans become `true`/`false`, and arrays or `JsonSerializable` objects (such as `InlineKeyboard`) are JSON encoded.
 
@@ -244,7 +256,7 @@ $token  = Value::env('TELEGRAM_BOT_TOKEN');                 // null if unset or 
 ```php
 use TGbotPHP\Security\WebhookValidator;
 
-WebhookValidator::validate($body, $secret, WebhookValidator::getSecretToken());
+WebhookValidator::validate($secret, WebhookValidator::getSecretToken());
 WebhookValidator::isTelegramIp($_SERVER['REMOTE_ADDR']);
 $data = WebhookValidator::validateWebAppData($initData, $token, maxAge: 3600); // null if invalid
 ```

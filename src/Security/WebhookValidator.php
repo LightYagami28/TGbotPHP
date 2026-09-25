@@ -20,21 +20,13 @@ class WebhookValidator
     ];
 
     /**
-     * Validate the X-Telegram-Bot-Api-Secret-Token header
+     * Check the X-Telegram-Bot-Api-Secret-Token header in constant time
      *
-     * Returns true when no secret is configured.
+     * An empty $secretToken means no secret is configured: every request passes.
      */
-    public static function validate(string $body, string $secretToken, ?string $xTelegramBotApiSecretToken = null): bool
+    public static function validate(string $secretToken, ?string $header): bool
     {
-        if ($secretToken === '') {
-            return true;
-        }
-
-        if ($xTelegramBotApiSecretToken === null || $xTelegramBotApiSecretToken === '') {
-            return false;
-        }
-
-        return hash_equals($secretToken, $xTelegramBotApiSecretToken);
+        return $secretToken === '' || ($header !== null && $header !== '' && hash_equals($secretToken, $header));
     }
 
     /**

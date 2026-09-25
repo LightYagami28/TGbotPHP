@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Cache;
 
+use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Support\Value;
 
 /**
@@ -19,11 +20,11 @@ class FileCache implements CacheInterface
     public function __construct(string $directory)
     {
         if (!is_dir($directory) && !@mkdir($directory, 0700, true) && !is_dir($directory)) {
-            throw new \RuntimeException("Unable to create cache directory: $directory");
+            throw new StorageException("Unable to create cache directory: $directory");
         }
 
         if (!is_writable($directory)) {
-            throw new \RuntimeException("Cache directory is not writable: $directory");
+            throw new StorageException("Cache directory is not writable: $directory");
         }
 
         $this->directory = rtrim($directory, '/\\');
@@ -50,7 +51,7 @@ class FileCache implements CacheInterface
 
         if (file_put_contents($tmp, $payload, LOCK_EX) === false || !rename($tmp, $path)) {
             @unlink($tmp);
-            throw new \RuntimeException("Unable to write cache entry: $key");
+            throw new StorageException("Unable to write cache entry: $key");
         }
     }
 

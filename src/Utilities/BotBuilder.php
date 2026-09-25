@@ -21,11 +21,10 @@ use TGbotPHP\Plugin\PluginInterface;
 class BotBuilder
 {
     private string $token;
-    private bool $debug = false;
-    private string|false $debugFile = false;
+    private bool|string $debug = false;
     private string|false $secretToken = false;
     private ?string $username = null;
-    private string $apiBaseUrl = 'https://api.telegram.org';
+    private string $apiBaseUrl = Config::DEFAULT_API_URL;
     private bool $enforceHttps = true;
     private int $timeout = 10;
     private ?TransportInterface $transport = null;
@@ -67,10 +66,14 @@ class BotBuilder
         $this->token = $token;
     }
 
-    public function withDebug(string|false $logFile = '/tmp/bot.log'): self
+    /**
+     * Log every request and response: true for the PHP error log, or a file path
+     *
+     * The log contains message contents: keep it private.
+     */
+    public function withDebug(bool|string $log = true): self
     {
-        $this->debug = true;
-        $this->debugFile = $logFile;
+        $this->debug = $log;
         return $this;
     }
 
@@ -179,15 +182,14 @@ class BotBuilder
     {
         $config = new Config(
             token: $this->token,
-            debug: $this->debug,
-            debugFile: $this->debugFile,
             secretToken: $this->secretToken,
-            enforceHttps: $this->enforceHttps,
             apiBaseUrl: $this->apiBaseUrl,
-            timeout: $this->timeout
+            enforceHttps: $this->enforceHttps,
+            timeout: $this->timeout,
+            debug: $this->debug,
         );
 
-        $bot = new Bot($config, transport: $this->transport);
+        $bot = new Bot($config, $this->transport);
 
         if ($this->username !== null) {
             $bot->setUsername($this->username);

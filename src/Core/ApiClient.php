@@ -87,21 +87,11 @@ class ApiClient
         return $this->config->apiBaseUrl . '/bot' . $this->config->token;
     }
 
-    /**
-     * Get bot token
-     */
     public function getToken(): string
     {
         return $this->config->getToken();
     }
 
-    /**
-     * Get bot token for HTTP requests (protected access)
-     */
-    protected function getBotToken(): string
-    {
-        return $this->config->getToken();
-    }
 
     /**
      * Check if configuration is valid

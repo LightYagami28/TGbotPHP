@@ -114,14 +114,13 @@ use TGbotPHP\Framework\Bot;
 
 $bot = new Bot(new Config(
     token: $token,
-    debug: true,
-    debugFile: '/var/log/telegram-bot.log', // every request and response
+    debug: '/var/log/telegram-bot.log', // every request and response; true for the PHP error log
 ));
 ```
 
 ## Next Steps
 
-- [API Reference](API_REFERENCE.md)
-- [Advanced Features](ADVANCED_FEATURES.md)
-- [Examples](examples)
-- [Security Guide](SECURITY.md)
+- [API Reference](api-reference.md)
+- [Advanced Features](advanced.md)
+- [Examples](../examples)
+- [Security Guide](../SECURITY.md)

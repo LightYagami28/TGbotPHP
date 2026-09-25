@@ -54,10 +54,10 @@ trait MediaMethods
     abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
-     * Send animation (GIF or H.264/MPEG-4 AVC video without sound)
+     * Send a GIF or an H.264/MPEG-4 AVC video without sound
      *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options duration, width, height, thumbnail...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendanimation
@@ -65,10 +65,6 @@ trait MediaMethods
     public function sendAnimation(
         int|string $chatId,
         string|InputFile $animation,
-        ?int $duration = null,
-        ?int $width = null,
-        ?int $height = null,
-        string|InputFile|null $thumbnail = null,
         ?string $caption = null,
         ?string $parseMode = 'HTML',
         array|JsonSerializable|null $replyMarkup = null,
@@ -77,10 +73,6 @@ trait MediaMethods
         return $this->apiCallObject('sendAnimation', [
             'chat_id' => $chatId,
             'animation' => $animation,
-            'duration' => $duration,
-            'width' => $width,
-            'height' => $height,
-            'thumbnail' => $thumbnail,
             'caption' => $caption,
             'parse_mode' => $caption !== null ? $parseMode : null,
             'reply_markup' => $replyMarkup,

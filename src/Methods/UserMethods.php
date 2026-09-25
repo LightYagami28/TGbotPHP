@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 use TGbotPHP\Exceptions\ApiException;
+use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Http\TransportInterface;
 use TGbotPHP\Support\Value;
 
@@ -89,8 +90,6 @@ trait UserMethods
     }
 
     /**
-     * Get user profile photos
-     *
      * @return array<string, mixed> UserProfilePhotos
      *
      * @see https://core.telegram.org/bots/api#getuserprofilephotos
@@ -172,7 +171,7 @@ trait UserMethods
         }
 
         if (file_put_contents($destination, $response->body, LOCK_EX) === false) {
-            throw new \RuntimeException("Unable to write file: $destination");
+            throw new StorageException("Unable to write file: $destination");
         }
 
         return $destination;

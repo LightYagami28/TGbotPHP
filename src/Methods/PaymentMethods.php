@@ -53,11 +53,10 @@ trait PaymentMethods
     abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
-     * Send invoice
+     * For payments in Telegram Stars use the "XTR" currency and no provider token
      *
-     * @param array<int, array{label: string, amount: int}> $prices
-     * @param int[]|null $suggestedTipAmounts
-     * @param array<string, mixed> $options
+     * @param list<array{label: string, amount: int}> $prices
+     * @param array<string, mixed> $options provider_token, max_tip_amount, suggested_tip_amounts, photo_url...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendinvoice
@@ -69,9 +68,6 @@ trait PaymentMethods
         string $payload,
         string $currency,
         array $prices,
-        ?string $providerToken = null,
-        ?int $maxTipAmount = null,
-        ?array $suggestedTipAmounts = null,
         array $options = []
     ): array {
         return $this->apiCallObject('sendInvoice', [
@@ -80,16 +76,11 @@ trait PaymentMethods
             'description' => $description,
             'payload' => $payload,
             'currency' => $currency,
-            'prices' => array_values($prices),
-            'provider_token' => $providerToken,
-            'max_tip_amount' => $maxTipAmount,
-            'suggested_tip_amounts' => $suggestedTipAmounts === [] ? null : $suggestedTipAmounts,
+            'prices' => $prices,
         ], $options);
     }
 
     /**
-     * Create a link for an invoice
-     *
      * @param array<int, array{label: string, amount: int}> $prices
      * @param array<string, mixed> $options
      *
@@ -115,8 +106,6 @@ trait PaymentMethods
     }
 
     /**
-     * Answer shipping query
-     *
      * @param array<int, array<string, mixed>>|null $shippingOptions
      *
      * @see https://core.telegram.org/bots/api#answershippingquery

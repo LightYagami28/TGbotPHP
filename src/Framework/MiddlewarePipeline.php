@@ -82,12 +82,11 @@ final class MiddlewarePipeline
     public function execute(stdClass $update): bool
     {
         return $this->process($update, static function (): void {
+            // No final handler: only the middleware runs
         });
     }
 
     /**
-     * Get all middleware
-     *
      * @return callable[]
      */
     public function getMiddleware(): array

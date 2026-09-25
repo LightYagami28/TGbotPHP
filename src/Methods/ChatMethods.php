@@ -65,8 +65,6 @@ trait ChatMethods
     }
 
     /**
-     * Get chat member
-     *
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#getchatmember
@@ -80,8 +78,6 @@ trait ChatMethods
     }
 
     /**
-     * Get chat administrators
-     *
      * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getchatadministrators
@@ -110,8 +106,6 @@ trait ChatMethods
     }
 
     /**
-     * Leave chat
-     *
      * @see https://core.telegram.org/bots/api#leavechat
      */
     public function leaveChat(int|string $chatId): bool
@@ -120,8 +114,6 @@ trait ChatMethods
     }
 
     /**
-     * Set chat title
-     *
      * @see https://core.telegram.org/bots/api#setchattitle
      */
     public function setChatTitle(int|string $chatId, string $title): bool
@@ -133,8 +125,6 @@ trait ChatMethods
     }
 
     /**
-     * Set chat description
-     *
      * @see https://core.telegram.org/bots/api#setchatdescription
      */
     public function setChatDescription(int|string $chatId, string $description): bool
@@ -146,8 +136,6 @@ trait ChatMethods
     }
 
     /**
-     * Set chat photo
-     *
      * @see https://core.telegram.org/bots/api#setchatphoto
      */
     public function setChatPhoto(int|string $chatId, InputFile $photo): bool
@@ -159,8 +147,6 @@ trait ChatMethods
     }
 
     /**
-     * Delete chat photo
-     *
      * @see https://core.telegram.org/bots/api#deletechatphoto
      */
     public function deleteChatPhoto(int|string $chatId): bool
@@ -188,8 +174,6 @@ trait ChatMethods
     }
 
     /**
-     * Pin a message
-     *
      * @param array<string, mixed> $options
      *
      * @see https://core.telegram.org/bots/api#pinchatmessage
@@ -239,8 +223,6 @@ trait ChatMethods
     }
 
     /**
-     * Unpin all messages
-     *
      * @see https://core.telegram.org/bots/api#unpinallchatmessages
      */
     public function unpinAllChatMessages(int|string $chatId): bool
@@ -300,8 +282,6 @@ trait ChatMethods
     }
 
     /**
-     * Revoke an invite link
-     *
      * @return array<string, mixed> ChatInviteLink
      *
      * @see https://core.telegram.org/bots/api#revokechatinvitelink

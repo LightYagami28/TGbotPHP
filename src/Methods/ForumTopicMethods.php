@@ -85,8 +85,6 @@ trait ForumTopicMethods
     }
 
     /**
-     * Edit forum topic
-     *
      * @see https://core.telegram.org/bots/api#editforumtopic
      */
     public function editForumTopic(

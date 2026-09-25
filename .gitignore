@@ -1,73 +1,24 @@
-# IDE and Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-*.sublime-project
-*.sublime-workspace
+# Dependencies
+/vendor/
 
-# PHP
-.php_cs
-.php_cs.cache
-vendor/
-
-# Environment
+# Local configuration and secrets
 .env
-.env.local
-.env.*.local
+.env.*
 config.local.php
+
+# Tool caches and reports
+/.phpunit.cache/
+/.phpstan.cache/
+/coverage/
+phpunit.xml
+phpstan.neon
 
 # Logs
 *.log
-logs/
-errors.txt
 
-# Testing
-.phpunit.cache/
-.phpunit.result.cache
-coverage/
-.coverage
-phpunit.xml
-phpstan.neon
-.phpstan.cache/
-
-# Temporary
-tmp/
-temp/
-cache/
-
-# OS
+# Editors and OS
+.idea/
+.vscode/
+*.swp
 .DS_Store
 Thumbs.db
-
-# Secrets (never commit)
-.telegram.php
-secrets.php
-tokens/
-api_keys/
-
-# Build artifacts
-build/
-dist/
-
-# CI/CD & Development
-# Excluded workflows: security, dependency-check, release, lint, pr-check, issue-labeler, stale, test
-# Kept workflows: tests, analysis
-# Kept: dependabot.yml for automatic updates
-.github/SECURITY.md
-.gitlab-ci.yml
-.travis.yml
-Jenkinsfile
-
-# Old/Removed files (no longer in repo)
-# botlib.php, botesempio.php, echobot.php, bot-complete.php
-# example-webhook.php, webhook-secure.php
-# README_COMPLETE.md, PROJECT_STATUS.md, PROJECT_SUMMARY.md
-# SECURITY_SCAN_REPORT.md
-
-# Node (if using node scripts)
-node_modules/
-npm-debug.log
-yarn-error.log

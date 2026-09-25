@@ -1,12 +1,12 @@
-# TGbotPHP Architecture
+# Architecture
 
 ## Layers
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│ Framework\Bot                                              │
-│  handle() / poll() → EventDispatcher → MiddlewarePipeline  │
-│                    → Router → your handlers                │
+│ Framework\Bot (facade)                                     │
+│  Runner\WebhookHandler / Runner\LongPolling                │
+│  → Kernel: events → middleware → Router → your handlers    │
 ├────────────────────────────────────────────────────────────┤
 │ Core\ApiClient                                             │
 │  Methods\* traits (sendMessage, banChatMember, ...)        │
@@ -17,7 +17,7 @@
 ```
 
 - **`Core\ApiClient`** is a plain API client. Use it without the framework when you only need to send messages.
-- **`Framework\Bot`** extends it with update handling.
+- **`Framework\Bot`** extends it with update handling. It is a thin facade: the work is done by `Kernel` (processing one update), `Router`, the runners and three traits in `Framework\Concerns` (handler registration, replies, conversations).
 - **`Http\TransportInterface`** is the only I/O boundary. Tests swap it for `tests/Support/FakeTransport.php`.
 
 ## Directory Structure
@@ -26,16 +26,21 @@
 src/
 ├── Cache/        CacheInterface, ArrayCache (in memory), FileCache (persistent)
 ├── CLI/          Console (bin/tgbot)
-├── Core/         ApiClient, Config, UpdateParser
+├── Core/         ApiClient, Config, RetryPolicy, UpdateParser
 ├── Exceptions/   TelegramException → ApiException → TooManyRequestsException
-│                                  → InvalidTokenException, NetworkException
-├── Framework/    Bot, Router, MiddlewarePipeline, EventDispatcher
+│                                  → InvalidTokenException, NetworkException,
+│                                    StorageException, PluginException
+├── Framework/    Bot, Kernel, Router, MiddlewarePipeline, EventDispatcher
+│   ├── Concerns/ RegistersHandlers, RespondsToUpdates, ManagesConversations
+│   ├── Routing/  Command, Pattern, PatternTable
+│   └── Runner/   WebhookHandler, LongPolling
 ├── Http/         TransportInterface, CurlTransport, HttpResponse
 ├── Methods/      one trait per API area (Message, Media, Chat, Admin, Sticker, ...)
 ├── Plugin/       PluginInterface, BotPluginInterface, PluginManager
 ├── Rate/         RateLimiter (+ middleware)
 ├── Security/     WebhookValidator (secret token, IP ranges, Mini App data)
 ├── Session/      SessionManager, ConversationManager
+├── Support/      Value (typed reads of mixed data), Payload (chat, user, topic of an update)
 ├── Traits/       HttpClientTrait
 ├── Types/        InputFile
 └── Utilities/    Keyboard, InlineKeyboard, Formatter, MessageParser, Logger, BotBuilder
@@ -50,7 +55,7 @@ src/
    - arrays and `JsonSerializable` objects are JSON encoded
    - `InputFile` objects become `CURLFile` uploads. Nested ones become `attach://fileN` references, and the request switches to `multipart/form-data`.
 3. The transport sends the request. The response is decoded whatever the HTTP status, so Telegram's error `description` is never lost.
-4. `ok: false` throws `ApiException`, or `TooManyRequestsException` for 429. A 429 is retried after `retry_after` seconds, up to `Config::$maxRetries` times.
+4. `ok: false` throws `ApiException`, or `TooManyRequestsException` for 429. A 429 is retried after `retry_after` seconds, as allowed by `Config::$retry` (a `RetryPolicy`).
 5. The `result` field is returned.
 
 ## Update lifecycle (incoming)

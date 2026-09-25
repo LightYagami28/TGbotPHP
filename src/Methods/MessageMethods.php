@@ -86,8 +86,6 @@ trait MessageMethods
     }
 
     /**
-     * Forward message
-     *
      * @param array<string, mixed> $options
      * @return array<string, mixed>
      *
@@ -131,8 +129,6 @@ trait MessageMethods
     }
 
     /**
-     * Copy message
-     *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options
      * @return array<string, mixed> MessageId object
@@ -181,8 +177,6 @@ trait MessageMethods
     }
 
     /**
-     * Send photo
-     *
      * @param string|InputFile $photo file_id, HTTP URL or InputFile to upload
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options
@@ -208,8 +202,6 @@ trait MessageMethods
     }
 
     /**
-     * Send audio
-     *
      * @param string|InputFile $audio file_id, HTTP URL or InputFile to upload
      * @param array<string, mixed> $options
      * @return array<string, mixed>
@@ -236,8 +228,6 @@ trait MessageMethods
     }
 
     /**
-     * Send document
-     *
      * @param string|InputFile $document file_id, HTTP URL or InputFile to upload
      * @param array<string, mixed> $options
      * @return array<string, mixed>
@@ -260,10 +250,9 @@ trait MessageMethods
     }
 
     /**
-     * Send video
-     *
      * @param string|InputFile $video file_id, HTTP URL or InputFile to upload
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed> $options duration, width, height, supports_streaming, thumbnail...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendvideo
@@ -272,26 +261,20 @@ trait MessageMethods
         int|string $chatId,
         string|InputFile $video,
         ?string $caption = null,
-        ?int $duration = null,
-        ?int $width = null,
-        ?int $height = null,
-        bool $supportsStreaming = false,
+        ?string $parseMode = 'HTML',
+        array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
         return $this->apiCallObject('sendVideo', [
             'chat_id' => $chatId,
             'video' => $video,
             'caption' => $caption,
-            'duration' => $duration,
-            'width' => $width,
-            'height' => $height,
-            'supports_streaming' => $supportsStreaming ? true : null,
+            'parse_mode' => $caption !== null ? $parseMode : null,
+            'reply_markup' => $replyMarkup,
         ], $options);
     }
 
     /**
-     * Edit message text
-     *
      * Pass `$chatId = null`, `$messageId = null` and `['inline_message_id' => ...]`
      * in `$options` to edit an inline message.
      *
@@ -322,8 +305,6 @@ trait MessageMethods
     }
 
     /**
-     * Edit message caption
-     *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options
      * @return array<string, mixed>|bool
@@ -348,8 +329,6 @@ trait MessageMethods
     }
 
     /**
-     * Edit message media
-     *
      * @param array<string, mixed> $media InputMedia object; "media" may be an InputFile
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options
@@ -373,8 +352,6 @@ trait MessageMethods
     }
 
     /**
-     * Edit message reply markup
-     *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup New inline keyboard; null removes it
      * @param array<string, mixed> $options
      * @return array<string, mixed>|bool
@@ -396,8 +373,6 @@ trait MessageMethods
     }
 
     /**
-     * Delete message
-     *
      * @see https://core.telegram.org/bots/api#deletemessage
      */
     public function deleteMessage(int|string $chatId, int $messageId): bool

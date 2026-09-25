@@ -141,7 +141,7 @@ try {
 }
 ```
 
-429 errors are retried automatically (`Config::$maxRetries`, `Config::$maxRetryDelay`).
+429 errors are retried automatically. Change the policy with `new Config($token, retry: new RetryPolicy(maxRetries: 3, maxDelay: 60))`, or disable it with `RetryPolicy::none()`.
 
 ## Local Bot API server
 
@@ -159,7 +159,7 @@ $bot = new Bot(new Config(
 Implement `TGbotPHP\Http\TransportInterface` to use another HTTP client, or to fake Telegram in tests:
 
 ```php
-$bot = new Bot($token, transport: new MyTransport());
+$bot = new Bot($token, new MyTransport());
 ```
 
 ## Mini Apps

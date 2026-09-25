@@ -54,7 +54,7 @@ class Console
                 default => $this->unknown($command),
             };
         } catch (Throwable $e) {
-            $this->write('❌ Error: ' . $e->getMessage());
+            $this->write('Error: ' . $e->getMessage());
             return 1;
         }
     }
@@ -62,7 +62,7 @@ class Console
     private function showHelp(): int
     {
         $this->write(<<<'EOF'
-🤖 TGbotPHP CLI Tool
+TGbotPHP command line tool
 
 Usage: tgbot <command> [options]
 
@@ -104,7 +104,7 @@ EOF);
     {
         $info = $this->bot($argv)->getWebhookInfo();
 
-        $this->write('✅ Webhook Info:');
+        $this->write('Webhook:');
         $this->write('  URL: ' . Value::string($info['url'] ?? null, 'Not set'));
         $this->write('  Pending updates: ' . Value::int($info['pending_update_count'] ?? null));
 
@@ -131,7 +131,7 @@ EOF);
         $url = $this->getOption($argv, 'url');
 
         if ($url === null || $url === '') {
-            $this->write('❌ Error: --url is required');
+            $this->write('Error: --url is required');
             return 1;
         }
 
@@ -141,7 +141,7 @@ EOF);
             secretToken: $this->getOption($argv, 'secret')
         );
 
-        $this->write('✅ Webhook set successfully');
+        $this->write('Webhook set');
         return 0;
     }
 
@@ -152,7 +152,7 @@ EOF);
     {
         $this->bot($argv)->deleteWebhook($this->hasFlag($argv, 'drop-pending'));
 
-        $this->write('✅ Webhook deleted successfully');
+        $this->write('Webhook deleted');
         return 0;
     }
 
@@ -163,7 +163,7 @@ EOF);
     {
         $me = $this->bot($argv)->getMe();
 
-        $this->write('✅ Bot Info:');
+        $this->write('Bot:');
         $this->write('  ID: ' . Value::string($me['id'] ?? null, '?'));
         $this->write('  Username: @' . Value::string($me['username'] ?? null, '?'));
         $this->write('  Name: ' . Value::string($me['first_name'] ?? null, '?'));
@@ -200,13 +200,13 @@ EOF);
     {
         $this->bot($argv)->deleteMyCommands($this->getOption($argv, 'scope'), $this->getOption($argv, 'lang'));
 
-        $this->write('✅ Commands deleted');
+        $this->write('Commands deleted');
         return 0;
     }
 
     private function unknown(string $command): int
     {
-        $this->write("❌ Unknown command: $command");
+        $this->write("Unknown command: $command");
         $this->showHelp();
         return 1;
     }

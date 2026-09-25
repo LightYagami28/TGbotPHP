@@ -1,4 +1,4 @@
-# Development Guide
+# Development
 
 ## Project Structure
 
@@ -7,22 +7,29 @@ TGbotPHP/
 ├── src/
 │   ├── Cache/        # CacheInterface, ArrayCache, FileCache
 │   ├── CLI/          # tgbot console commands
-│   ├── Core/         # ApiClient, Config, UpdateParser
+│   ├── Core/         # ApiClient, Config, RetryPolicy, UpdateParser
 │   ├── Exceptions/   # TelegramException hierarchy
-│   ├── Framework/    # Bot, Router, MiddlewarePipeline, EventDispatcher
+│   ├── Framework/    # Bot (facade), Kernel, Router, MiddlewarePipeline, EventDispatcher
+│   │   ├── Concerns/ # Bot traits: handler registration, replies, conversations
+│   │   ├── Routing/  # Command, Pattern, PatternTable
+│   │   └── Runner/   # WebhookHandler, LongPolling
 │   ├── Http/         # TransportInterface, CurlTransport
 │   ├── Methods/      # Bot API method traits
 │   ├── Plugin/       # Plugin interfaces and manager
 │   ├── Rate/         # RateLimiter
 │   ├── Security/     # WebhookValidator
 │   ├── Session/      # SessionManager, ConversationManager
-│   ├── Support/      # Value: type-safe readers for mixed data
+│   ├── Support/      # Value and Payload: typed reads of mixed data and update payloads
 │   ├── Traits/       # HttpClientTrait (request encoding, errors, retries)
 │   ├── Types/        # InputFile
 │   └── Utilities/    # Keyboard, InlineKeyboard, Formatter, MessageParser, Logger, BotBuilder
 ├── bin/tgbot         # CLI entry point
+├── docs/             # Guides
 ├── examples/         # Runnable example bots
-└── tests/            # PHPUnit test suite
+└── tests/
+    ├── Unit/         # Fast tests with a fake transport
+    ├── E2E/          # Real Telegram API (needs a token)
+    └── Support/      # FakeTransport, update fixtures
 ```
 
 ## Setup
@@ -49,4 +56,4 @@ composer check
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md)
+See [CONTRIBUTING.md](../CONTRIBUTING.md)

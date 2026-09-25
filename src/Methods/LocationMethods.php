@@ -54,7 +54,7 @@ trait LocationMethods
 
     /**
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options live_period, horizontal_accuracy, heading, proximity_alert_radius...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendlocation
@@ -63,10 +63,6 @@ trait LocationMethods
         int|string $chatId,
         float $latitude,
         float $longitude,
-        ?float $horizontalAccuracy = null,
-        ?int $livePeriod = null,
-        ?int $heading = null,
-        ?int $proximityAlertRadius = null,
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
@@ -74,17 +70,13 @@ trait LocationMethods
             'chat_id' => $chatId,
             'latitude' => $latitude,
             'longitude' => $longitude,
-            'horizontal_accuracy' => $horizontalAccuracy,
-            'live_period' => $livePeriod,
-            'heading' => $heading,
-            'proximity_alert_radius' => $proximityAlertRadius,
             'reply_markup' => $replyMarkup,
         ], $options);
     }
 
     /**
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options horizontal_accuracy, heading, proximity_alert_radius, inline_message_id...
      * @return array<string, mixed>|bool
      *
      * @see https://core.telegram.org/bots/api#editmessagelivelocation
@@ -94,9 +86,6 @@ trait LocationMethods
         ?int $messageId,
         float $latitude,
         float $longitude,
-        ?float $horizontalAccuracy = null,
-        ?int $heading = null,
-        ?int $proximityAlertRadius = null,
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array|bool {
@@ -105,9 +94,6 @@ trait LocationMethods
             'message_id' => $messageId,
             'latitude' => $latitude,
             'longitude' => $longitude,
-            'horizontal_accuracy' => $horizontalAccuracy,
-            'heading' => $heading,
-            'proximity_alert_radius' => $proximityAlertRadius,
             'reply_markup' => $replyMarkup,
         ], $options);
     }
@@ -133,7 +119,7 @@ trait LocationMethods
 
     /**
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options foursquare_id, google_place_id...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendvenue
@@ -144,10 +130,6 @@ trait LocationMethods
         float $longitude,
         string $title,
         string $address,
-        ?string $foursquareId = null,
-        ?string $foursquareType = null,
-        ?string $googlePlaceId = null,
-        ?string $googlePlaceType = null,
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
@@ -157,10 +139,6 @@ trait LocationMethods
             'longitude' => $longitude,
             'title' => $title,
             'address' => $address,
-            'foursquare_id' => $foursquareId,
-            'foursquare_type' => $foursquareType,
-            'google_place_id' => $googlePlaceId,
-            'google_place_type' => $googlePlaceType,
             'reply_markup' => $replyMarkup,
         ], $options);
     }
@@ -192,11 +170,10 @@ trait LocationMethods
     }
 
     /**
-     * Send a native poll
-     *
-     * @param array<int, string|array<string, mixed>> $options Answer options: plain strings or InputPollOption objects
+     * @param list<string|array<string, mixed>> $answers Answer texts or InputPollOption objects
+     * @param string|null $type "regular" or "quiz"
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $extra Additional API parameters
+     * @param array<string, mixed> $options allows_multiple_answers, correct_option_id, explanation, open_period...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendpoll
@@ -204,42 +181,24 @@ trait LocationMethods
     public function sendPoll(
         int|string $chatId,
         string $question,
-        array $options,
+        array $answers,
         ?string $type = null,
-        bool $allowsMultipleAnswers = false,
-        ?int $correctOptionId = null,
-        ?string $explanation = null,
-        ?string $explanationParseMode = 'HTML',
-        ?int $openPeriod = null,
-        ?int $closeDate = null,
-        bool $isClosed = false,
         array|JsonSerializable|null $replyMarkup = null,
-        array $extra = []
+        array $options = []
     ): array {
-        $pollOptions = array_map(
-            static fn(string|array $option): array => is_string($option) ? ['text' => $option] : $option,
-            array_values($options)
-        );
-
         return $this->apiCallObject('sendPoll', [
             'chat_id' => $chatId,
             'question' => $question,
-            'options' => $pollOptions,
+            'options' => array_map(
+                static fn(string|array $answer): array => is_string($answer) ? ['text' => $answer] : $answer,
+                $answers
+            ),
             'type' => $type,
-            'allows_multiple_answers' => $allowsMultipleAnswers ? true : null,
-            'correct_option_id' => $correctOptionId,
-            'explanation' => $explanation,
-            'explanation_parse_mode' => $explanation !== null ? $explanationParseMode : null,
-            'open_period' => $openPeriod,
-            'close_date' => $closeDate,
-            'is_closed' => $isClosed ? true : null,
             'reply_markup' => $replyMarkup,
-        ], $extra);
+        ], $options);
     }
 
     /**
-     * Stop a poll
-     *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options
      * @return array<string, mixed> The stopped Poll

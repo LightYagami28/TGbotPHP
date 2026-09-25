@@ -71,7 +71,7 @@ trait HttpClientTrait
             } catch (TooManyRequestsException $e) {
                 $retryAfter = $e->getRetryAfter();
 
-                if ($attempt >= $this->config->maxRetries || $retryAfter > $this->config->maxRetryDelay) {
+                if (!$this->config->retry->allows($attempt, $retryAfter)) {
                     throw $e;
                 }
 

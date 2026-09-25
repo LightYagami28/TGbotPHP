@@ -6,6 +6,7 @@ namespace TGbotPHP\Tests\E2E;
 
 use PHPUnit\Framework\TestCase;
 use TGbotPHP\Core\Config;
+use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Support\Value;
 
@@ -33,7 +34,7 @@ abstract class TelegramTestCase extends TestCase
             self::markTestSkipped('TELEGRAM_BOT_TOKEN is not set');
         }
 
-        $this->bot = new Bot(new Config($token, timeout: 20, maxRetries: 3, maxRetryDelay: 30));
+        $this->bot = new Bot(new Config($token, timeout: 20, retry: new RetryPolicy(maxRetries: 3, maxDelay: 30)));
     }
 
     protected function chatId(): int|string

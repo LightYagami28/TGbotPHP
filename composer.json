@@ -1,8 +1,8 @@
 {
     "name": "lightyagami28/tgbotphp",
-    "description": "Production-ready PHP framework for the Telegram Bot API: routing, middleware, conversations, webhooks and long polling",
+    "description": "PHP framework for the Telegram Bot API: typed API client, routing, middleware, conversations, webhooks and long polling",
     "type": "library",
-    "license": "MIT",
+    "license": "Apache-2.0",
     "authors": [
         {
             "name": "LightYagami28",

@@ -57,8 +57,6 @@ trait StickerMethods
     abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
-     * Send sticker
-     *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options
      * @return array<string, mixed>
@@ -145,8 +143,6 @@ trait StickerMethods
     }
 
     /**
-     * Add a sticker to a set
-     *
      * @param array<string, mixed> $sticker InputSticker object
      *
      * @see https://core.telegram.org/bots/api#addstickertoset

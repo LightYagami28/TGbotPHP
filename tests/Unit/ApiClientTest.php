@@ -8,6 +8,7 @@ use CURLStringFile;
 use PHPUnit\Framework\TestCase;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Core\Config;
+use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Tests\Support\FakeTransport;
@@ -24,7 +25,7 @@ final class ApiClientTest extends TestCase
     protected function setUp(): void
     {
         $this->transport = new FakeTransport();
-        $this->client = new ApiClient(new Config(Updates::TOKEN, maxRetries: 2, maxRetryDelay: 0), $this->transport);
+        $this->client = new ApiClient(new Config(Updates::TOKEN, retry: new RetryPolicy(maxRetries: 2, maxDelay: 0)), $this->transport);
     }
 
     public function testBuildsMethodUrl(): void
@@ -43,7 +44,7 @@ final class ApiClientTest extends TestCase
         self::assertIsString($log);
 
         try {
-            $client = new ApiClient(new Config(Updates::TOKEN, debug: true, debugFile: $log), $this->transport);
+            $client = new ApiClient(new Config(Updates::TOKEN, debug: $log), $this->transport);
             $client->setWebhook('https://example.com/hook', secretToken: 'super-secret-value');
 
             $contents = (string) file_get_contents($log);

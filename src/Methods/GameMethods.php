@@ -53,8 +53,6 @@ trait GameMethods
     abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
-     * Send game
-     *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
      * @param array<string, mixed> $options
      * @return array<string, mixed>
@@ -77,8 +75,6 @@ trait GameMethods
     }
 
     /**
-     * Set game score
-     *
      * @return array<string, mixed>|bool Edited message, or true for inline messages
      *
      * @see https://core.telegram.org/bots/api#setgamescore
@@ -104,8 +100,6 @@ trait GameMethods
     }
 
     /**
-     * Get game high scores
-     *
      * @return list<array<string, mixed>> GameHighScore objects
      *
      * @see https://core.telegram.org/bots/api#getgamehighscores

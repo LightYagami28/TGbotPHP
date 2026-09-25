@@ -62,8 +62,6 @@ trait AdminMethods
     }
 
     /**
-     * Ban chat member
-     *
      * @see https://core.telegram.org/bots/api#banchatmember
      */
     public function banChatMember(
@@ -81,8 +79,6 @@ trait AdminMethods
     }
 
     /**
-     * Unban chat member
-     *
      * @see https://core.telegram.org/bots/api#unbanchatmember
      */
     public function unbanChatMember(
@@ -98,8 +94,6 @@ trait AdminMethods
     }
 
     /**
-     * Restrict chat member
-     *
      * @param array<string, bool> $permissions ChatPermissions object
      * @param array<string, mixed> $options
      *
@@ -121,50 +115,17 @@ trait AdminMethods
     }
 
     /**
-     * Promote chat member
-     *
-     * @param array<string, mixed> $options Additional rights (can_post_stories, ...)
+     * @param array<string, bool> $rights ChatAdministratorRights, e.g. ['can_delete_messages' => true]
+     * @param array<string, mixed> $options
      *
      * @see https://core.telegram.org/bots/api#promotechatmember
      */
-    public function promoteChatMember(
-        int|string $chatId,
-        int $userId,
-        bool $isAnonymous = false,
-        bool $canManageChat = false,
-        bool $canDeleteMessages = false,
-        bool $canManageVideoChats = false,
-        bool $canRestrictMembers = false,
-        bool $canPromoteMembers = false,
-        bool $canChangeInfo = false,
-        bool $canInviteUsers = false,
-        bool $canPostMessages = false,
-        bool $canEditMessages = false,
-        bool $canPinMessages = false,
-        bool $canManageTopics = false,
-        array $options = []
-    ): bool {
-        return $this->apiCallBool('promoteChatMember', [
-            'chat_id' => $chatId,
-            'user_id' => $userId,
-            'is_anonymous' => $isAnonymous,
-            'can_manage_chat' => $canManageChat,
-            'can_delete_messages' => $canDeleteMessages,
-            'can_manage_video_chats' => $canManageVideoChats,
-            'can_restrict_members' => $canRestrictMembers,
-            'can_promote_members' => $canPromoteMembers,
-            'can_change_info' => $canChangeInfo,
-            'can_invite_users' => $canInviteUsers,
-            'can_post_messages' => $canPostMessages,
-            'can_edit_messages' => $canEditMessages,
-            'can_pin_messages' => $canPinMessages,
-            'can_manage_topics' => $canManageTopics,
-        ], $options);
+    public function promoteChatMember(int|string $chatId, int $userId, array $rights = [], array $options = []): bool
+    {
+        return $this->apiCallBool('promoteChatMember', ['chat_id' => $chatId, 'user_id' => $userId] + $rights, $options);
     }
 
     /**
-     * Set chat administrator custom title
-     *
      * @see https://core.telegram.org/bots/api#setchatadministratorcustomtitle
      */
     public function setChatAdministratorCustomTitle(

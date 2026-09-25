@@ -11,7 +11,7 @@ namespace TGbotPHP\Utilities;
  * For mixed buttons use the fluent builder:
  *
  *     Keyboard::inlineBuilder()
- *         ->button('✅ Yes', 'confirm:yes')->button('❌ No', 'confirm:no')
+ *         ->button('Yes', 'confirm:yes')->button('No', 'confirm:no')
  *         ->row()
  *         ->url('Docs', 'https://core.telegram.org/bots/api');
  */
