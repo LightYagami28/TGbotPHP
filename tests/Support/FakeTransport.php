@@ -92,6 +92,15 @@ final class FakeTransport implements TransportInterface
         return array_shift($this->queue) ?? new HttpResponse(404, '');
     }
 
+    #[\Override]
+    public function download(string $url, string $destination, int $timeout): int
+    {
+        $response = $this->get($url, $timeout);
+        file_put_contents($destination, $response->body);
+
+        return $response->statusCode;
+    }
+
     /**
      * @return array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}
      */

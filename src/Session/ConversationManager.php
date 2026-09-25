@@ -55,11 +55,17 @@ final readonly class ConversationManager
      */
     public function updateData(int|string $chatId, int|string|null $userId, array $data): void
     {
-        $state = $this->getState($chatId, $userId);
+        $this->cache->update(
+            $this->key($chatId, $userId),
+            static function (mixed $entry) use ($data): ?array {
+                if (!is_array($entry) || Value::nullableString($entry['state'] ?? null) === null) {
+                    return null;
+                }
 
-        if ($state !== null) {
-            $this->setState($chatId, $userId, $state, array_merge($this->getData($chatId, $userId), $data));
-        }
+                return ['state' => $entry['state'], 'data' => array_merge(Value::map($entry['data'] ?? null), $data)];
+            },
+            $this->ttl,
+        );
     }
 
     public function clear(int|string $chatId, int|string|null $userId = null): void

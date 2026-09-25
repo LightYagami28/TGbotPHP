@@ -55,6 +55,31 @@ class FileCache implements CacheInterface
         }
     }
 
+    /**
+     * Holds an exclusive lock while the callback runs, so concurrent processes
+     * updating the same key wait for each other
+     */
+    #[\Override]
+    public function update(string $key, callable $callback, ?int $ttl = null): mixed
+    {
+        $lock = $this->lock($key);
+
+        try {
+            $value = $callback($this->get($key));
+
+            if ($value === null) {
+                $this->forget($key);
+            } else {
+                $this->put($key, $value, $ttl);
+            }
+
+            return $value;
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
     #[\Override]
     public function forget(string $key): void
     {
@@ -155,6 +180,28 @@ class FileCache implements CacheInterface
         $files = glob($this->directory . '/*.cache');
 
         return $files === false ? [] : $files;
+    }
+
+    /**
+     * Lock the stripe a key belongs to: 256 lock files at most, whatever the number of keys
+     *
+     * @return resource
+     */
+    private function lock(string $key)
+    {
+        $path = $this->directory . '/' . substr(hash('sha256', $key), 0, 2) . '.lock';
+        $handle = @fopen($path, 'c');
+
+        if ($handle === false) {
+            throw new StorageException("Unable to open cache lock: $path");
+        }
+
+        if (!flock($handle, LOCK_EX)) {
+            fclose($handle);
+            throw new StorageException("Unable to lock cache entry: $key");
+        }
+
+        return $handle;
     }
 
     private function path(string $key): string

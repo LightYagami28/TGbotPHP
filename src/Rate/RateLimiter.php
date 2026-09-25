@@ -21,21 +21,29 @@ class RateLimiter
      */
     public function limit(string $key, int $maxRequests, int $windowSeconds): bool
     {
-        $now = time();
-        $window = $this->window($key);
+        $allowed = false;
 
-        if ($window === null || $window['reset_at'] <= $now) {
-            $window = ['count' => 0, 'reset_at' => $now + $windowSeconds];
-        }
+        $this->cache->update(
+            $this->cacheKey($key),
+            static function (mixed $stored) use ($maxRequests, $windowSeconds, &$allowed): array {
+                $now = time();
+                $window = self::decode($stored);
 
-        if ($window['count'] >= $maxRequests) {
-            return false;
-        }
+                if ($window === null || $window['reset_at'] <= $now) {
+                    $window = ['count' => 0, 'reset_at' => $now + $windowSeconds];
+                }
 
-        $window['count']++;
-        $this->cache->put($this->cacheKey($key), $window, max(1, $window['reset_at'] - $now));
+                if ($window['count'] < $maxRequests) {
+                    $window['count']++;
+                    $allowed = true;
+                }
 
-        return true;
+                return $window;
+            },
+            $windowSeconds,
+        );
+
+        return $allowed;
     }
 
     public function reset(string $key): void
@@ -100,8 +108,14 @@ class RateLimiter
      */
     private function window(string $key): ?array
     {
-        $window = $this->cache->get($this->cacheKey($key));
+        return self::decode($this->cache->get($this->cacheKey($key)));
+    }
 
+    /**
+     * @return array{count: int, reset_at: int}|null
+     */
+    private static function decode(mixed $window): ?array
+    {
         if (!is_array($window)) {
             return null;
         }

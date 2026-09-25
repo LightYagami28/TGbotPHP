@@ -70,6 +70,14 @@ $cache->prune(); // delete expired entries (e.g. from a cron job)
 
 `FileCache` never unserializes objects. Store scalars and arrays.
 
+`update()` reads, changes and writes an entry as one step. `FileCache` holds a file lock meanwhile, so two webhook requests from the same user cannot overwrite each other's changes. Conversations, sessions and the rate limiter use it.
+
+```php
+$cache->update('visits', fn(mixed $count) => (int) $count + 1);
+```
+
+With your own `CacheInterface` on Redis or a database, make `update()` atomic too, for example with a transaction or a lock.
+
 ## Rate Limiting
 
 ```php
@@ -156,7 +164,7 @@ $bot = new Bot(new Config(
 
 ## Custom HTTP transport
 
-Implement `TGbotPHP\Http\TransportInterface` to use another HTTP client, or to fake Telegram in tests:
+Implement `TGbotPHP\Http\TransportInterface` (`post()`, `get()` and `download()`, which writes a response to a file) to use another HTTP client, or to fake Telegram in tests. `CurlTransport` reuses its connection between requests.
 
 ```php
 $bot = new Bot($token, new MyTransport());

@@ -41,6 +41,20 @@ class ArrayCache implements CacheInterface
     }
 
     #[\Override]
+    public function update(string $key, callable $callback, ?int $ttl = null): mixed
+    {
+        $value = $callback($this->get($key));
+
+        if ($value === null) {
+            $this->forget($key);
+        } else {
+            $this->put($key, $value, $ttl);
+        }
+
+        return $value;
+    }
+
+    #[\Override]
     public function forget(string $key): void
     {
         unset($this->store[$key], $this->expiration[$key]);

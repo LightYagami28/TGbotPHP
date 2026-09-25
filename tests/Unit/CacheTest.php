@@ -92,6 +92,47 @@ final class CacheTest extends TestCase
         self::assertTrue($cache->has('fresh'));
     }
 
+    /**
+     * @param callable(): CacheInterface $factory
+     */
+    #[DataProvider('caches')]
+    public function testUpdatesValues(callable $factory): void
+    {
+        $cache = $factory();
+
+        self::assertSame(1, $cache->update('counter', static fn(mixed $value): int => Value::int($value) + 1));
+        self::assertSame(2, $cache->update('counter', static fn(mixed $value): int => Value::int($value) + 1, 60));
+        self::assertSame(2, $cache->get('counter'));
+
+        self::assertNull($cache->update('counter', static fn(): mixed => null));
+        self::assertFalse($cache->has('counter'));
+    }
+
+    public function testFileCacheUpdatesAreAtomicAcrossProcesses(): void
+    {
+        $cache = new FileCache(self::$directory);
+        $cache->forget('shared-counter');
+
+        $script = sprintf(
+            'require %s; $c = new TGbotPHP\Cache\FileCache(%s); for ($i = 0; $i < 50; $i++) { $c->update("shared-counter", fn($v) => (int) $v + 1); }',
+            var_export(dirname(__DIR__, 2) . '/vendor/autoload.php', true),
+            var_export(self::$directory, true),
+        );
+
+        $processes = [];
+        for ($i = 0; $i < 4; $i++) {
+            $process = proc_open([PHP_BINARY, '-r', $script], [], $pipes);
+            self::assertIsResource($process);
+            $processes[] = $process;
+        }
+
+        foreach ($processes as $process) {
+            self::assertSame(0, proc_close($process));
+        }
+
+        self::assertSame(200, $cache->get('shared-counter'));
+    }
+
     public function testFileCachePersistsAcrossInstances(): void
     {
         (new FileCache(self::$directory))->put('shared', 'value', 60);
@@ -151,6 +192,9 @@ final class CacheTest extends TestCase
         self::assertSame(['a' => 1, 'b' => 2], $manager->getData(1, 2));
         self::assertNull($manager->getState(1, 3));
 
+        $manager->updateData(5, 5, ['ignored' => true]);
+        self::assertSame([], $manager->getData(5, 5));
+
         $manager->clear(1, 2);
         self::assertNull($manager->getState(1, 2));
         self::assertSame([], $manager->getData(1, 2));
@@ -165,6 +209,9 @@ final class CacheTest extends TestCase
 
         self::assertSame(7, $sessions->getSession($id)['user_id'] ?? null);
         self::assertSame('it', $sessions->getSessionData($id, 'lang'));
+
+        $sessions->setSessionData('missing', 'lang', 'it');
+        self::assertNull($sessions->getSession('missing'));
 
         $sessions->endSession($id);
         self::assertNull($sessions->getSession($id));

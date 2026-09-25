@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
+use TGbotPHP\Core\Config;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Http\TransportInterface;
@@ -16,6 +17,9 @@ use TGbotPHP\Support\Value;
  */
 trait UserMethods
 {
+    /** Largest file downloadFile() loads in memory: the Bot API download limit */
+    public const int MAX_MEMORY_DOWNLOAD = 20 * 1024 * 1024;
+
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
@@ -146,9 +150,16 @@ trait UserMethods
     /**
      * Download a file by file_id
      *
-     * Returns the file contents, or writes them to $destination and returns the path.
+     * Without $destination the contents are returned, for files up to
+     * MAX_MEMORY_DOWNLOAD bytes. With $destination the file is streamed to
+     * disk, whatever its size, and the path is returned. The destination only
+     * appears once the download is complete.
+     *
+     * With a local Bot API server (--local), getFile returns a path on the
+     * server's disk: the file is copied from there.
      *
      * @throws ApiException
+     * @throws StorageException
      */
     public function downloadFile(string $fileId, ?string $destination = null): string
     {
@@ -160,20 +171,76 @@ trait UserMethods
             throw new ApiException('File is not available for download', 0, $file, 'getFile');
         }
 
-        $response = $this->getTransport()->get($this->getFileUrl($filePath), max(60, $this->config->timeout));
+        $size = Value::nullableInt($file['file_size'] ?? null);
 
-        if ($response->statusCode !== 200) {
-            throw new ApiException("HTTP {$response->statusCode} while downloading file", $response->statusCode, [], 'getFile');
+        if ($destination === null && $size !== null && $size > self::MAX_MEMORY_DOWNLOAD) {
+            throw new StorageException("File is too large to load in memory ($size bytes): pass a destination");
         }
 
+        if ($this->isLocalServerFile($filePath)) {
+            return $this->copyLocalFile($filePath, $destination);
+        }
+
+        $url = $this->getFileUrl($filePath);
+        $timeout = max(60, $this->config->timeout);
+
         if ($destination === null) {
+            $response = $this->getTransport()->get($url, $timeout);
+            self::checkDownloadStatus($response->statusCode);
+
             return $response->body;
         }
 
-        if (file_put_contents($destination, $response->body, LOCK_EX) === false) {
+        $tmp = $destination . '.' . bin2hex(random_bytes(4)) . '.part';
+
+        try {
+            self::checkDownloadStatus($this->getTransport()->download($url, $tmp, $timeout));
+
+            if (!@rename($tmp, $destination)) {
+                throw new StorageException("Unable to write file: $destination");
+            }
+        } finally {
+            if (is_file($tmp)) {
+                @unlink($tmp);
+            }
+        }
+
+        return $destination;
+    }
+
+    /**
+     * Absolute paths only come from a local Bot API server, which shares its disk with the bot
+     */
+    private function isLocalServerFile(string $filePath): bool
+    {
+        return $this->config->apiBaseUrl !== Config::DEFAULT_API_URL
+            && str_starts_with($filePath, '/')
+            && is_file($filePath);
+    }
+
+    private function copyLocalFile(string $filePath, ?string $destination): string
+    {
+        if ($destination === null) {
+            $contents = @file_get_contents($filePath);
+
+            if ($contents === false) {
+                throw new StorageException("Unable to read file: $filePath");
+            }
+
+            return $contents;
+        }
+
+        if (!@copy($filePath, $destination)) {
             throw new StorageException("Unable to write file: $destination");
         }
 
         return $destination;
+    }
+
+    private static function checkDownloadStatus(int $statusCode): void
+    {
+        if ($statusCode !== 200) {
+            throw new ApiException("HTTP $statusCode while downloading file", $statusCode, [], 'getFile');
+        }
     }
 }

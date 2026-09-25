@@ -36,11 +36,11 @@ class SessionManager
 
     public function setSessionData(string $sessionId, string $key, mixed $value): void
     {
-        $session = $this->getSession($sessionId);
-        if ($session !== null) {
-            $session[$key] = $value;
-            $this->cache->put("session:$sessionId", $session, self::SESSION_TTL);
-        }
+        $this->cache->update(
+            "session:$sessionId",
+            static fn(mixed $session): ?array => Value::isMap($session) ? [$key => $value] + $session : null,
+            self::SESSION_TTL,
+        );
     }
 
     public function getSessionData(string $sessionId, string $key, mixed $default = null): mixed

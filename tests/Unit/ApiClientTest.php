@@ -10,6 +10,7 @@ use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Core\Config;
 use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Exceptions\ApiException;
+use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Tests\Support\FakeTransport;
 use TGbotPHP\Tests\Support\Updates;
@@ -334,5 +335,63 @@ final class ApiClientTest extends TestCase
             'https://api.telegram.org/file/bot' . Updates::TOKEN . '/photos/file_1.jpg',
             $this->transport->lastRequest()['url'],
         );
+    }
+
+    public function testDownloadFileStreamsToDestination(): void
+    {
+        $destination = sys_get_temp_dir() . '/tgbotphp-download-' . bin2hex(random_bytes(4));
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'documents/a.pdf', 'file_size' => 50 * 1024 * 1024]);
+        $this->transport->queueRaw('pdf-data');
+
+        try {
+            self::assertSame($destination, $this->client->downloadFile('f', $destination));
+            self::assertSame('pdf-data', file_get_contents($destination));
+            self::assertSame([$destination], glob($destination . '*'));
+        } finally {
+            @unlink($destination);
+        }
+    }
+
+    public function testFailedDownloadLeavesNoFile(): void
+    {
+        $destination = sys_get_temp_dir() . '/tgbotphp-download-' . bin2hex(random_bytes(4));
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'documents/a.pdf']);
+        $this->transport->queueRaw('Not Found', 404);
+
+        try {
+            $this->client->downloadFile('f', $destination);
+            self::fail('Expected an ApiException');
+        } catch (ApiException $e) {
+            self::assertSame(404, $e->getCode());
+        }
+
+        self::assertSame([], glob($destination . '*'));
+    }
+
+    public function testRefusesToLoadLargeFilesInMemory(): void
+    {
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'videos/v.mp4', 'file_size' => ApiClient::MAX_MEMORY_DOWNLOAD + 1]);
+
+        $this->expectException(StorageException::class);
+
+        $this->client->downloadFile('f');
+    }
+
+    public function testCopiesFilesFromLocalBotApiServer(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($source);
+        file_put_contents($source, 'local-data');
+
+        $transport = new FakeTransport();
+        $client = new ApiClient(new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false), $transport);
+        $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
+
+        try {
+            self::assertSame('local-data', $client->downloadFile('f'));
+            self::assertSame(['getFile'], $transport->methods());
+        } finally {
+            unlink($source);
+        }
     }
 }

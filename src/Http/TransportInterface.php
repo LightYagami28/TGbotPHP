@@ -29,4 +29,13 @@ interface TransportInterface
      * @throws NetworkException
      */
     public function get(string $url, int $timeout): HttpResponse;
+
+    /**
+     * Send a GET request and write the response body to a file
+     *
+     * @return int The HTTP status code
+     *
+     * @throws NetworkException
+     */
+    public function download(string $url, string $destination, int $timeout): int;
 }
