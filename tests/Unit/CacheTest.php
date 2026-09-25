@@ -174,7 +174,8 @@ final class CacheTest extends TestCase
 
         try {
             $this->expectException(StorageException::class);
-            new FileCache($file . '/cache');
+            $cache = new FileCache($file . '/cache');
+            self::fail('Created a cache under a file: ' . $cache::class);
         } finally {
             unlink($file);
         }

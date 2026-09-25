@@ -95,10 +95,16 @@ final class BotBuilderTest extends TestCase
             }
 
             #[\Override]
-            public function activate(): void {}
+            public function activate(): void
+            {
+                // Nothing to set up: the test only checks boot()
+            }
 
             #[\Override]
-            public function deactivate(): void {}
+            public function deactivate(): void
+            {
+                // Nothing to release
+            }
         };
 
         $bot = new BotBuilder(Updates::TOKEN)->addPlugin($plugin)->build();

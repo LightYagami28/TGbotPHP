@@ -106,7 +106,8 @@ final class BotApiCoverageTest extends TestCase
         $client = new ApiClient(new Config(Updates::TOKEN), $transport);
 
         $method = new ReflectionMethod(ApiClient::class, $name);
-        $method->invokeArgs($client, array_map(self::argument(...), $method->getParameters()));
+        $arguments = array_map(static fn(ReflectionParameter $parameter): mixed => self::argument($parameter), $method->getParameters());
+        $method->invokeArgs($client, $arguments);
 
         $request = $transport->lastRequest();
         self::assertSame($name, $request['method']);
@@ -120,15 +121,25 @@ final class BotApiCoverageTest extends TestCase
     }
 
     /**
+     * @return list<string> The types a parameter accepts
+     */
+    private static function typeNames(?\ReflectionType $type): array
+    {
+        if ($type instanceof ReflectionNamedType) {
+            return [$type->getName()];
+        }
+
+        $types = $type instanceof \ReflectionUnionType ? $type->getTypes() : [];
+
+        return array_values(array_map(static fn(\ReflectionType $t): string => $t instanceof ReflectionNamedType ? $t->getName() : 'mixed', $types));
+    }
+
+    /**
      * A value for every argument, so that optional parameters are sent too
      */
     private static function argument(ReflectionParameter $parameter): mixed
     {
-        $type = $parameter->getType();
-        $names = $type instanceof ReflectionNamedType ? [$type->getName()] : array_map(
-            static fn(\ReflectionType $t): string => $t instanceof ReflectionNamedType ? $t->getName() : 'mixed',
-            $type instanceof \ReflectionUnionType ? $type->getTypes() : [],
-        );
+        $names = self::typeNames($parameter->getType());
 
         return match (true) {
             $parameter->getName() === 'options' => [],

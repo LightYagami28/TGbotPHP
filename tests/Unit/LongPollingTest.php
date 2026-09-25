@@ -14,6 +14,7 @@ use TGbotPHP\Framework\Bot;
 use TGbotPHP\Framework\Runner\LongPolling;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Testing\FakeTransport;
+use TGbotPHP\Tests\Support\HandlerFailure;
 use TGbotPHP\Tests\Support\Updates;
 
 final class LongPollingTest extends TestCase
@@ -100,7 +101,7 @@ final class LongPollingTest extends TestCase
             $processed[] = Value::path($message, 'text');
 
             if (Value::path($message, 'text') === 'boom') {
-                throw new \RuntimeException('handler failed');
+                throw new HandlerFailure('handler failed');
             }
         });
 
