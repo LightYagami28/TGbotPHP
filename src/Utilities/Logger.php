@@ -77,7 +77,7 @@ class Logger
         $message = str_replace(["\r", "\n"], ['\r', '\n'], $message);
 
         $timestamp = date('Y-m-d H:i:s');
-        $contextStr = !empty($context) ? ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR) : '';
+        $contextStr = $context !== [] ? ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR) : '';
         $logLine = "[$timestamp] [$level] $message$contextStr\n";
 
         error_log($logLine, 3, $this->logFile);

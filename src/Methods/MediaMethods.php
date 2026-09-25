@@ -17,8 +17,41 @@ trait MediaMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Send animation (GIF or H.264/MPEG-4 AVC video without sound)
@@ -41,7 +74,7 @@ trait MediaMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendAnimation', [
+        return $this->apiCallObject('sendAnimation', [
             'chat_id' => $chatId,
             'animation' => $animation,
             'duration' => $duration,
@@ -72,7 +105,7 @@ trait MediaMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendVoice', [
+        return $this->apiCallObject('sendVoice', [
             'chat_id' => $chatId,
             'voice' => $voice,
             'caption' => $caption,
@@ -100,7 +133,7 @@ trait MediaMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendVideoNote', [
+        return $this->apiCallObject('sendVideoNote', [
             'chat_id' => $chatId,
             'video_note' => $videoNote,
             'duration' => $duration,
@@ -117,7 +150,7 @@ trait MediaMethods
      *
      * @param array<int, array<string, mixed>> $media
      * @param array<string, mixed> $options
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#sendmediagroup
      */
@@ -127,10 +160,10 @@ trait MediaMethods
         bool $disableNotification = false,
         array $options = []
     ): array {
-        return $this->apiCall('sendMediaGroup', [
+        return $this->apiCallList('sendMediaGroup', [
             'chat_id' => $chatId,
             'media' => array_values($media),
-            'disable_notification' => $disableNotification ?: null,
+            'disable_notification' => $disableNotification ? true : null,
         ], $options);
     }
 }

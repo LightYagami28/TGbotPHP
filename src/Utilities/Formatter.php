@@ -15,10 +15,13 @@ final class Formatter
 {
     /**
      * Escape text for parse_mode HTML
+     *
+     * Telegram only understands the &lt; &gt; &amp; &quot; named entities and
+     * numeric ones, so quotes are escaped as &quot; and &#039; (never &apos;).
      */
     public static function escape(string $text): string
     {
-        return htmlspecialchars($text, ENT_QUOTES | ENT_HTML5 | ENT_SUBSTITUTE, 'UTF-8');
+        return htmlspecialchars($text, ENT_QUOTES | ENT_HTML401 | ENT_SUBSTITUTE, 'UTF-8');
     }
 
     /**

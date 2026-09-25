@@ -6,26 +6,28 @@ namespace TGbotPHP\Core;
 
 /**
  * Bot configuration
+ *
+ * Immutable: every value is validated once in the constructor.
  */
 class Config
 {
-    public string $token;
-    public bool $debug;
-    public string|false $debugFile;
-    public string|false $secretToken;
-    public bool $enforceHttps;
+    public readonly string $token;
+    public readonly bool $debug;
+    public readonly string|false $debugFile;
+    public readonly string|false $secretToken;
+    public readonly bool $enforceHttps;
 
     /** Base URL of the Bot API server (change it to use a local Bot API server) */
-    public string $apiBaseUrl;
+    public readonly string $apiBaseUrl;
 
     /** Request timeout in seconds (long polling adds its own timeout on top) */
-    public int $timeout;
+    public readonly int $timeout;
 
     /** How many times a request is retried after a 429 flood-control error */
-    public int $maxRetries;
+    public readonly int $maxRetries;
 
     /** Maximum number of seconds to wait before retrying a 429 error */
-    public int $maxRetryDelay;
+    public readonly int $maxRetryDelay;
 
     public function __construct(
         string $token,
@@ -46,7 +48,7 @@ class Config
             throw new \InvalidArgumentException('API base URL must use HTTPS (disable enforceHttps for a local server)');
         }
 
-        if ($secretToken !== false && !preg_match('/^[A-Za-z0-9_-]{1,256}$/', $secretToken)) {
+        if ($secretToken !== false && preg_match('/^[A-Za-z0-9_-]{1,256}$/', $secretToken) !== 1) {
             throw new \InvalidArgumentException('Secret token must be 1-256 characters: A-Z, a-z, 0-9, _ and -');
         }
 

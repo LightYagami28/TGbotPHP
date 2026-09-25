@@ -20,8 +20,41 @@ trait StickerMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Send sticker
@@ -38,7 +71,7 @@ trait StickerMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendSticker', [
+        return $this->apiCallObject('sendSticker', [
             'chat_id' => $chatId,
             'sticker' => $sticker,
             'reply_markup' => $replyMarkup,
@@ -52,18 +85,18 @@ trait StickerMethods
      */
     public function getStickerSet(string $name): array
     {
-        return $this->apiCall('getStickerSet', ['name' => $name]);
+        return $this->apiCallObject('getStickerSet', ['name' => $name]);
     }
 
     /**
      * @param string[] $customEmojiIds
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getcustomemojistickers
      */
     public function getCustomEmojiStickers(array $customEmojiIds): array
     {
-        return $this->apiCall('getCustomEmojiStickers', [
+        return $this->apiCallList('getCustomEmojiStickers', [
             'custom_emoji_ids' => array_values($customEmojiIds),
         ]);
     }
@@ -78,7 +111,7 @@ trait StickerMethods
      */
     public function uploadStickerFile(int $userId, InputFile $sticker, string $stickerFormat): array
     {
-        return $this->apiCall('uploadStickerFile', [
+        return $this->apiCallObject('uploadStickerFile', [
             'user_id' => $userId,
             'sticker' => $sticker,
             'sticker_format' => $stickerFormat,
@@ -101,13 +134,13 @@ trait StickerMethods
         ?string $stickerType = null,
         bool $needsRepainting = false
     ): bool {
-        return (bool) $this->apiCall('createNewStickerSet', [
+        return $this->apiCallBool('createNewStickerSet', [
             'user_id' => $userId,
             'name' => $name,
             'title' => $title,
             'stickers' => array_values($stickers),
             'sticker_type' => $stickerType,
-            'needs_repainting' => $needsRepainting ?: null,
+            'needs_repainting' => $needsRepainting ? true : null,
         ]);
     }
 
@@ -120,7 +153,7 @@ trait StickerMethods
      */
     public function addStickerToSet(int $userId, string $name, array $sticker): bool
     {
-        return (bool) $this->apiCall('addStickerToSet', [
+        return $this->apiCallBool('addStickerToSet', [
             'user_id' => $userId,
             'name' => $name,
             'sticker' => $sticker,
@@ -132,7 +165,7 @@ trait StickerMethods
      */
     public function setStickerPositionInSet(string $sticker, int $position): bool
     {
-        return (bool) $this->apiCall('setStickerPositionInSet', [
+        return $this->apiCallBool('setStickerPositionInSet', [
             'sticker' => $sticker,
             'position' => $position,
         ]);
@@ -143,7 +176,7 @@ trait StickerMethods
      */
     public function deleteStickerFromSet(string $sticker): bool
     {
-        return (bool) $this->apiCall('deleteStickerFromSet', ['sticker' => $sticker]);
+        return $this->apiCallBool('deleteStickerFromSet', ['sticker' => $sticker]);
     }
 
     /**
@@ -153,7 +186,7 @@ trait StickerMethods
      */
     public function setStickerEmojiList(string $sticker, array $emojiList): bool
     {
-        return (bool) $this->apiCall('setStickerEmojiList', [
+        return $this->apiCallBool('setStickerEmojiList', [
             'sticker' => $sticker,
             'emoji_list' => array_values($emojiList),
         ]);
@@ -166,7 +199,7 @@ trait StickerMethods
      */
     public function setStickerKeywords(string $sticker, array $keywords = []): bool
     {
-        return (bool) $this->apiCall('setStickerKeywords', [
+        return $this->apiCallBool('setStickerKeywords', [
             'sticker' => $sticker,
             'keywords' => array_values($keywords),
         ]);
@@ -177,7 +210,7 @@ trait StickerMethods
      */
     public function setStickerSetTitle(string $name, string $title): bool
     {
-        return (bool) $this->apiCall('setStickerSetTitle', [
+        return $this->apiCallBool('setStickerSetTitle', [
             'name' => $name,
             'title' => $title,
         ]);
@@ -188,6 +221,6 @@ trait StickerMethods
      */
     public function deleteStickerSet(string $name): bool
     {
-        return (bool) $this->apiCall('deleteStickerSet', ['name' => $name]);
+        return $this->apiCallBool('deleteStickerSet', ['name' => $name]);
     }
 }

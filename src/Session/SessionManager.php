@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Session;
 
 use TGbotPHP\Cache\CacheInterface;
+use TGbotPHP\Support\Value;
 
 class SessionManager
 {
@@ -23,15 +24,20 @@ class SessionManager
         return $sessionId;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getSession(string $sessionId): ?array
     {
-        return $this->cache->get("session:$sessionId");
+        $session = $this->cache->get("session:$sessionId");
+
+        return Value::isMap($session) ? $session : null;
     }
 
     public function setSessionData(string $sessionId, string $key, mixed $value): void
     {
         $session = $this->getSession($sessionId);
-        if ($session) {
+        if ($session !== null) {
             $session[$key] = $value;
             $this->cache->put("session:$sessionId", $session, self::SESSION_TTL);
         }

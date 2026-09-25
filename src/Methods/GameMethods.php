@@ -16,8 +16,41 @@ trait GameMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Send game
@@ -35,10 +68,10 @@ trait GameMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendGame', [
+        return $this->apiCallObject('sendGame', [
             'chat_id' => $chatId,
             'game_short_name' => $gameShortName,
-            'disable_notification' => $disableNotification ?: null,
+            'disable_notification' => $disableNotification ? true : null,
             'reply_markup' => $replyMarkup,
         ], $options);
     }
@@ -59,11 +92,11 @@ trait GameMethods
         ?int $messageId = null,
         ?string $inlineMessageId = null
     ): array|bool {
-        return $this->apiCall('setGameScore', [
+        return $this->apiCallObjectOrTrue('setGameScore', [
             'user_id' => $userId,
             'score' => $score,
-            'force' => $force ?: null,
-            'disable_edit_message' => $disableEditMessage ?: null,
+            'force' => $force ? true : null,
+            'disable_edit_message' => $disableEditMessage ? true : null,
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'inline_message_id' => $inlineMessageId,
@@ -73,7 +106,7 @@ trait GameMethods
     /**
      * Get game high scores
      *
-     * @return array<int, array<string, mixed>> GameHighScore objects
+     * @return list<array<string, mixed>> GameHighScore objects
      *
      * @see https://core.telegram.org/bots/api#getgamehighscores
      */
@@ -83,7 +116,7 @@ trait GameMethods
         ?int $messageId = null,
         ?string $inlineMessageId = null
     ): array {
-        return $this->apiCall('getGameHighScores', [
+        return $this->apiCallList('getGameHighScores', [
             'user_id' => $userId,
             'chat_id' => $chatId,
             'message_id' => $messageId,

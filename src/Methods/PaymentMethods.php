@@ -16,8 +16,41 @@ trait PaymentMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Send invoice
@@ -41,7 +74,7 @@ trait PaymentMethods
         ?array $suggestedTipAmounts = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendInvoice', [
+        return $this->apiCallObject('sendInvoice', [
             'chat_id' => $chatId,
             'title' => $title,
             'description' => $description,
@@ -50,7 +83,7 @@ trait PaymentMethods
             'prices' => array_values($prices),
             'provider_token' => $providerToken,
             'max_tip_amount' => $maxTipAmount,
-            'suggested_tip_amounts' => $suggestedTipAmounts ?: null,
+            'suggested_tip_amounts' => $suggestedTipAmounts === [] ? null : $suggestedTipAmounts,
         ], $options);
     }
 
@@ -71,7 +104,7 @@ trait PaymentMethods
         ?string $providerToken = null,
         array $options = []
     ): string {
-        return (string) $this->apiCall('createInvoiceLink', [
+        return $this->apiCallString('createInvoiceLink', [
             'title' => $title,
             'description' => $description,
             'payload' => $payload,
@@ -94,7 +127,7 @@ trait PaymentMethods
         ?array $shippingOptions = null,
         ?string $errorMessage = null
     ): bool {
-        return (bool) $this->apiCall('answerShippingQuery', [
+        return $this->apiCallBool('answerShippingQuery', [
             'shipping_query_id' => $shippingQueryId,
             'ok' => $ok,
             'shipping_options' => $shippingOptions,
@@ -112,7 +145,7 @@ trait PaymentMethods
         bool $ok,
         ?string $errorMessage = null
     ): bool {
-        return (bool) $this->apiCall('answerPreCheckoutQuery', [
+        return $this->apiCallBool('answerPreCheckoutQuery', [
             'pre_checkout_query_id' => $preCheckoutQueryId,
             'ok' => $ok,
             'error_message' => $errorMessage,
@@ -126,7 +159,7 @@ trait PaymentMethods
      */
     public function refundStarPayment(int $userId, string $telegramPaymentChargeId): bool
     {
-        return (bool) $this->apiCall('refundStarPayment', [
+        return $this->apiCallBool('refundStarPayment', [
             'user_id' => $userId,
             'telegram_payment_charge_id' => $telegramPaymentChargeId,
         ]);
@@ -141,7 +174,7 @@ trait PaymentMethods
      */
     public function getStarTransactions(?int $offset = null, ?int $limit = null): array
     {
-        return $this->apiCall('getStarTransactions', [
+        return $this->apiCallObject('getStarTransactions', [
             'offset' => $offset,
             'limit' => $limit,
         ]);

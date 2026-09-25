@@ -6,7 +6,6 @@ namespace TGbotPHP\Framework;
 
 use JsonException;
 use stdClass;
-use Throwable;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Core\Config;
@@ -21,6 +20,8 @@ use TGbotPHP\Plugin\PluginInterface;
 use TGbotPHP\Plugin\PluginManager;
 use TGbotPHP\Security\WebhookValidator;
 use TGbotPHP\Session\ConversationManager;
+use TGbotPHP\Support\Value;
+use Throwable;
 
 /**
  * Main Bot class - orchestrates all Telegram Bot API interactions
@@ -170,7 +171,7 @@ final class Bot extends ApiClient
     {
         if ($this->router->getBotUsername() === null) {
             $me = $this->getMe();
-            $this->setUsername(isset($me['username']) ? (string) $me['username'] : null);
+            $this->setUsername(Value::nullableString($me['username'] ?? null));
         }
 
         $this->running = true;
@@ -202,7 +203,13 @@ final class Bot extends ApiClient
             }
 
             foreach ($updates as $data) {
-                $offset = (int) $data['update_id'] + 1;
+                $updateId = Value::nullableInt($data['update_id'] ?? null);
+
+                if ($updateId === null) {
+                    continue;
+                }
+
+                $offset = $updateId + 1;
 
                 try {
                     $this->processUpdate(UpdateParser::fromArray($data));
@@ -418,25 +425,51 @@ final class Bot extends ApiClient
      */
     public function reply(stdClass $message, string $text, array $options = []): array
     {
-        $chat = $message->chat ?? $message->message->chat ?? null;
+        [$chatId] = self::conversationKey($message);
 
-        if (!$chat instanceof stdClass || !isset($chat->id)) {
-            throw new \InvalidArgumentException('Cannot reply: the payload has no chat');
+        // A callback query carries the original message
+        $source = Value::object(Value::path($message, 'message')) ?? $message;
+        $threadId = Value::nullableInt(Value::path($source, 'message_thread_id'));
+
+        if (Value::path($source, 'is_topic_message') === true && $threadId !== null) {
+            $options += ['message_thread_id' => $threadId];
         }
 
-        $source = isset($message->message) && $message->message instanceof stdClass ? $message->message : $message;
+        // $options override the defaults, including parse_mode and reply_markup
+        return $this->sendMessage($chatId, $text, options: $options);
+    }
 
-        if (!empty($source->is_topic_message) && isset($source->message_thread_id)) {
-            $options += ['message_thread_id' => $source->message_thread_id];
+    /**
+     * Edit the text of the message a callback query button belongs to
+     *
+     * Works for regular messages and for messages sent in inline mode.
+     *
+     * @param array<string, mixed> $options Extra editMessageText parameters (reply_markup, parse_mode, ...)
+     * @return array<string, mixed>|bool Edited message, or true for inline messages
+     */
+    public function edit(stdClass $callbackQuery, string $text, array $options = []): array|bool
+    {
+        $inlineMessageId = Value::nullableString(Value::path($callbackQuery, 'inline_message_id'));
+
+        if ($inlineMessageId !== null) {
+            return $this->editMessageText(null, null, $text, options: ['inline_message_id' => $inlineMessageId] + $options);
         }
 
-        $replyMarkup = $options['reply_markup'] ?? null;
-        unset($options['reply_markup']);
+        $messageId = Value::nullableInt(Value::path($callbackQuery, 'message', 'message_id'));
 
-        $parseMode = array_key_exists('parse_mode', $options) ? $options['parse_mode'] : 'HTML';
-        unset($options['parse_mode']);
+        if ($messageId === null) {
+            throw new \InvalidArgumentException('The callback query has no message to edit');
+        }
 
-        return $this->sendMessage($chat->id, $text, $parseMode, $replyMarkup, options: $options);
+        return $this->editMessageText($this->chatId($callbackQuery), $messageId, $text, options: $options);
+    }
+
+    /**
+     * Chat id of a message, callback query or any payload carrying a chat
+     */
+    public function chatId(stdClass $payload): int|string
+    {
+        return self::conversationKey($payload)[0];
     }
 
     /**
@@ -444,7 +477,13 @@ final class Bot extends ApiClient
      */
     public function answer(stdClass $callbackQuery, ?string $text = null, bool $showAlert = false): bool
     {
-        return $this->answerCallbackQuery((string) $callbackQuery->id, $text, $showAlert);
+        $id = Value::nullableString(Value::path($callbackQuery, 'id'));
+
+        if ($id === null) {
+            throw new \InvalidArgumentException('The payload is not a callback query');
+        }
+
+        return $this->answerCallbackQuery($id, $text, $showAlert);
     }
 
     /**
@@ -517,14 +556,13 @@ final class Bot extends ApiClient
      */
     private static function conversationKey(stdClass $message): array
     {
-        $chatId = $message->chat->id ?? $message->message->chat->id ?? null;
-        $userId = $message->from->id ?? null;
+        $chatId = Value::id(Value::path($message, 'chat', 'id') ?? Value::path($message, 'message', 'chat', 'id'));
 
         if ($chatId === null) {
             throw new \InvalidArgumentException('The payload has no chat');
         }
 
-        return [$chatId, $userId];
+        return [$chatId, Value::id(Value::path($message, 'from', 'id'))];
     }
 
     private static function respond(int $statusCode): void

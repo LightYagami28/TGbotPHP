@@ -32,19 +32,19 @@ class BotBuilder
     private ?CacheInterface $conversationCache = null;
     private int $conversationTtl = 3600;
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $commands = [];
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $callbacks = [];
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $texts = [];
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $inlineQueries = [];
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $states = [];
 
     /** @var array<int, array{0: string, 1: callable}> */

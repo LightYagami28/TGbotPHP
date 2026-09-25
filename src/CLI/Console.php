@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace TGbotPHP\CLI;
 
-use Throwable;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Framework\Bot;
+use TGbotPHP\Support\Value;
+use Throwable;
 
 /**
  * Command line tool
@@ -104,16 +105,19 @@ EOF);
         $info = $this->bot($argv)->getWebhookInfo();
 
         $this->write('✅ Webhook Info:');
-        $this->write('  URL: ' . (($info['url'] ?? '') !== '' ? $info['url'] : 'Not set'));
-        $this->write('  Pending updates: ' . ($info['pending_update_count'] ?? 0));
+        $this->write('  URL: ' . Value::string($info['url'] ?? null, 'Not set'));
+        $this->write('  Pending updates: ' . Value::int($info['pending_update_count'] ?? null));
 
-        if (isset($info['max_connections'])) {
-            $this->write('  Max connections: ' . $info['max_connections']);
+        $maxConnections = Value::nullableInt($info['max_connections'] ?? null);
+        if ($maxConnections !== null) {
+            $this->write('  Max connections: ' . $maxConnections);
         }
 
-        if (isset($info['last_error_message'])) {
-            $date = isset($info['last_error_date']) ? date('Y-m-d H:i:s', (int) $info['last_error_date']) : 'unknown';
-            $this->write("  Last error ($date): " . $info['last_error_message']);
+        $lastError = Value::nullableString($info['last_error_message'] ?? null);
+        if ($lastError !== null) {
+            $errorDate = Value::nullableInt($info['last_error_date'] ?? null);
+            $date = $errorDate !== null ? date('Y-m-d H:i:s', $errorDate) : 'unknown';
+            $this->write("  Last error ($date): " . $lastError);
         }
 
         return 0;
@@ -160,12 +164,12 @@ EOF);
         $me = $this->bot($argv)->getMe();
 
         $this->write('✅ Bot Info:');
-        $this->write('  ID: ' . ($me['id'] ?? '?'));
-        $this->write('  Username: @' . ($me['username'] ?? '?'));
-        $this->write('  Name: ' . ($me['first_name'] ?? '?'));
-        $this->write('  Can join groups: ' . (!empty($me['can_join_groups']) ? 'Yes' : 'No'));
-        $this->write('  Reads all group messages: ' . (!empty($me['can_read_all_group_messages']) ? 'Yes' : 'No'));
-        $this->write('  Supports inline queries: ' . (!empty($me['supports_inline_queries']) ? 'Yes' : 'No'));
+        $this->write('  ID: ' . Value::string($me['id'] ?? null, '?'));
+        $this->write('  Username: @' . Value::string($me['username'] ?? null, '?'));
+        $this->write('  Name: ' . Value::string($me['first_name'] ?? null, '?'));
+        $this->write('  Can join groups: ' . (($me['can_join_groups'] ?? false) === true ? 'Yes' : 'No'));
+        $this->write('  Reads all group messages: ' . (($me['can_read_all_group_messages'] ?? false) === true ? 'Yes' : 'No'));
+        $this->write('  Supports inline queries: ' . (($me['supports_inline_queries'] ?? false) === true ? 'Yes' : 'No'));
 
         return 0;
     }
@@ -183,7 +187,7 @@ EOF);
         }
 
         foreach ($commands as $command) {
-            $this->write(sprintf('  /%s - %s', $command['command'] ?? '', $command['description'] ?? ''));
+            $this->write(sprintf('  /%s - %s', Value::string($command['command'] ?? null), Value::string($command['description'] ?? null)));
         }
 
         return 0;
@@ -212,7 +216,7 @@ EOF);
      */
     private function bot(array $argv): Bot
     {
-        $token = $this->getOption($argv, 'token') ?? (getenv('TELEGRAM_BOT_TOKEN') ?: null);
+        $token = $this->getOption($argv, 'token') ?? Value::env('TELEGRAM_BOT_TOKEN');
 
         if ($token === null || $token === '') {
             throw new \InvalidArgumentException('--token or TELEGRAM_BOT_TOKEN is required');

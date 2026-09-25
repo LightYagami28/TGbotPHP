@@ -11,6 +11,7 @@ use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Http\CurlTransport;
 use TGbotPHP\Http\TransportInterface;
+use TGbotPHP\Support\Value;
 use TGbotPHP\Types\InputFile;
 
 /**
@@ -20,6 +21,9 @@ use TGbotPHP\Types\InputFile;
  */
 trait HttpClientTrait
 {
+    /** Parameters never written to the debug log */
+    private const SECRET_FIELDS = ['secret_token', 'provider_token'];
+
     private ?TransportInterface $transport = null;
 
     /**
@@ -51,7 +55,7 @@ trait HttpClientTrait
         [$fields, $multipart] = self::prepareFields($data);
 
         $url = $this->config->apiBaseUrl . '/bot' . $this->config->token . '/' . rawurlencode($method);
-        $timeout = $this->config->timeout + (int) ($data['timeout'] ?? 0);
+        $timeout = $this->config->timeout + max(0, Value::int($data['timeout'] ?? null));
 
         $attempt = 0;
 
@@ -96,6 +100,129 @@ trait HttpClientTrait
     }
 
     /**
+     * Call a method returning an object (User, Message, Chat, ...)
+     *
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @throws ApiException
+     */
+    protected function apiCallObject(string $method, array $params = [], array $options = []): array
+    {
+        $result = $this->apiCall($method, $params, $options);
+
+        if (!Value::isMap($result)) {
+            throw self::unexpectedResult($method, 'an object', $result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Call a method returning an array of objects
+     *
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     *
+     * @throws ApiException
+     */
+    protected function apiCallList(string $method, array $params = [], array $options = []): array
+    {
+        $result = $this->apiCall($method, $params, $options);
+
+        if (!Value::isListOfMaps($result)) {
+            throw self::unexpectedResult($method, 'an array of objects', $result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Call an edit method: returns the edited Message, or true for inline messages
+     *
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     *
+     * @throws ApiException
+     */
+    protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool
+    {
+        $result = $this->apiCall($method, $params, $options);
+
+        if ($result !== true && !Value::isMap($result)) {
+            throw self::unexpectedResult($method, 'an object or true', $result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Call a method returning True on success
+     *
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     *
+     * @throws ApiException
+     */
+    protected function apiCallBool(string $method, array $params = [], array $options = []): bool
+    {
+        $result = $this->apiCall($method, $params, $options);
+
+        if (!is_bool($result)) {
+            throw self::unexpectedResult($method, 'a boolean', $result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     *
+     * @throws ApiException
+     */
+    protected function apiCallInt(string $method, array $params = [], array $options = []): int
+    {
+        $result = $this->apiCall($method, $params, $options);
+
+        if (!is_int($result)) {
+            throw self::unexpectedResult($method, 'an integer', $result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     *
+     * @throws ApiException
+     */
+    protected function apiCallString(string $method, array $params = [], array $options = []): string
+    {
+        $result = $this->apiCall($method, $params, $options);
+
+        if (!is_string($result)) {
+            throw self::unexpectedResult($method, 'a string', $result);
+        }
+
+        return $result;
+    }
+
+    private static function unexpectedResult(string $method, string $expected, mixed $result): ApiException
+    {
+        return new ApiException(
+            "Unexpected result from $method: expected $expected, got " . get_debug_type($result),
+            0,
+            ['ok' => true, 'result' => $result],
+            $method
+        );
+    }
+
+    /**
      * Decode an API response and throw on errors
      *
      * @throws ApiException
@@ -112,9 +239,11 @@ trait HttpClientTrait
             throw new ApiException($message, $statusCode, [], $method);
         }
 
+        $decoded = Value::map($decoded);
+
         if (($decoded['ok'] ?? false) !== true) {
-            $code = (int) ($decoded['error_code'] ?? $statusCode);
-            $description = (string) ($decoded['description'] ?? "HTTP $statusCode from Telegram API");
+            $code = Value::int($decoded['error_code'] ?? null, $statusCode);
+            $description = Value::string($decoded['description'] ?? null, "HTTP $statusCode from Telegram API");
 
             if ($code === 429) {
                 throw new TooManyRequestsException($description, $code, $decoded, $method);
@@ -202,14 +331,15 @@ trait HttpClientTrait
      */
     private static function describeFields(array $fields): string
     {
-        $described = array_map(
-            static fn(mixed $value): mixed => match (true) {
+        $described = [];
+        foreach ($fields as $key => $value) {
+            $described[$key] = match (true) {
+                in_array($key, self::SECRET_FIELDS, true) => '<redacted>',
                 $value instanceof CURLFile => '<file ' . $value->getPostFilename() . '>',
                 $value instanceof CURLStringFile => '<file ' . $value->postname . '>',
                 default => $value,
-            },
-            $fields
-        );
+            };
+        }
 
         return (string) json_encode($described, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }

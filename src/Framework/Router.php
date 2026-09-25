@@ -6,6 +6,7 @@ namespace TGbotPHP\Framework;
 
 use stdClass;
 use TGbotPHP\Core\UpdateParser;
+use TGbotPHP\Support\Value;
 
 /**
  * Command, text, callback, inline query and update routing
@@ -28,19 +29,19 @@ use TGbotPHP\Core\UpdateParser;
  */
 final class Router
 {
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $commands = [];
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $callbacks = [];
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $inlineHandlers = [];
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $textHandlers = [];
 
-    /** @var array<string, callable> */
+    /** @var array<int|string, callable> Numeric-string keys become integers */
     private array $stateHandlers = [];
 
     /** @var array<string, callable[]> */
@@ -157,12 +158,16 @@ final class Router
             return false;
         }
 
-        $payload = $update->$type;
+        $payload = Value::object($update->$type);
+
+        if ($payload === null) {
+            return false;
+        }
 
         $handled = match ($type) {
-            'message' => $payload instanceof stdClass && $this->handleMessage($payload, $state, $stateData),
-            'callback_query' => $payload instanceof stdClass && $this->handleCallback($payload),
-            'inline_query' => $payload instanceof stdClass && $this->handleInlineQuery($payload),
+            'message' => $this->handleMessage($payload, $state, $stateData),
+            'callback_query' => $this->handleCallback($payload),
+            'inline_query' => $this->handleInlineQuery($payload),
             default => false,
         };
 
@@ -225,7 +230,7 @@ final class Router
      */
     public function handleCallback(stdClass $callback): bool
     {
-        $data = isset($callback->data) ? (string) $callback->data : '';
+        $data = Value::string(Value::path($callback, 'data'));
 
         return $this->routeByPattern($this->callbacks, $data, $callback);
     }
@@ -235,7 +240,7 @@ final class Router
      */
     public function handleInlineQuery(stdClass $query): bool
     {
-        $text = isset($query->query) ? (string) $query->query : '';
+        $text = Value::string(Value::path($query, 'query'));
 
         return $this->routeByPattern($this->inlineHandlers, $text, $query);
     }
@@ -279,7 +284,7 @@ final class Router
     }
 
     /**
-     * @param array<string, callable> $handlers
+     * @param array<int|string, callable> $handlers
      */
     private function routeByPattern(array $handlers, string $value, stdClass $payload): bool
     {
@@ -352,7 +357,7 @@ final class Router
         }
 
         $end = strrpos($pattern, $pattern[0]);
-        if ($end === false || $end === 0 || !preg_match('/^[imsxuUXJD]*$/', substr($pattern, $end + 1))) {
+        if ($end === false || $end === 0 || preg_match('/^[imsxuUXJD]*$/', substr($pattern, $end + 1)) !== 1) {
             return false;
         }
 
@@ -373,7 +378,7 @@ final class Router
     /**
      * Get all registered commands
      *
-     * @return array<string, callable>
+     * @return array<int|string, callable>
      */
     public function getCommands(): array
     {
@@ -383,7 +388,7 @@ final class Router
     /**
      * Get all registered callbacks
      *
-     * @return array<string, callable>
+     * @return array<int|string, callable>
      */
     public function getCallbacks(): array
     {

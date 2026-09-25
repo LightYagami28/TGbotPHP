@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Session;
 
 use TGbotPHP\Cache\CacheInterface;
+use TGbotPHP\Support\Value;
 
 /**
  * Per chat/user conversation state for multi-step dialogs
@@ -25,7 +26,7 @@ final class ConversationManager
     {
         $entry = $this->cache->get($this->key($chatId, $userId));
 
-        return is_array($entry) && isset($entry['state']) ? (string) $entry['state'] : null;
+        return is_array($entry) ? Value::nullableString($entry['state'] ?? null) : null;
     }
 
     /**
@@ -35,7 +36,7 @@ final class ConversationManager
     {
         $entry = $this->cache->get($this->key($chatId, $userId));
 
-        return is_array($entry) && is_array($entry['data'] ?? null) ? $entry['data'] : [];
+        return is_array($entry) ? Value::map($entry['data'] ?? null) : [];
     }
 
     /**

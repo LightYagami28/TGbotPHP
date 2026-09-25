@@ -16,8 +16,41 @@ trait LocationMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
@@ -37,7 +70,7 @@ trait LocationMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendLocation', [
+        return $this->apiCallObject('sendLocation', [
             'chat_id' => $chatId,
             'latitude' => $latitude,
             'longitude' => $longitude,
@@ -67,7 +100,7 @@ trait LocationMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array|bool {
-        return $this->apiCall('editMessageLiveLocation', [
+        return $this->apiCallObjectOrTrue('editMessageLiveLocation', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'latitude' => $latitude,
@@ -91,7 +124,7 @@ trait LocationMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): bool {
-        return (bool) $this->apiCall('stopMessageLiveLocation', [
+        return $this->apiCallBool('stopMessageLiveLocation', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'reply_markup' => $replyMarkup,
@@ -118,7 +151,7 @@ trait LocationMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendVenue', [
+        return $this->apiCallObject('sendVenue', [
             'chat_id' => $chatId,
             'latitude' => $latitude,
             'longitude' => $longitude,
@@ -148,7 +181,7 @@ trait LocationMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendContact', [
+        return $this->apiCallObject('sendContact', [
             'chat_id' => $chatId,
             'phone_number' => $phoneNumber,
             'first_name' => $firstName,
@@ -188,18 +221,18 @@ trait LocationMethods
             array_values($options)
         );
 
-        return $this->apiCall('sendPoll', [
+        return $this->apiCallObject('sendPoll', [
             'chat_id' => $chatId,
             'question' => $question,
             'options' => $pollOptions,
             'type' => $type,
-            'allows_multiple_answers' => $allowsMultipleAnswers ?: null,
+            'allows_multiple_answers' => $allowsMultipleAnswers ? true : null,
             'correct_option_id' => $correctOptionId,
             'explanation' => $explanation,
             'explanation_parse_mode' => $explanation !== null ? $explanationParseMode : null,
             'open_period' => $openPeriod,
             'close_date' => $closeDate,
-            'is_closed' => $isClosed ?: null,
+            'is_closed' => $isClosed ? true : null,
             'reply_markup' => $replyMarkup,
         ], $extra);
     }
@@ -219,7 +252,7 @@ trait LocationMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('stopPoll', [
+        return $this->apiCallObject('stopPoll', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'reply_markup' => $replyMarkup,
@@ -240,10 +273,10 @@ trait LocationMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendDice', [
+        return $this->apiCallObject('sendDice', [
             'chat_id' => $chatId,
             'emoji' => $emoji,
-            'disable_notification' => $disableNotification ?: null,
+            'disable_notification' => $disableNotification ? true : null,
             'reply_markup' => $replyMarkup,
         ], $options);
     }

@@ -16,8 +16,41 @@ trait ChatMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Get chat information (ChatFullInfo)
@@ -28,7 +61,7 @@ trait ChatMethods
      */
     public function getChat(int|string $chatId): array
     {
-        return $this->apiCall('getChat', ['chat_id' => $chatId]);
+        return $this->apiCallObject('getChat', ['chat_id' => $chatId]);
     }
 
     /**
@@ -40,7 +73,7 @@ trait ChatMethods
      */
     public function getChatMember(int|string $chatId, int $userId): array
     {
-        return $this->apiCall('getChatMember', [
+        return $this->apiCallObject('getChatMember', [
             'chat_id' => $chatId,
             'user_id' => $userId,
         ]);
@@ -49,13 +82,13 @@ trait ChatMethods
     /**
      * Get chat administrators
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getchatadministrators
      */
     public function getChatAdministrators(int|string $chatId): array
     {
-        return $this->apiCall('getChatAdministrators', ['chat_id' => $chatId]);
+        return $this->apiCallList('getChatAdministrators', ['chat_id' => $chatId]);
     }
 
     /**
@@ -65,7 +98,7 @@ trait ChatMethods
      */
     public function getChatMemberCount(int|string $chatId): int
     {
-        return (int) $this->apiCall('getChatMemberCount', ['chat_id' => $chatId]);
+        return $this->apiCallInt('getChatMemberCount', ['chat_id' => $chatId]);
     }
 
     /**
@@ -83,7 +116,7 @@ trait ChatMethods
      */
     public function leaveChat(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('leaveChat', ['chat_id' => $chatId]);
+        return $this->apiCallBool('leaveChat', ['chat_id' => $chatId]);
     }
 
     /**
@@ -93,7 +126,7 @@ trait ChatMethods
      */
     public function setChatTitle(int|string $chatId, string $title): bool
     {
-        return (bool) $this->apiCall('setChatTitle', [
+        return $this->apiCallBool('setChatTitle', [
             'chat_id' => $chatId,
             'title' => $title,
         ]);
@@ -106,7 +139,7 @@ trait ChatMethods
      */
     public function setChatDescription(int|string $chatId, string $description): bool
     {
-        return (bool) $this->apiCall('setChatDescription', [
+        return $this->apiCallBool('setChatDescription', [
             'chat_id' => $chatId,
             'description' => $description,
         ]);
@@ -119,7 +152,7 @@ trait ChatMethods
      */
     public function setChatPhoto(int|string $chatId, InputFile $photo): bool
     {
-        return (bool) $this->apiCall('setChatPhoto', [
+        return $this->apiCallBool('setChatPhoto', [
             'chat_id' => $chatId,
             'photo' => $photo,
         ]);
@@ -132,7 +165,7 @@ trait ChatMethods
      */
     public function deleteChatPhoto(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('deleteChatPhoto', ['chat_id' => $chatId]);
+        return $this->apiCallBool('deleteChatPhoto', ['chat_id' => $chatId]);
     }
 
     /**
@@ -147,7 +180,7 @@ trait ChatMethods
         array $permissions,
         ?bool $useIndependentChatPermissions = null
     ): bool {
-        return (bool) $this->apiCall('setChatPermissions', [
+        return $this->apiCallBool('setChatPermissions', [
             'chat_id' => $chatId,
             'permissions' => $permissions,
             'use_independent_chat_permissions' => $useIndependentChatPermissions,
@@ -167,10 +200,10 @@ trait ChatMethods
         bool $disableNotification = false,
         array $options = []
     ): bool {
-        return (bool) $this->apiCall('pinChatMessage', [
+        return $this->apiCallBool('pinChatMessage', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
-            'disable_notification' => $disableNotification ?: null,
+            'disable_notification' => $disableNotification ? true : null,
         ], $options);
     }
 
@@ -191,7 +224,7 @@ trait ChatMethods
      */
     public function unpinChatMessage(int|string $chatId, ?int $messageId = null, array $options = []): bool
     {
-        return (bool) $this->apiCall('unpinChatMessage', [
+        return $this->apiCallBool('unpinChatMessage', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
         ], $options);
@@ -212,7 +245,7 @@ trait ChatMethods
      */
     public function unpinAllChatMessages(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('unpinAllChatMessages', ['chat_id' => $chatId]);
+        return $this->apiCallBool('unpinAllChatMessages', ['chat_id' => $chatId]);
     }
 
     /**
@@ -222,7 +255,7 @@ trait ChatMethods
      */
     public function exportChatInviteLink(int|string $chatId): string
     {
-        return (string) $this->apiCall('exportChatInviteLink', ['chat_id' => $chatId]);
+        return $this->apiCallString('exportChatInviteLink', ['chat_id' => $chatId]);
     }
 
     /**
@@ -241,12 +274,12 @@ trait ChatMethods
         bool $createsJoinRequest = false,
         array $options = []
     ): array {
-        return $this->apiCall('createChatInviteLink', [
+        return $this->apiCallObject('createChatInviteLink', [
             'chat_id' => $chatId,
             'name' => $name,
             'expire_date' => $expireDate,
             'member_limit' => $memberLimit,
-            'creates_join_request' => $createsJoinRequest ?: null,
+            'creates_join_request' => $createsJoinRequest ? true : null,
         ], $options);
     }
 
@@ -260,7 +293,7 @@ trait ChatMethods
      */
     public function editChatInviteLink(int|string $chatId, string $inviteLink, array $options = []): array
     {
-        return $this->apiCall('editChatInviteLink', [
+        return $this->apiCallObject('editChatInviteLink', [
             'chat_id' => $chatId,
             'invite_link' => $inviteLink,
         ], $options);
@@ -275,7 +308,7 @@ trait ChatMethods
      */
     public function revokeChatInviteLink(int|string $chatId, string $inviteLink): array
     {
-        return $this->apiCall('revokeChatInviteLink', [
+        return $this->apiCallObject('revokeChatInviteLink', [
             'chat_id' => $chatId,
             'invite_link' => $inviteLink,
         ]);
@@ -286,7 +319,7 @@ trait ChatMethods
      */
     public function approveChatJoinRequest(int|string $chatId, int $userId): bool
     {
-        return (bool) $this->apiCall('approveChatJoinRequest', [
+        return $this->apiCallBool('approveChatJoinRequest', [
             'chat_id' => $chatId,
             'user_id' => $userId,
         ]);
@@ -297,7 +330,7 @@ trait ChatMethods
      */
     public function declineChatJoinRequest(int|string $chatId, int $userId): bool
     {
-        return (bool) $this->apiCall('declineChatJoinRequest', [
+        return $this->apiCallBool('declineChatJoinRequest', [
             'chat_id' => $chatId,
             'user_id' => $userId,
         ]);
@@ -308,7 +341,7 @@ trait ChatMethods
      */
     public function setChatStickerSet(int|string $chatId, string $stickerSetName): bool
     {
-        return (bool) $this->apiCall('setChatStickerSet', [
+        return $this->apiCallBool('setChatStickerSet', [
             'chat_id' => $chatId,
             'sticker_set_name' => $stickerSetName,
         ]);
@@ -319,6 +352,6 @@ trait ChatMethods
      */
     public function deleteChatStickerSet(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('deleteChatStickerSet', ['chat_id' => $chatId]);
+        return $this->apiCallBool('deleteChatStickerSet', ['chat_id' => $chatId]);
     }
 }

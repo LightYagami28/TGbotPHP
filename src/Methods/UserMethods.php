@@ -6,6 +6,7 @@ namespace TGbotPHP\Methods;
 
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Http\TransportInterface;
+use TGbotPHP\Support\Value;
 
 /**
  * User, file and bot session methods from Telegram Bot API
@@ -17,8 +18,41 @@ trait UserMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     abstract public function getTransport(): TransportInterface;
 
@@ -31,7 +65,7 @@ trait UserMethods
      */
     public function getMe(): array
     {
-        return $this->apiCall('getMe');
+        return $this->apiCallObject('getMe');
     }
 
     /**
@@ -41,7 +75,7 @@ trait UserMethods
      */
     public function logOut(): bool
     {
-        return (bool) $this->apiCall('logOut');
+        return $this->apiCallBool('logOut');
     }
 
     /**
@@ -51,7 +85,7 @@ trait UserMethods
      */
     public function close(): bool
     {
-        return (bool) $this->apiCall('close');
+        return $this->apiCallBool('close');
     }
 
     /**
@@ -66,7 +100,7 @@ trait UserMethods
         ?int $offset = null,
         ?int $limit = null
     ): array {
-        return $this->apiCall('getUserProfilePhotos', [
+        return $this->apiCallObject('getUserProfilePhotos', [
             'user_id' => $userId,
             'offset' => $offset,
             'limit' => $limit,
@@ -82,7 +116,7 @@ trait UserMethods
      */
     public function getUserChatBoosts(int|string $chatId, int $userId): array
     {
-        return $this->apiCall('getUserChatBoosts', [
+        return $this->apiCallObject('getUserChatBoosts', [
             'chat_id' => $chatId,
             'user_id' => $userId,
         ]);
@@ -97,7 +131,7 @@ trait UserMethods
      */
     public function getFile(string $fileId): array
     {
-        return $this->apiCall('getFile', ['file_id' => $fileId]);
+        return $this->apiCallObject('getFile', ['file_id' => $fileId]);
     }
 
     /**
@@ -121,11 +155,13 @@ trait UserMethods
     {
         $file = $this->getFile($fileId);
 
-        if (!isset($file['file_path'])) {
+        $filePath = Value::nullableString($file['file_path'] ?? null);
+
+        if ($filePath === null || $filePath === '') {
             throw new ApiException('File is not available for download', 0, $file, 'getFile');
         }
 
-        $response = $this->getTransport()->get($this->getFileUrl((string) $file['file_path']), max(60, $this->config->timeout));
+        $response = $this->getTransport()->get($this->getFileUrl($filePath), max(60, $this->config->timeout));
 
         if ($response->statusCode !== 200) {
             throw new ApiException("HTTP {$response->statusCode} while downloading file", $response->statusCode, [], 'getFile');

@@ -15,19 +15,52 @@ trait ForumTopicMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Get custom emoji stickers usable as forum topic icons
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getforumtopiciconstickers
      */
     public function getForumTopicIconStickers(): array
     {
-        return $this->apiCall('getForumTopicIconStickers');
+        return $this->apiCallList('getForumTopicIconStickers');
     }
 
     /**
@@ -43,7 +76,7 @@ trait ForumTopicMethods
         ?int $iconColor = null,
         ?string $iconCustomEmojiId = null
     ): array {
-        return $this->apiCall('createForumTopic', [
+        return $this->apiCallObject('createForumTopic', [
             'chat_id' => $chatId,
             'name' => $name,
             'icon_color' => $iconColor,
@@ -62,7 +95,7 @@ trait ForumTopicMethods
         ?string $name = null,
         ?string $iconCustomEmojiId = null
     ): bool {
-        return (bool) $this->apiCall('editForumTopic', [
+        return $this->apiCallBool('editForumTopic', [
             'chat_id' => $chatId,
             'message_thread_id' => $messageThreadId,
             'name' => $name,
@@ -107,7 +140,7 @@ trait ForumTopicMethods
      */
     public function editGeneralForumTopic(int|string $chatId, string $name): bool
     {
-        return (bool) $this->apiCall('editGeneralForumTopic', [
+        return $this->apiCallBool('editGeneralForumTopic', [
             'chat_id' => $chatId,
             'name' => $name,
         ]);
@@ -118,7 +151,7 @@ trait ForumTopicMethods
      */
     public function closeGeneralForumTopic(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('closeGeneralForumTopic', ['chat_id' => $chatId]);
+        return $this->apiCallBool('closeGeneralForumTopic', ['chat_id' => $chatId]);
     }
 
     /**
@@ -126,7 +159,7 @@ trait ForumTopicMethods
      */
     public function reopenGeneralForumTopic(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('reopenGeneralForumTopic', ['chat_id' => $chatId]);
+        return $this->apiCallBool('reopenGeneralForumTopic', ['chat_id' => $chatId]);
     }
 
     /**
@@ -134,7 +167,7 @@ trait ForumTopicMethods
      */
     public function hideGeneralForumTopic(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('hideGeneralForumTopic', ['chat_id' => $chatId]);
+        return $this->apiCallBool('hideGeneralForumTopic', ['chat_id' => $chatId]);
     }
 
     /**
@@ -142,7 +175,7 @@ trait ForumTopicMethods
      */
     public function unhideGeneralForumTopic(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('unhideGeneralForumTopic', ['chat_id' => $chatId]);
+        return $this->apiCallBool('unhideGeneralForumTopic', ['chat_id' => $chatId]);
     }
 
     /**
@@ -150,12 +183,12 @@ trait ForumTopicMethods
      */
     public function unpinAllGeneralForumTopicMessages(int|string $chatId): bool
     {
-        return (bool) $this->apiCall('unpinAllGeneralForumTopicMessages', ['chat_id' => $chatId]);
+        return $this->apiCallBool('unpinAllGeneralForumTopicMessages', ['chat_id' => $chatId]);
     }
 
     private function forumTopicAction(string $method, int|string $chatId, int $messageThreadId): bool
     {
-        return (bool) $this->apiCall($method, [
+        return $this->apiCallBool($method, [
             'chat_id' => $chatId,
             'message_thread_id' => $messageThreadId,
         ]);

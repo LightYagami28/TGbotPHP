@@ -7,6 +7,7 @@ namespace TGbotPHP\Rate;
 use stdClass;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Core\UpdateParser;
+use TGbotPHP\Support\Value;
 
 /**
  * Fixed-window rate limiter
@@ -70,18 +71,21 @@ class RateLimiter
      *
      *     $bot->middleware($limiter->middleware(5, 10, fn($update, $bot) => ...));
      *
-     * @param callable|null $onLimited fn(stdClass $update, mixed ...$args) called for dropped updates
+     * @param (callable(stdClass, mixed...): mixed)|null $onLimited Called for dropped updates
+     * @return \Closure(stdClass, mixed...): bool
      */
-    public function middleware(int $maxRequests, int $windowSeconds, ?callable $onLimited = null): callable
+    public function middleware(int $maxRequests, int $windowSeconds, ?callable $onLimited = null): \Closure
     {
         return function (stdClass $update, mixed ...$args) use ($maxRequests, $windowSeconds, $onLimited): bool {
             $user = UpdateParser::getUser($update);
 
-            if ($user === null || !isset($user->id)) {
+            $userId = Value::id(Value::path($user, 'id'));
+
+            if ($userId === null) {
                 return true;
             }
 
-            if ($this->limit('user:' . $user->id, $maxRequests, $windowSeconds)) {
+            if ($this->limit('user:' . $userId, $maxRequests, $windowSeconds)) {
                 return true;
             }
 
@@ -100,11 +104,14 @@ class RateLimiter
     {
         $window = $this->cache->get($this->cacheKey($key));
 
-        if (!is_array($window) || !isset($window['count'], $window['reset_at'])) {
+        if (!is_array($window)) {
             return null;
         }
 
-        return ['count' => (int) $window['count'], 'reset_at' => (int) $window['reset_at']];
+        $count = Value::nullableInt($window['count'] ?? null);
+        $resetAt = Value::nullableInt($window['reset_at'] ?? null);
+
+        return $count !== null && $resetAt !== null ? ['count' => $count, 'reset_at' => $resetAt] : null;
     }
 
     private function cacheKey(string $key): string

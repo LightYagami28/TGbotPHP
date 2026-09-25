@@ -6,6 +6,7 @@ namespace TGbotPHP\Core;
 
 use JsonException;
 use stdClass;
+use TGbotPHP\Support\Value;
 
 /**
  * Parse and validate Telegram webhook updates
@@ -85,7 +86,7 @@ class UpdateParser
         }
 
         foreach (get_object_vars($update) as $key => $value) {
-            if ($key !== 'update_id' && $value instanceof stdClass) {
+            if (is_string($key) && $key !== 'update_id' && $value instanceof stdClass) {
                 return $key;
             }
         }
@@ -118,11 +119,8 @@ class UpdateParser
             return $payload->chat;
         }
 
-        if (isset($payload->message->chat) && $payload->message->chat instanceof stdClass) {
-            return $payload->message->chat;
-        }
-
-        return null;
+        // Callback queries carry the chat inside the attached message
+        return Value::object(Value::path($payload, 'message', 'chat'));
     }
 
     /**

@@ -57,6 +57,9 @@ final class CurlTransport implements TransportInterface
             CURLOPT_CONNECTTIMEOUT => $this->connectTimeout,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
+            // Never follow redirects or switch to another protocol (file://, gopher://, ...)
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
             CURLOPT_USERAGENT => 'TGbotPHP/' . ApiClient::VERSION,
         ]);
 
@@ -66,6 +69,6 @@ final class CurlTransport implements TransportInterface
             throw new NetworkException('cURL error: ' . curl_error($curl), curl_errno($curl));
         }
 
-        return new HttpResponse((int) curl_getinfo($curl, CURLINFO_HTTP_CODE), $body);
+        return new HttpResponse(curl_getinfo($curl, CURLINFO_HTTP_CODE), $body);
     }
 }

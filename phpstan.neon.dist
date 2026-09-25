@@ -1,4 +1,19 @@
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
 parameters:
-    level: 5
+    level: 10
     paths:
         - src
+        - tests
+        - examples
+        - bin/tgbot
+    tmpDir: .phpstan.cache
+    checkUninitializedProperties: true
+    checkBenevolentUnionTypes: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    reportAnyTypeWideningInVarTag: true
+    reportWrongPhpDocTypeInVarTag: true
+    reportUnmatchedIgnoredErrors: true

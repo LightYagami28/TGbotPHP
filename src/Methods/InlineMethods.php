@@ -14,8 +14,41 @@ trait InlineMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Answer a callback query sent from an inline keyboard button
@@ -35,10 +68,10 @@ trait InlineMethods
         ?int $cacheTime = null,
         array $options = []
     ): bool {
-        return (bool) $this->apiCall('answerCallbackQuery', [
+        return $this->apiCallBool('answerCallbackQuery', [
             'callback_query_id' => $callbackQueryId,
             'text' => $text,
-            'show_alert' => $showAlert ?: null,
+            'show_alert' => $showAlert ? true : null,
             'url' => $url,
             'cache_time' => $cacheTime,
         ], $options);
@@ -70,11 +103,11 @@ trait InlineMethods
             $button = ['text' => $switchPmText, 'start_parameter' => $switchPmParameter ?? ''];
         }
 
-        return (bool) $this->apiCall('answerInlineQuery', [
+        return $this->apiCallBool('answerInlineQuery', [
             'inline_query_id' => $inlineQueryId,
             'results' => array_values($results),
             'cache_time' => $cacheTime,
-            'is_personal' => $isPersonal ?: null,
+            'is_personal' => $isPersonal ? true : null,
             'next_offset' => $nextOffset,
             'button' => $button,
         ], $options);
@@ -90,7 +123,7 @@ trait InlineMethods
      */
     public function answerWebAppQuery(string $webAppQueryId, array $result): array
     {
-        return $this->apiCall('answerWebAppQuery', [
+        return $this->apiCallObject('answerWebAppQuery', [
             'web_app_query_id' => $webAppQueryId,
             'result' => $result,
         ]);

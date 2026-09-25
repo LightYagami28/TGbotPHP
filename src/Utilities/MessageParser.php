@@ -38,7 +38,7 @@ class MessageParser
         preg_match_all('/"((?:[^"\\\\]|\\\\.)*)"|(\S+)/u', $args, $matches, PREG_SET_ORDER);
 
         return array_map(
-            static fn(array $match): string => ($match[2] ?? '') !== '' ? $match[2] : stripcslashes($match[1]),
+            static fn(array $match): string => ($match[2] ?? '') !== '' ? $match[2] : stripcslashes($match[1] ?? ''),
             $matches
         );
     }

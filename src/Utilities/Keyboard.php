@@ -20,7 +20,7 @@ class Keyboard
     /**
      * Single row of callback buttons
      *
-     * @param array<string, string> $buttons text => callback data
+     * @param array<int|string, string> $buttons text => callback data
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
      */
     public static function inline(array $buttons): array
@@ -31,7 +31,7 @@ class Keyboard
     /**
      * Single row of URL buttons
      *
-     * @param array<string, string> $links text => URL
+     * @param array<int|string, string> $links text => URL
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
      */
     public static function links(array $links): array
@@ -45,7 +45,7 @@ class Keyboard
     }
 
     /**
-     * @param array<string, string> $buttons text => callback data
+     * @param array<int|string, string> $buttons text => callback data
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
      */
     public static function row(array $buttons): array
@@ -56,7 +56,7 @@ class Keyboard
     /**
      * Callback buttons laid out in a grid
      *
-     * @param array<string, string> $buttons text => callback data
+     * @param array<int|string, string> $buttons text => callback data
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
      */
     public static function grid(array $buttons, int $cols = 2): array
@@ -70,7 +70,7 @@ class Keyboard
     }
 
     /**
-     * @param array<string, string> $items text => callback data
+     * @param array<int|string, string> $items text => callback data
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
      */
     public static function menu(array $items, int $itemsPerRow = 1): array
@@ -124,10 +124,10 @@ class Keyboard
 
         return array_filter([
             'keyboard' => $keyboard,
-            'resize_keyboard' => $resize ?: null,
-            'one_time_keyboard' => $oneTime ?: null,
+            'resize_keyboard' => $resize ? true : null,
+            'one_time_keyboard' => $oneTime ? true : null,
             'input_field_placeholder' => $placeholder,
-            'selective' => $selective ?: null,
+            'selective' => $selective ? true : null,
         ], static fn(mixed $value): bool => $value !== null);
     }
 
@@ -151,7 +151,7 @@ class Keyboard
         return array_filter([
             'force_reply' => true,
             'input_field_placeholder' => $placeholder,
-            'selective' => $selective ?: null,
+            'selective' => $selective ? true : null,
         ], static fn(mixed $value): bool => $value !== null);
     }
 
@@ -199,7 +199,7 @@ class Keyboard
     {
         $row = [];
         foreach ($buttons as $text => $data) {
-            $row[] = self::button((string) $text, (string) $data);
+            $row[] = self::button((string) $text, $data);
         }
 
         return $row;

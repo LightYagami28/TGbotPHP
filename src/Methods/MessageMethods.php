@@ -21,8 +21,41 @@ trait MessageMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Send text message
@@ -42,12 +75,12 @@ trait MessageMethods
         bool $disableNotification = false,
         array $options = []
     ): array {
-        return $this->apiCall('sendMessage', [
+        return $this->apiCallObject('sendMessage', [
             'chat_id' => $chatId,
             'text' => $text,
             'parse_mode' => $parseMode,
             'link_preview_options' => $disableWebPagePreview ? ['is_disabled' => true] : null,
-            'disable_notification' => $disableNotification ?: null,
+            'disable_notification' => $disableNotification ? true : null,
             'reply_markup' => $replyMarkup,
         ], $options);
     }
@@ -67,11 +100,11 @@ trait MessageMethods
         bool $disableNotification = false,
         array $options = []
     ): array {
-        return $this->apiCall('forwardMessage', [
+        return $this->apiCallObject('forwardMessage', [
             'chat_id' => $chatId,
             'from_chat_id' => $fromChatId,
             'message_id' => $messageId,
-            'disable_notification' => $disableNotification ?: null,
+            'disable_notification' => $disableNotification ? true : null,
         ], $options);
     }
 
@@ -80,7 +113,7 @@ trait MessageMethods
      *
      * @param int[] $messageIds
      * @param array<string, mixed> $options
-     * @return array<int, array<string, mixed>> MessageId objects
+     * @return list<array<string, mixed>> MessageId objects
      *
      * @see https://core.telegram.org/bots/api#forwardmessages
      */
@@ -90,7 +123,7 @@ trait MessageMethods
         array $messageIds,
         array $options = []
     ): array {
-        return $this->apiCall('forwardMessages', [
+        return $this->apiCallList('forwardMessages', [
             'chat_id' => $chatId,
             'from_chat_id' => $fromChatId,
             'message_ids' => array_values($messageIds),
@@ -115,7 +148,7 @@ trait MessageMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('copyMessage', [
+        return $this->apiCallObject('copyMessage', [
             'chat_id' => $chatId,
             'from_chat_id' => $fromChatId,
             'message_id' => $messageId,
@@ -130,7 +163,7 @@ trait MessageMethods
      *
      * @param int[] $messageIds
      * @param array<string, mixed> $options
-     * @return array<int, array<string, mixed>> MessageId objects
+     * @return list<array<string, mixed>> MessageId objects
      *
      * @see https://core.telegram.org/bots/api#copymessages
      */
@@ -140,7 +173,7 @@ trait MessageMethods
         array $messageIds,
         array $options = []
     ): array {
-        return $this->apiCall('copyMessages', [
+        return $this->apiCallList('copyMessages', [
             'chat_id' => $chatId,
             'from_chat_id' => $fromChatId,
             'message_ids' => array_values($messageIds),
@@ -165,7 +198,7 @@ trait MessageMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendPhoto', [
+        return $this->apiCallObject('sendPhoto', [
             'chat_id' => $chatId,
             'photo' => $photo,
             'caption' => $caption,
@@ -192,7 +225,7 @@ trait MessageMethods
         ?string $title = null,
         array $options = []
     ): array {
-        return $this->apiCall('sendAudio', [
+        return $this->apiCallObject('sendAudio', [
             'chat_id' => $chatId,
             'audio' => $audio,
             'caption' => $caption,
@@ -218,7 +251,7 @@ trait MessageMethods
         ?string $parseMode = 'HTML',
         array $options = []
     ): array {
-        return $this->apiCall('sendDocument', [
+        return $this->apiCallObject('sendDocument', [
             'chat_id' => $chatId,
             'document' => $document,
             'caption' => $caption,
@@ -245,14 +278,14 @@ trait MessageMethods
         bool $supportsStreaming = false,
         array $options = []
     ): array {
-        return $this->apiCall('sendVideo', [
+        return $this->apiCallObject('sendVideo', [
             'chat_id' => $chatId,
             'video' => $video,
             'caption' => $caption,
             'duration' => $duration,
             'width' => $width,
             'height' => $height,
-            'supports_streaming' => $supportsStreaming ?: null,
+            'supports_streaming' => $supportsStreaming ? true : null,
         ], $options);
     }
 
@@ -276,7 +309,7 @@ trait MessageMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array|bool {
-        return $this->apiCall('editMessageText', [
+        return $this->apiCallObjectOrTrue('editMessageText', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'text' => $text,
@@ -302,7 +335,7 @@ trait MessageMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array|bool {
-        return $this->apiCall('editMessageCaption', [
+        return $this->apiCallObjectOrTrue('editMessageCaption', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'caption' => $caption,
@@ -328,7 +361,7 @@ trait MessageMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array|bool {
-        return $this->apiCall('editMessageMedia', [
+        return $this->apiCallObjectOrTrue('editMessageMedia', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'media' => $media,
@@ -351,7 +384,7 @@ trait MessageMethods
         array|JsonSerializable|null $replyMarkup = null,
         array $options = []
     ): array|bool {
-        return $this->apiCall('editMessageReplyMarkup', [
+        return $this->apiCallObjectOrTrue('editMessageReplyMarkup', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'reply_markup' => $replyMarkup,
@@ -365,7 +398,7 @@ trait MessageMethods
      */
     public function deleteMessage(int|string $chatId, int $messageId): bool
     {
-        return (bool) $this->apiCall('deleteMessage', [
+        return $this->apiCallBool('deleteMessage', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
         ]);
@@ -380,7 +413,7 @@ trait MessageMethods
      */
     public function deleteMessages(int|string $chatId, array $messageIds): bool
     {
-        return (bool) $this->apiCall('deleteMessages', [
+        return $this->apiCallBool('deleteMessages', [
             'chat_id' => $chatId,
             'message_ids' => array_values($messageIds),
         ]);
@@ -395,7 +428,7 @@ trait MessageMethods
      */
     public function sendChatAction(int|string $chatId, string $action, array $options = []): bool
     {
-        return (bool) $this->apiCall('sendChatAction', [
+        return $this->apiCallBool('sendChatAction', [
             'chat_id' => $chatId,
             'action' => $action,
         ], $options);

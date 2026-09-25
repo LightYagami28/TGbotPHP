@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Exceptions;
 
+use TGbotPHP\Support\Value;
+
 /**
  * Exception for Telegram API failures
  */
@@ -53,9 +55,7 @@ class ApiException extends TelegramException
      */
     public function getParameters(): array
     {
-        $parameters = $this->apiResponse['parameters'] ?? [];
-
-        return is_array($parameters) ? $parameters : [];
+        return Value::map($this->apiResponse['parameters'] ?? null);
     }
 
     /**
@@ -63,8 +63,6 @@ class ApiException extends TelegramException
      */
     public function getMigrateToChatId(): ?int
     {
-        $id = $this->getParameters()['migrate_to_chat_id'] ?? null;
-
-        return $id !== null ? (int) $id : null;
+        return Value::nullableInt($this->getParameters()['migrate_to_chat_id'] ?? null);
     }
 }

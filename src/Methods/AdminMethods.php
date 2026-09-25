@@ -14,8 +14,41 @@ trait AdminMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * @deprecated Use banChatMember()
@@ -39,11 +72,11 @@ trait AdminMethods
         ?int $untilDate = null,
         bool $revokeMessages = false
     ): bool {
-        return (bool) $this->apiCall('banChatMember', [
+        return $this->apiCallBool('banChatMember', [
             'chat_id' => $chatId,
             'user_id' => $userId,
             'until_date' => $untilDate,
-            'revoke_messages' => $revokeMessages ?: null,
+            'revoke_messages' => $revokeMessages ? true : null,
         ]);
     }
 
@@ -57,10 +90,10 @@ trait AdminMethods
         int $userId,
         bool $onlyIfBanned = false
     ): bool {
-        return (bool) $this->apiCall('unbanChatMember', [
+        return $this->apiCallBool('unbanChatMember', [
             'chat_id' => $chatId,
             'user_id' => $userId,
-            'only_if_banned' => $onlyIfBanned ?: null,
+            'only_if_banned' => $onlyIfBanned ? true : null,
         ]);
     }
 
@@ -79,7 +112,7 @@ trait AdminMethods
         ?int $untilDate = null,
         array $options = []
     ): bool {
-        return (bool) $this->apiCall('restrictChatMember', [
+        return $this->apiCallBool('restrictChatMember', [
             'chat_id' => $chatId,
             'user_id' => $userId,
             'permissions' => $permissions,
@@ -111,7 +144,7 @@ trait AdminMethods
         bool $canManageTopics = false,
         array $options = []
     ): bool {
-        return (bool) $this->apiCall('promoteChatMember', [
+        return $this->apiCallBool('promoteChatMember', [
             'chat_id' => $chatId,
             'user_id' => $userId,
             'is_anonymous' => $isAnonymous,
@@ -139,7 +172,7 @@ trait AdminMethods
         int $userId,
         string $customTitle
     ): bool {
-        return (bool) $this->apiCall('setChatAdministratorCustomTitle', [
+        return $this->apiCallBool('setChatAdministratorCustomTitle', [
             'chat_id' => $chatId,
             'user_id' => $userId,
             'custom_title' => $customTitle,
@@ -153,7 +186,7 @@ trait AdminMethods
      */
     public function banChatSenderChat(int|string $chatId, int $senderChatId): bool
     {
-        return (bool) $this->apiCall('banChatSenderChat', [
+        return $this->apiCallBool('banChatSenderChat', [
             'chat_id' => $chatId,
             'sender_chat_id' => $senderChatId,
         ]);
@@ -164,7 +197,7 @@ trait AdminMethods
      */
     public function unbanChatSenderChat(int|string $chatId, int $senderChatId): bool
     {
-        return (bool) $this->apiCall('unbanChatSenderChat', [
+        return $this->apiCallBool('unbanChatSenderChat', [
             'chat_id' => $chatId,
             'sender_chat_id' => $senderChatId,
         ]);

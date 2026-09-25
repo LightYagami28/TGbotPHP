@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
+use TGbotPHP\Support\Value;
+
 /**
  * Bot profile and command methods from Telegram Bot API
  *
@@ -14,8 +16,41 @@ trait CustomCommandMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Change the list of bot commands
@@ -36,10 +71,10 @@ trait CustomCommandMethods
     ): bool {
         $list = [];
         foreach ($commands as $key => $value) {
-            $list[] = is_string($key) ? ['command' => ltrim($key, '/'), 'description' => (string) $value] : $value;
+            $list[] = is_string($key) ? ['command' => ltrim($key, '/'), 'description' => Value::string($value)] : $value;
         }
 
-        return (bool) $this->apiCall('setMyCommands', [
+        return $this->apiCallBool('setMyCommands', [
             'commands' => $list,
             'scope' => self::normalizeCommandScope($scope),
             'language_code' => $languageCode,
@@ -50,7 +85,7 @@ trait CustomCommandMethods
      * Get the list of bot commands
      *
      * @param array<string, mixed>|string|null $scope
-     * @return array<int, array<string, string>>
+     * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getmycommands
      */
@@ -58,7 +93,7 @@ trait CustomCommandMethods
         array|string|null $scope = null,
         ?string $languageCode = null
     ): array {
-        return $this->apiCall('getMyCommands', [
+        return $this->apiCallList('getMyCommands', [
             'scope' => self::normalizeCommandScope($scope),
             'language_code' => $languageCode,
         ]);
@@ -75,7 +110,7 @@ trait CustomCommandMethods
         array|string|null $scope = null,
         ?string $languageCode = null
     ): bool {
-        return (bool) $this->apiCall('deleteMyCommands', [
+        return $this->apiCallBool('deleteMyCommands', [
             'scope' => self::normalizeCommandScope($scope),
             'language_code' => $languageCode,
         ]);
@@ -86,7 +121,7 @@ trait CustomCommandMethods
      */
     public function setMyName(?string $name = null, ?string $languageCode = null): bool
     {
-        return (bool) $this->apiCall('setMyName', [
+        return $this->apiCallBool('setMyName', [
             'name' => $name,
             'language_code' => $languageCode,
         ]);
@@ -97,9 +132,9 @@ trait CustomCommandMethods
      */
     public function getMyName(?string $languageCode = null): string
     {
-        $result = $this->apiCall('getMyName', ['language_code' => $languageCode]);
+        $result = $this->apiCallObject('getMyName', ['language_code' => $languageCode]);
 
-        return (string) ($result['name'] ?? '');
+        return Value::string($result['name'] ?? null);
     }
 
     /**
@@ -107,7 +142,7 @@ trait CustomCommandMethods
      */
     public function setMyDescription(?string $description = null, ?string $languageCode = null): bool
     {
-        return (bool) $this->apiCall('setMyDescription', [
+        return $this->apiCallBool('setMyDescription', [
             'description' => $description,
             'language_code' => $languageCode,
         ]);
@@ -118,9 +153,9 @@ trait CustomCommandMethods
      */
     public function getMyDescription(?string $languageCode = null): string
     {
-        $result = $this->apiCall('getMyDescription', ['language_code' => $languageCode]);
+        $result = $this->apiCallObject('getMyDescription', ['language_code' => $languageCode]);
 
-        return (string) ($result['description'] ?? '');
+        return Value::string($result['description'] ?? null);
     }
 
     /**
@@ -128,7 +163,7 @@ trait CustomCommandMethods
      */
     public function setMyShortDescription(?string $shortDescription = null, ?string $languageCode = null): bool
     {
-        return (bool) $this->apiCall('setMyShortDescription', [
+        return $this->apiCallBool('setMyShortDescription', [
             'short_description' => $shortDescription,
             'language_code' => $languageCode,
         ]);
@@ -139,9 +174,9 @@ trait CustomCommandMethods
      */
     public function getMyShortDescription(?string $languageCode = null): string
     {
-        $result = $this->apiCall('getMyShortDescription', ['language_code' => $languageCode]);
+        $result = $this->apiCallObject('getMyShortDescription', ['language_code' => $languageCode]);
 
-        return (string) ($result['short_description'] ?? '');
+        return Value::string($result['short_description'] ?? null);
     }
 
     /**
@@ -153,7 +188,7 @@ trait CustomCommandMethods
      */
     public function setChatMenuButton(?int $chatId = null, ?array $menuButton = null): bool
     {
-        return (bool) $this->apiCall('setChatMenuButton', [
+        return $this->apiCallBool('setChatMenuButton', [
             'chat_id' => $chatId,
             'menu_button' => $menuButton,
         ]);
@@ -166,7 +201,7 @@ trait CustomCommandMethods
      */
     public function getChatMenuButton(?int $chatId = null): array
     {
-        return $this->apiCall('getChatMenuButton', ['chat_id' => $chatId]);
+        return $this->apiCallObject('getChatMenuButton', ['chat_id' => $chatId]);
     }
 
     /**
@@ -176,21 +211,21 @@ trait CustomCommandMethods
      */
     public function setMyDefaultAdministratorRights(?array $rights = null, bool $forChannels = false): bool
     {
-        return (bool) $this->apiCall('setMyDefaultAdministratorRights', [
+        return $this->apiCallBool('setMyDefaultAdministratorRights', [
             'rights' => $rights,
-            'for_channels' => $forChannels ?: null,
+            'for_channels' => $forChannels ? true : null,
         ]);
     }
 
     /**
-     * @return array<string, bool> ChatAdministratorRights
+     * @return array<string, mixed> ChatAdministratorRights
      *
      * @see https://core.telegram.org/bots/api#getmydefaultadministratorrights
      */
     public function getMyDefaultAdministratorRights(bool $forChannels = false): array
     {
-        return $this->apiCall('getMyDefaultAdministratorRights', [
-            'for_channels' => $forChannels ?: null,
+        return $this->apiCallObject('getMyDefaultAdministratorRights', [
+            'for_channels' => $forChannels ? true : null,
         ]);
     }
 

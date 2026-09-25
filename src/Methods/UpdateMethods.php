@@ -17,14 +17,47 @@ trait UpdateMethods
     /**
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
+     * @return array<string, mixed>
      */
-    abstract protected function apiCall(string $method, array $params = [], array $options = []): mixed;
+    abstract protected function apiCallObject(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function apiCallList(string $method, array $params = [], array $options = []): array;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|bool
+     */
+    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallBool(string $method, array $params = [], array $options = []): bool;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallInt(string $method, array $params = [], array $options = []): int;
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $options
+     */
+    abstract protected function apiCallString(string $method, array $params = [], array $options = []): string;
 
     /**
      * Receive incoming updates using long polling
      *
      * @param string[]|null $allowedUpdates
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getupdates
      */
@@ -34,7 +67,7 @@ trait UpdateMethods
         ?int $timeout = null,
         ?array $allowedUpdates = null
     ): array {
-        return $this->apiCall('getUpdates', [
+        return $this->apiCallList('getUpdates', [
             'offset' => $offset,
             'limit' => $limit,
             'timeout' => $timeout,
@@ -62,13 +95,13 @@ trait UpdateMethods
             throw new \InvalidArgumentException('Webhook URL must use HTTPS');
         }
 
-        return (bool) $this->apiCall('setWebhook', [
+        return $this->apiCallBool('setWebhook', [
             'url' => $url,
             'certificate' => $certificate,
             'ip_address' => $ipAddress,
             'max_connections' => $maxConnections,
             'allowed_updates' => $allowedUpdates !== null ? array_values($allowedUpdates) : null,
-            'drop_pending_updates' => $dropPendingUpdates ?: null,
+            'drop_pending_updates' => $dropPendingUpdates ? true : null,
             'secret_token' => $secretToken,
         ]);
     }
@@ -80,8 +113,8 @@ trait UpdateMethods
      */
     public function deleteWebhook(bool $dropPendingUpdates = false): bool
     {
-        return (bool) $this->apiCall('deleteWebhook', [
-            'drop_pending_updates' => $dropPendingUpdates ?: null,
+        return $this->apiCallBool('deleteWebhook', [
+            'drop_pending_updates' => $dropPendingUpdates ? true : null,
         ]);
     }
 
@@ -94,6 +127,6 @@ trait UpdateMethods
      */
     public function getWebhookInfo(): array
     {
-        return $this->apiCall('getWebhookInfo');
+        return $this->apiCallObject('getWebhookInfo');
     }
 }

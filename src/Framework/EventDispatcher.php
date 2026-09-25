@@ -40,7 +40,7 @@ final class EventDispatcher
      */
     public function hasListeners(string $event): bool
     {
-        return !empty($this->listeners[$event]);
+        return ($this->listeners[$event] ?? []) !== [];
     }
 
     /**

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Cache;
 
+use TGbotPHP\Support\Value;
+
 /**
  * Filesystem cache that persists between requests
  *
@@ -61,7 +63,7 @@ class FileCache implements CacheInterface
 
     public function flush(): void
     {
-        foreach (glob($this->directory . '/*.cache') ?: [] as $file) {
+        foreach ($this->files() as $file) {
             @unlink($file);
         }
     }
@@ -78,7 +80,7 @@ class FileCache implements CacheInterface
     {
         $removed = 0;
 
-        foreach (glob($this->directory . '/*.cache') ?: [] as $file) {
+        foreach ($this->files() as $file) {
             $entry = $this->decode((string) @file_get_contents($file));
             if ($entry === null || self::isExpired($entry)) {
                 @unlink($file);
@@ -126,7 +128,7 @@ class FileCache implements CacheInterface
         }
 
         return [
-            'expires' => isset($entry['expires']) ? (int) $entry['expires'] : null,
+            'expires' => Value::nullableInt($entry['expires'] ?? null),
             'value' => $entry['value'],
         ];
     }
@@ -137,6 +139,16 @@ class FileCache implements CacheInterface
     private static function isExpired(array $entry): bool
     {
         return $entry['expires'] !== null && time() >= $entry['expires'];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function files(): array
+    {
+        $files = glob($this->directory . '/*.cache');
+
+        return $files === false ? [] : $files;
     }
 
     private function path(string $key): string
