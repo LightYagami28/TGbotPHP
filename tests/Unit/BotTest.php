@@ -725,14 +725,14 @@ final class BotTest extends TestCase
 
     public function testExactCallbackPatternsReceiveTheData(): void
     {
-        $matches = null;
-        $this->bot->callback('menu', function (stdClass $callback, Bot $bot, array $m) use (&$matches): void {
-            $matches = $m;
+        $received = null;
+        $this->bot->callback('menu', function (stdClass $callback, Bot $bot, array $matches) use (&$received): void {
+            $received = $matches;
         });
 
         $this->bot->handleUpdate(Updates::callback('menu'));
 
-        self::assertSame(['menu'], $matches);
+        self::assertSame(['menu'], $received);
     }
 
     public function testHandleReadsTheSecretFromTheRequest(): void
