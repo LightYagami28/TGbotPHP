@@ -29,4 +29,14 @@ if (!$loaded) {
 
 use TGbotPHP\CLI\Console;
 
-exit((new Console())->run($argv));
+$rawArguments = $_SERVER['argv'] ?? [];
+$arguments = [];
+if (!is_array($rawArguments)) {
+    $rawArguments = [];
+}
+foreach ($rawArguments as $argument) {
+    if (is_string($argument)) {
+        $arguments[] = $argument;
+    }
+}
+exit((new Console())->run($arguments));

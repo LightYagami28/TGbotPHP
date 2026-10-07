@@ -8,7 +8,12 @@ declare(strict_types=1);
  *     php tools/coverage-check.php coverage.xml 95
  */
 
-[, $file, $minimum] = $argv + [1 => 'coverage.xml', 2 => '90'];
+$arguments = $_SERVER['argv'] ?? [];
+if (!is_array($arguments)) {
+    $arguments = [];
+}
+$file = isset($arguments[1]) && is_string($arguments[1]) ? $arguments[1] : 'coverage.xml';
+$minimum = isset($arguments[2]) && is_string($arguments[2]) ? $arguments[2] : '90';
 
 $xml = @simplexml_load_file($file);
 $metrics = $xml !== false ? $xml->project?->metrics : null;
