@@ -4,14 +4,14 @@ PHP library for the [Telegram Bot API](https://core.telegram.org/bots/api), with
 
 [![Tests](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml)
 [![Code Analysis](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml)
-[![PHP](https://img.shields.io/badge/PHP-8.4%2B-777bb4)](https://www.php.net/)
+[![PHP](https://img.shields.io/badge/PHP-8.5%2B-777bb4)](https://www.php.net/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue)](LICENSE)
 
 Fork of [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotPHP).
 
 ## Requirements
 
-- PHP 8.4 or later, with the `curl` and `json` extensions
+- PHP 8.5 or later, with the `curl` and `json` extensions
 - An HTTPS endpoint, only if you receive updates through a webhook
 
 There are no runtime dependencies.

@@ -19,11 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php-version: '8.4'
-            coverage: pcov
-            experimental: false
           - php-version: '8.5'
-            coverage: none
+            coverage: pcov
             experimental: false
           - php-version: '8.6'
             coverage: none
