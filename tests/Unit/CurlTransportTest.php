@@ -29,7 +29,7 @@ final class CurlTransportTest extends TestCase
 
         $server = proc_open(
             [PHP_BINARY, '-S', "127.0.0.1:$port", dirname(__DIR__) . '/Support/Server/router.php'],
-            [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']],
+            [1 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'w'], 2 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'w']],
             $pipes,
         );
         self::assertIsResource($server);

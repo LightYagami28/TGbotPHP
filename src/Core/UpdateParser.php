@@ -59,8 +59,9 @@ class UpdateParser
             throw new JsonException('Invalid webhook JSON: ' . $e->getMessage(), 0, $e);
         }
 
-        if (!$decoded instanceof stdClass || !isset($decoded->update_id)) {
-            throw new JsonException('Invalid webhook JSON: missing update_id');
+        if (!$decoded instanceof stdClass || !isset($decoded->update_id)
+            || !is_int($decoded->update_id) || $decoded->update_id < 0 || $decoded->update_id === PHP_INT_MAX) {
+            throw new JsonException('Invalid webhook JSON: update_id must be a non-negative integer below PHP_INT_MAX');
         }
 
         return $decoded;

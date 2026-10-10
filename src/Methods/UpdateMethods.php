@@ -80,6 +80,14 @@ trait UpdateMethods
             throw new \InvalidArgumentException('Webhook URL must use HTTPS');
         }
 
+        $secretToken ??= $this->config->secretToken !== false ? $this->config->secretToken : null;
+        if ($url !== '' && $secretToken === null && !$this->config->allowUnauthenticatedWebhook) {
+            throw new \InvalidArgumentException('A webhook secret token is required');
+        }
+        if ($secretToken !== null && preg_match('/^[A-Za-z0-9_-]{1,256}\z/', $secretToken) !== 1) {
+            throw new \InvalidArgumentException('Invalid webhook secret token');
+        }
+
         return $this->apiCallBool('setWebhook', [
             'url' => $url,
             'certificate' => $certificate,

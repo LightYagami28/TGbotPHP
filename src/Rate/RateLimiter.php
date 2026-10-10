@@ -21,6 +21,9 @@ class RateLimiter
      */
     public function limit(string $key, int $maxRequests, int $windowSeconds): bool
     {
+        if ($maxRequests < 1 || $windowSeconds < 1 || $windowSeconds > PHP_INT_MAX - time()) {
+            throw new \InvalidArgumentException('Rate limit and window must be positive and within integer range');
+        }
         $allowed = false;
 
         $this->cache->update(

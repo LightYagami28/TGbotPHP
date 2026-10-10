@@ -62,6 +62,9 @@ final class ApiClientTest extends TestCase
 
     public function testDebugLogIsCreatedPrivate(): void
     {
+        if (PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('POSIX permissions are not Windows ACLs');
+        }
         $log = sys_get_temp_dir() . '/tgbotphp-debug-' . bin2hex(random_bytes(4)) . '.log';
 
         try {
@@ -434,7 +437,7 @@ final class ApiClientTest extends TestCase
         file_put_contents($source, 'local-data');
 
         $transport = new FakeTransport();
-        $client = new ApiClient(new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false), $transport);
+        $client = new ApiClient(new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false, localFileRoot: sys_get_temp_dir()), $transport);
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
 
         try {

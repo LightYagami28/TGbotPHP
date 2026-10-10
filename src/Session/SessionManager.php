@@ -36,6 +36,9 @@ class SessionManager
 
     public function setSessionData(string $sessionId, string $key, mixed $value): void
     {
+        if (in_array($key, ['user_id', 'created_at'], true)) {
+            throw new \InvalidArgumentException('Session identity and creation time are reserved');
+        }
         $this->cache->update(
             "session:$sessionId",
             static fn(mixed $session): ?array => Value::isMap($session) ? [$key => $value] + $session : null,

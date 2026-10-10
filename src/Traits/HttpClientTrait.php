@@ -11,6 +11,7 @@ use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Http\CurlTransport;
 use TGbotPHP\Http\TransportInterface;
+use TGbotPHP\Security\LogRedactor;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Types\InputFile;
 
@@ -57,6 +58,9 @@ trait HttpClientTrait
         bool $returnResponse = false,
         bool $objects = false,
     ): mixed {
+        if (preg_match('/^[a-zA-Z][a-zA-Z0-9_]*\z/', $method) !== 1) {
+            throw new \InvalidArgumentException('Invalid Bot API method name');
+        }
         [$fields, $multipart] = self::prepareFields($data);
 
         $url = $this->config->apiBaseUrl . '/bot' . $this->config->token . '/' . rawurlencode($method);
@@ -69,7 +73,7 @@ trait HttpClientTrait
 
             $response = $this->getTransport()->post($url, $fields, $multipart, $timeout);
 
-            $this->debugLog("← $method [{$response->statusCode}] " . substr($response->body, 0, 1000));
+            $this->debugLog("← $method [{$response->statusCode}] " . LogRedactor::text(substr($response->body, 0, 1000)));
 
             try {
                 return $this->parseResponse($method, $response->statusCode, $response->body, $returnResponse, $objects);
@@ -261,7 +265,7 @@ trait HttpClientTrait
      */
     private function parseResponse(string $method, int $statusCode, string $body, bool $returnResponse, bool $objects = false): mixed
     {
-        $result = $objects ? self::successfulResultAsObjects($body) : null;
+        $result = $objects && $statusCode >= 200 && $statusCode < 300 ? self::successfulResultAsObjects($body) : null;
 
         if ($result === null) {
             $response = self::decodeResponse($method, $statusCode, $body);
@@ -306,7 +310,7 @@ trait HttpClientTrait
 
         $decoded = Value::map($decoded);
 
-        if (($decoded['ok'] ?? false) !== true) {
+        if (($decoded['ok'] ?? false) !== true || $statusCode < 200 || $statusCode >= 300) {
             throw self::errorFromResponse($method, $statusCode, $decoded);
         }
 
@@ -442,7 +446,7 @@ trait HttpClientTrait
                 in_array($key, self::SECRET_FIELDS, true) => '<redacted>',
                 $value instanceof CURLFile => '<file ' . $value->getPostFilename() . '>',
                 $value instanceof CURLStringFile => '<file ' . $value->postname . '>',
-                default => $value,
+                default => is_string($value) ? LogRedactor::text($value) : $value,
             };
         }
 

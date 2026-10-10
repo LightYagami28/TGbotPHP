@@ -184,6 +184,9 @@ final class CacheTest extends TestCase
 
     public function testFileCacheFilesAreOnlyReadableByTheOwner(): void
     {
+        if (PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('POSIX permissions are not Windows ACLs');
+        }
         // A directory created by someone else, with the default permissions
         $directory = self::$directory . '-perm';
         @mkdir($directory);

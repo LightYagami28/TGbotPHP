@@ -52,9 +52,8 @@ final class LongPolling
     public function run(int $timeout = 30, ?array $allowedUpdates = null, ?int $limit = null, int $maxIterations = 0): void
     {
         $this->running = true;
-        $this->bot->getEvents()->dispatch('polling.started', $this->bot);
-
         try {
+            $this->bot->getEvents()->dispatch('polling.started', $this->bot);
             for ($i = 0; $this->running && ($maxIterations === 0 || $i < $maxIterations); $i++) {
                 $this->processBatch($this->fetch($timeout, $allowedUpdates, $limit));
             }
@@ -122,7 +121,7 @@ final class LongPolling
 
             $updateId = Value::nullableInt($update->update_id ?? null);
 
-            if ($updateId !== null) {
+            if ($updateId !== null && $updateId >= 0 && $updateId < PHP_INT_MAX) {
                 $this->offset = $updateId + 1;
                 $this->process($update);
             }

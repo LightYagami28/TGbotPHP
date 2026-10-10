@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Security;
 
-use TGbotPHP\Support\Value;
-
 /**
  * Webhook request validation helpers
  */
@@ -30,11 +28,11 @@ class WebhookValidator
     /**
      * Check the X-Telegram-Bot-Api-Secret-Token header in constant time
      *
-     * An empty $secretToken means no secret is configured: every request passes.
+     * Missing or empty secrets fail closed.
      */
     public static function validate(string $secretToken, ?string $header): bool
     {
-        return $secretToken === '' || ($header !== null && $header !== '' && hash_equals($secretToken, $header));
+        return $secretToken !== '' && $header !== null && hash_equals($secretToken, $header);
     }
 
     /**
@@ -42,6 +40,9 @@ class WebhookValidator
      */
     public static function validateSignature(string $body, string $signature, string $secret): bool
     {
+        if ($secret === '' || preg_match('/^[a-fA-F0-9]{64}\z/', $signature) !== 1) {
+            return false;
+        }
         $expectedSignature = hash_hmac('sha256', $body, $secret);
         return hash_equals($expectedSignature, strtolower($signature));
     }
@@ -75,7 +76,7 @@ class WebhookValidator
             [$subnet, $bits] = explode('/', $range) + [1 => '32'];
             $subnetLong = ip2long($subnet);
 
-            if ($subnetLong === false) {
+            if ($subnetLong === false || preg_match('/^(?:[0-9]|[12][0-9]|3[0-2])\z/', $bits) !== 1) {
                 continue;
             }
 
@@ -103,7 +104,7 @@ class WebhookValidator
         $hash = $fields['hash'] ?? '';
         unset($fields['hash']);
 
-        if ($fields === null || $hash === '') {
+        if ($fields === null || $botToken === '' || preg_match('/^[a-fA-F0-9]{64}\z/', $hash) !== 1) {
             return null;
         }
 
@@ -139,7 +140,7 @@ class WebhookValidator
         $signature = self::decodeSignature($fields['signature'] ?? '');
         unset($fields['hash'], $fields['signature']);
 
-        if ($fields === null || $signature === null || strlen($publicKey) !== 2 * SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES) {
+        if ($fields === null || $signature === null || $botId <= 0 || preg_match('/^[a-fA-F0-9]{64}\z/', $publicKey) !== 1) {
             return null;
         }
 
@@ -158,12 +159,25 @@ class WebhookValidator
      */
     private static function parseInitData(string $initData): ?array
     {
-        parse_str($initData, $data);
-
-        $fields = array_filter(Value::map($data), is_string(...));
-
-        // Nested values (field[]=...) are not part of the Telegram format
-        return $fields !== [] && count($fields) === count($data) ? $fields : null;
+        // parse_str normalizes names, overwrites duplicates and truncates at max_input_vars.
+        if ($initData === '' || strlen($initData) > 65536) {
+            return null;
+        }
+        $fields = [];
+        foreach (explode('&', $initData) as $pair) {
+            if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
+                return null;
+            }
+            [$name, $value] = explode('=', $pair, 2);
+            $name = urldecode($name);
+            $value = urldecode($value);
+            if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*\z/', $name) !== 1
+                || array_key_exists($name, $fields) || preg_match('/[\x00\r\n]/', $value) === 1) {
+                return null;
+            }
+            $fields[$name] = $value;
+        }
+        return $fields;
     }
 
     /**
@@ -171,7 +185,14 @@ class WebhookValidator
      */
     private static function isFresh(array $fields, int $maxAge): bool
     {
-        return $maxAge === 0 || time() - (int) ($fields['auth_date'] ?? 0) <= $maxAge;
+        $date = $fields['auth_date'] ?? '';
+        if ($maxAge < 0 || preg_match('/^[1-9][0-9]*\z/', $date) !== 1) {
+            return false;
+        }
+        $timestamp = filter_var($date, FILTER_VALIDATE_INT);
+        $now = time();
+        return is_int($timestamp) && $timestamp <= $now
+            && ($maxAge === 0 || $now - $timestamp <= $maxAge);
     }
 
     /**
@@ -180,7 +201,10 @@ class WebhookValidator
     private static function decodeSignature(string $signature): ?string
     {
         try {
-            $binary = sodium_base642bin($signature, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+            if (preg_match('/^[A-Za-z0-9_-]{86}(?:==)?\z/', $signature) !== 1) {
+                return null;
+            }
+            $binary = sodium_base642bin(rtrim($signature, '='), SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
         } catch (\SodiumException) {
             return null;
         }

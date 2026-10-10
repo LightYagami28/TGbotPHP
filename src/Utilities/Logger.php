@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Utilities;
 
+use TGbotPHP\Security\LogRedactor;
+
 /**
  * Minimal file logger with level threshold
  */
@@ -63,8 +65,9 @@ class Logger
     public function log(string $level, string $message, array $context = []): void
     {
         $level = strtoupper($level);
+        $level = isset(self::LEVELS[$level]) ? $level : 'DEBUG';
 
-        if (!$this->enabled || (self::LEVELS[$level] ?? 0) < $this->minLevel) {
+        if (!$this->enabled || self::LEVELS[$level] < $this->minLevel) {
             return;
         }
 
@@ -74,7 +77,8 @@ class Logger
                 $replacements['{' . $key . '}'] = (string) $value;
             }
         }
-        $message = strtr($message, $replacements);
+        $message = LogRedactor::text(strtr($message, $replacements));
+        $context = LogRedactor::context($context);
 
         // Prevent log injection through user supplied values
         $message = str_replace(["\r", "\n"], ['\r', '\n'], $message);

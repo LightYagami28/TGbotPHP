@@ -42,13 +42,31 @@ readonly class Config
         int $timeout = 10,
         RetryPolicy $retry = new RetryPolicy(),
         bool|string $debug = false,
+        public bool $allowUnauthenticatedWebhook = true,
+        public int $maxWebhookBodyBytes = 1048576,
+        public bool $acknowledgeHandledErrors = true,
+        public ?string $localFileRoot = null,
     ) {
         if (!self::isValidToken($token)) {
             throw new \InvalidArgumentException('Invalid Telegram bot token');
         }
 
-        if ($enforceHttps && !str_starts_with($apiBaseUrl, 'https://')) {
+        $parts = parse_url($apiBaseUrl);
+        if ($parts === false || !isset($parts['host']) || $parts['host'] === ''
+            || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+            || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])
+            || preg_match('/[\x00-\x20\x7f\\\\]/', $apiBaseUrl) === 1) {
+            throw new \InvalidArgumentException('API base URL must be an HTTP(S) URL without credentials, query or fragment');
+        }
+        if ($enforceHttps && $parts['scheme'] !== 'https') {
             throw new \InvalidArgumentException('API base URL must use HTTPS (disable enforceHttps for a local server)');
+        }
+
+        if ($maxWebhookBodyBytes < 1) {
+            throw new \InvalidArgumentException('Webhook body limit must be positive');
+        }
+        if ($localFileRoot !== null && !is_dir($localFileRoot)) {
+            throw new \InvalidArgumentException('Local file root must be an existing trusted directory');
         }
 
         if ($secretToken !== false && preg_match('/^[\w-]{1,256}\z/', $secretToken) !== 1) {

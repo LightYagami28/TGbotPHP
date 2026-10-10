@@ -50,7 +50,7 @@ final class Kernel
     }
 
     /**
-     * Exceptions go to "error" listeners when there are any, and are re-thrown otherwise
+     * Error listeners are notified; failures propagate unless explicitly acknowledged in Config.
      */
     public function process(stdClass $update, Bot $bot): void
     {
@@ -88,5 +88,8 @@ final class Kernel
         }
 
         $this->events->dispatch('error', $e, $update, $bot);
+        if (!$bot->getConfig()->acknowledgeHandledErrors) {
+            throw $e;
+        }
     }
 }

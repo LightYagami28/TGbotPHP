@@ -30,21 +30,30 @@ final readonly class WebhookHandler
      */
     public function handle(?string $body = null, ?string $secretToken = null, bool $respondFirst = false): bool
     {
-        $expected = $this->bot->getConfig()->secretToken;
+        $config = $this->bot->getConfig();
+        $expected = $config->secretToken;
 
-        if ($expected !== false && !WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken())) {
+        if (($expected === false && !$config->allowUnauthenticatedWebhook)
+            || ($expected !== false && !WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken()))) {
             self::respond(403);
             return false;
         }
 
+        $body ??= (string) file_get_contents('php://input', false, null, 0, max(0, $config->maxWebhookBodyBytes + 1));
+        if (strlen($body) > $config->maxWebhookBodyBytes) {
+            self::respond(413);
+            return false;
+        }
+
         try {
-            $update = UpdateParser::parse($body ?? (string) file_get_contents('php://input'));
+            $update = UpdateParser::parse($body);
         } catch (JsonException) {
             self::respond(400);
             return false;
         }
 
         if ($respondFirst) {
+            self::respond(200);
             self::finishRequest();
         }
 
@@ -54,6 +63,9 @@ final readonly class WebhookHandler
             error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
         }
 
+        if (!$respondFirst) {
+            self::respond(200);
+        }
         return true;
     }
 

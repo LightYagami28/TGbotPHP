@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
-use TGbotPHP\Core\Config;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Http\TransportInterface;
@@ -107,7 +106,17 @@ trait UserMethods
      */
     public function getFileUrl(string $filePath): string
     {
-        return $this->config->apiBaseUrl . '/file/bot' . $this->config->token . '/' . ltrim($filePath, '/');
+        if ($filePath === '' || str_starts_with($filePath, '/') || str_contains($filePath, '\\')
+            || preg_match('/[\x00-\x1f\x7f]/', $filePath) === 1) {
+            throw new \InvalidArgumentException('Expected a relative Telegram file path');
+        }
+        $segments = explode('/', $filePath);
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                throw new \InvalidArgumentException('Invalid Telegram file path segment');
+            }
+        }
+        return $this->config->apiBaseUrl . '/file/bot' . $this->config->token . '/' . implode('/', array_map(rawurlencode(...), $segments));
     }
 
     /**
@@ -150,11 +159,14 @@ trait UserMethods
         if ($destination === null) {
             $response = $this->getTransport()->get($url, $timeout);
             self::checkDownloadStatus($response->statusCode);
+            if (strlen($response->body) > self::MAX_MEMORY_DOWNLOAD) {
+                throw new StorageException('File exceeds the in-memory download limit');
+            }
 
             return $response->body;
         }
 
-        $tmp = $destination . '.' . bin2hex(random_bytes(4)) . '.part';
+        $tmp = self::downloadTemporaryFile($destination);
 
         try {
             self::checkDownloadStatus($this->getTransport()->download($url, $tmp, $timeout));
@@ -176,28 +188,68 @@ trait UserMethods
      */
     private function isLocalServerFile(string $filePath): bool
     {
-        return $this->config->apiBaseUrl !== Config::DEFAULT_API_URL
-            && str_starts_with($filePath, '/')
-            && is_file($filePath);
+        if (!str_starts_with($filePath, '/') && preg_match('/^[a-zA-Z]:[\\\\\/]/', $filePath) !== 1) {
+            return false;
+        }
+        $root = $this->config->localFileRoot;
+        $resolvedRoot = $root !== null ? realpath($root) : false;
+        $resolvedPath = realpath($filePath);
+        if ($resolvedRoot === false || $resolvedPath === false || !is_file($resolvedPath)) {
+            throw new StorageException('Local file access requires an explicit trusted localFileRoot');
+        }
+        $prefix = rtrim($resolvedRoot, '/\\') . DIRECTORY_SEPARATOR;
+        $inside = PHP_OS_FAMILY === 'Windows'
+            ? str_starts_with(strtolower($resolvedPath), strtolower($prefix))
+            : str_starts_with($resolvedPath, $prefix);
+        if (!$inside) {
+            throw new StorageException('Local file is outside the trusted root');
+        }
+        return true;
     }
 
     private function copyLocalFile(string $filePath, ?string $destination): string
     {
         if ($destination === null) {
-            $contents = @file_get_contents($filePath);
+            $contents = @file_get_contents($filePath, false, null, 0, self::MAX_MEMORY_DOWNLOAD + 1);
 
             if ($contents === false) {
                 throw new StorageException("Unable to read file: $filePath");
+            }
+            if (strlen($contents) > self::MAX_MEMORY_DOWNLOAD) {
+                throw new StorageException('File exceeds the in-memory download limit');
             }
 
             return $contents;
         }
 
-        if (!@copy($filePath, $destination)) {
-            throw new StorageException("Unable to write file: $destination");
+        $tmp = self::downloadTemporaryFile($destination);
+        try {
+            if (!@copy($filePath, $tmp) || !@rename($tmp, $destination)) {
+                throw new StorageException('Unable to copy local file to destination');
+            }
+        } finally {
+            if (is_file($tmp)) {
+                @unlink($tmp);
+            }
         }
 
         return $destination;
+    }
+
+    private static function downloadTemporaryFile(string $destination): string
+    {
+        if (str_contains($destination, '://') || str_contains($destination, "\0")) {
+            throw new StorageException('Download destination must be a local path');
+        }
+        $directory = realpath(dirname($destination));
+        if ($directory === false || !is_writable($directory)) {
+            throw new StorageException('Download directory is not writable');
+        }
+        $tmp = tempnam($directory, '.tgbotphp-');
+        if ($tmp === false) {
+            throw new StorageException('Unable to create download temporary file');
+        }
+        return $tmp;
     }
 
     private static function checkDownloadStatus(int $statusCode): void

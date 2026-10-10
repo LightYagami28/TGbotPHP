@@ -12,7 +12,7 @@ final class SecurityTest extends TestCase
 {
     public function testSecretTokenValidation(): void
     {
-        self::assertTrue(WebhookValidator::validate('', null));
+        self::assertFalse(WebhookValidator::validate('', null));
         self::assertFalse(WebhookValidator::validate('secret', null));
         self::assertFalse(WebhookValidator::validate('secret', ''));
         self::assertFalse(WebhookValidator::validate('secret', 'wrong'));

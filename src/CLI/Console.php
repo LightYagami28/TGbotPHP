@@ -6,6 +6,7 @@ namespace TGbotPHP\CLI;
 
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Framework\Bot;
+use TGbotPHP\Security\LogRedactor;
 use TGbotPHP\Support\Value;
 use Throwable;
 
@@ -253,11 +254,11 @@ EOF);
 
     private function write(string $line): void
     {
-        fwrite($this->output, $line . PHP_EOL);
+        fwrite($this->output, str_replace(["\r", "\n"], ['\\r', '\\n'], LogRedactor::text($line)) . PHP_EOL);
     }
 
     private function error(string $message): void
     {
-        fwrite($this->errors, 'Error: ' . $message . PHP_EOL);
+        fwrite($this->errors, 'Error: ' . str_replace(["\r", "\n"], ['\\r', '\\n'], LogRedactor::text($message)) . PHP_EOL);
     }
 }
