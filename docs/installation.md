@@ -94,7 +94,7 @@ vendor/bin/tgbot webhook:info
 ## Security
 
 - Keep the token in environment variables, never in the repository
-- Always configure a webhook secret token
+- Configure a webhook secret token. `handle()` answers 403 without one (`openssl rand -hex 32`, then `TELEGRAM_SECRET_TOKEN`)
 - Escape user input in HTML messages with `Formatter::escape()`
 - Use HTTPS for webhooks
 

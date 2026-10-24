@@ -23,6 +23,7 @@ final class BotBuilderTest extends TestCase
         $config = new BotBuilder(Updates::TOKEN)
             ->withDebug('/var/log/bot.log')
             ->withSecretToken('webhook-secret')
+            ->allowUnauthenticatedWebhook()
             ->withApiServer('http://127.0.0.1:8081', enforceHttps: false)
             ->withTimeout(60)
             ->withRetry($retry)
@@ -32,6 +33,8 @@ final class BotBuilderTest extends TestCase
         self::assertSame(Updates::TOKEN, $config->token);
         self::assertSame('/var/log/bot.log', $config->debugFile);
         self::assertSame('webhook-secret', $config->secretToken);
+        self::assertTrue($config->allowUnauthenticatedWebhook);
+        self::assertFalse((new BotBuilder(Updates::TOKEN))->build()->getConfig()->allowUnauthenticatedWebhook);
         self::assertSame('http://127.0.0.1:8081', $config->apiBaseUrl);
         self::assertSame(60, $config->timeout);
         self::assertSame($retry, $config->retry);

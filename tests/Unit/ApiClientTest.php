@@ -141,6 +141,8 @@ final class ApiClientTest extends TestCase
         self::assertFalse(new Config(Updates::TOKEN, debug: true)->debugFile);
         self::assertSame(1, new Config(Updates::TOKEN)->retry->maxRetries);
         self::assertSame(30, new Config(Updates::TOKEN)->retry->maxDelay);
+        self::assertFalse(new Config(Updates::TOKEN)->allowUnauthenticatedWebhook);
+        self::assertTrue(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true)->allowUnauthenticatedWebhook);
     }
 
     public function testPreparesFields(): void

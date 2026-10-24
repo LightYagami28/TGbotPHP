@@ -47,7 +47,7 @@ $bot->callback('vote:*', function (stdClass $callback, Bot $bot, array $matches)
 });
 
 $bot->poll();      // long polling
-// $bot->handle(); // or behind a webhook
+// Webhook: set secretToken first (examples/webhook.php), then $bot->handle();
 ```
 
 [`examples/`](examples) has a [long polling bot](examples/polling.php) and a [webhook bot](examples/webhook.php) with conversations and rate limiting.

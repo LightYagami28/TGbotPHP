@@ -3,9 +3,13 @@
 /**
  * Webhook bot
  *
- * 1. Serve this file over HTTPS (e.g. https://example.com/webhook.php)
- * 2. Register it:
- *    TELEGRAM_BOT_TOKEN=... vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret=$TELEGRAM_SECRET_TOKEN
+ * 1. Generate a secret: export TELEGRAM_SECRET_TOKEN=$(openssl rand -hex 32)
+ * 2. Serve this file over HTTPS (e.g. https://example.com/webhook.php)
+ * 3. Register the same secret:
+ *    TELEGRAM_BOT_TOKEN=... vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TELEGRAM_SECRET_TOKEN"
+ *
+ * handle() answers 403 when TELEGRAM_SECRET_TOKEN is missing or the request
+ * header does not match it. The secret is 1-256 characters: A-Z a-z 0-9 _ -
  */
 
 declare(strict_types=1);
@@ -20,9 +24,14 @@ use TGbotPHP\Support\Value;
 use TGbotPHP\Utilities\Formatter;
 use TGbotPHP\Utilities\Keyboard;
 
+$secret = Value::env('TELEGRAM_SECRET_TOKEN');
+if ($secret === null) {
+    throw new RuntimeException('Set TELEGRAM_SECRET_TOKEN before serving this webhook. Generate one with: openssl rand -hex 32');
+}
+
 $config = new Config(
     token: Value::env('TELEGRAM_BOT_TOKEN') ?? '',
-    secretToken: Value::env('TELEGRAM_SECRET_TOKEN') ?? false,
+    secretToken: $secret,
 );
 
 // Webhook requests run in separate PHP processes: state must live in a persistent cache

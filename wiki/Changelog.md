@@ -2,6 +2,10 @@
 
 The complete history, with migration notes, is in [CHANGELOG.md](https://github.com/LightYagami28/TGbotPHP/blob/main/CHANGELOG.md). Releases are published on the [releases page](https://github.com/LightYagami28/TGbotPHP/releases).
 
+## Unreleased
+
+- **Security**: `handle()` answers 403 unless a webhook secret is configured (`TELEGRAM_SECRET_TOKEN`, `openssl rand -hex 32`). Set `allowUnauthenticatedWebhook: true` to keep the previous behavior. See [CHANGELOG.md](https://github.com/LightYagami28/TGbotPHP/blob/main/CHANGELOG.md).
+
 ## 3.0.0
 
 - **PHP 8.4** or later.

@@ -26,7 +26,7 @@ use TGbotPHP\Support\Value;
  *
  *     $bot = new Bot(getenv('TELEGRAM_BOT_TOKEN'));
  *     $bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi!'));
- *     $bot->handle(); // webhook, or $bot->poll() for long polling
+ *     $bot->handle(); // webhook (configure secretToken first), or $bot->poll() for long polling
  */
 final class Bot extends ApiClient
 {

@@ -24,6 +24,7 @@ class BotBuilder
     private string $token;
     private bool|string $debug = false;
     private string|false $secretToken = false;
+    private bool $allowUnauthenticatedWebhook = false;
     private ?string $username = null;
     private string $apiBaseUrl = Config::DEFAULT_API_URL;
     private bool $enforceHttps = true;
@@ -83,6 +84,18 @@ class BotBuilder
     public function withSecretToken(string $token): self
     {
         $this->secretToken = $token;
+        return $this;
+    }
+
+    /**
+     * Accept webhook requests that do not present a secret token.
+     *
+     * The default is to refuse them. A secret set with withSecretToken() is
+     * still required when this is enabled.
+     */
+    public function allowUnauthenticatedWebhook(bool $allow = true): self
+    {
+        $this->allowUnauthenticatedWebhook = $allow;
         return $this;
     }
 
@@ -195,6 +208,7 @@ class BotBuilder
         $config = new Config(
             token: $this->token,
             secretToken: $this->secretToken,
+            allowUnauthenticatedWebhook: $this->allowUnauthenticatedWebhook,
             apiBaseUrl: $this->apiBaseUrl,
             enforceHttps: $this->enforceHttps,
             timeout: $this->timeout,

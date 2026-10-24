@@ -14,6 +14,12 @@ readonly class Config
     public string $token;
     public string|false $secretToken;
 
+    /**
+     * Accept webhook requests that do not present a secret token.
+     * The default is false: handle() answers 403 until a secret is configured.
+     */
+    public bool $allowUnauthenticatedWebhook;
+
     /** Base URL of the Bot API server; change it to use a local Bot API server */
     public string $apiBaseUrl;
 
@@ -31,8 +37,9 @@ readonly class Config
     public string|false $debugFile;
 
     /**
-     * @param string|false $secretToken Webhook secret token (1-256 characters: A-Z a-z 0-9 _ -)
+     * @param string|false $secretToken Webhook secret token (1-256 characters: A-Z a-z 0-9 _ -). Required for webhooks unless $allowUnauthenticatedWebhook is true
      * @param bool|string $debug true logs to the PHP error log, a string logs to that file
+     * @param bool $allowUnauthenticatedWebhook Accept webhook requests with no secret token. Long polling does not use it
      */
     public function __construct(
         string $token,
@@ -42,6 +49,7 @@ readonly class Config
         int $timeout = 10,
         RetryPolicy $retry = new RetryPolicy(),
         bool|string $debug = false,
+        bool $allowUnauthenticatedWebhook = false,
     ) {
         if (!self::isValidToken($token)) {
             throw new \InvalidArgumentException('Invalid Telegram bot token');
@@ -57,6 +65,7 @@ readonly class Config
 
         $this->token = $token;
         $this->secretToken = $secretToken;
+        $this->allowUnauthenticatedWebhook = $allowUnauthenticatedWebhook;
         $this->apiBaseUrl = rtrim($apiBaseUrl, '/');
         $this->enforceHttps = $enforceHttps;
         $this->timeout = max(1, $timeout);

@@ -15,7 +15,7 @@ The library checks the shape of the token and never writes it to the debug log.
 
 Anyone can send a request to your webhook URL. Without protection, they could impersonate any user.
 
-**Use a secret token.** Telegram sends it in the `X-Telegram-Bot-Api-Secret-Token` header of each request, and `handle()` rejects the others with 403. The comparison takes constant time, so the secret cannot be guessed by measuring response times.
+**Set a secret token.** Without one, `handle()` answers 403 and does not run your handlers. Telegram sends the secret in the `X-Telegram-Bot-Api-Secret-Token` header of each request, and `handle()` rejects a missing or different header with 403. The comparison takes constant time, so the secret cannot be guessed by measuring response times.
 
 ```php
 $bot = new Bot(new Config(token: $token, secretToken: getenv('TELEGRAM_SECRET_TOKEN')));
@@ -23,10 +23,13 @@ $bot->handle();
 ```
 
 ```bash
+export TELEGRAM_SECRET_TOKEN=$(openssl rand -hex 32)
 vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TELEGRAM_SECRET_TOKEN"
 ```
 
-Generate the secret with `openssl rand -hex 32`. It may contain `A-Z a-z 0-9 _ -`, up to 256 characters.
+The secret may contain `A-Z a-z 0-9 _ -`, from 1 to 256 characters. Put it in the environment of the PHP process (`TELEGRAM_SECRET_TOKEN`) and pass the same value to `webhook:set --secret`. An empty or unset secret is not a secret: `handle()` keeps answering 403.
+
+To accept requests that have no secret, set `allowUnauthenticatedWebhook: true`. If `secretToken` is set as well, the header must still match. Long polling does not use this option.
 
 **Optionally, check the IP address** as well. Telegram sends webhooks from `149.154.160.0/20` and `91.108.4.0/22`:
 

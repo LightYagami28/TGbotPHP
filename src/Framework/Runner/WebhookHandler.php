@@ -13,9 +13,10 @@ use Throwable;
 /**
  * Handles one webhook request
  *
- * Answers 403 for a wrong secret token and 400 for invalid JSON. Handler
- * errors still get a 2xx response: an error status would make Telegram
- * deliver the same update again and again.
+ * Answers 403 when no secret token is configured (unless
+ * allowUnauthenticatedWebhook is set) or the presented secret does not match,
+ * and 400 for invalid JSON. Handler errors still get a 2xx response: an error
+ * status would make Telegram deliver the same update again and again.
  */
 final readonly class WebhookHandler
 {
@@ -30,9 +31,17 @@ final readonly class WebhookHandler
      */
     public function handle(?string $body = null, ?string $secretToken = null, bool $respondFirst = false): bool
     {
-        $expected = $this->bot->getConfig()->secretToken;
+        $config = $this->bot->getConfig();
+        $expected = $config->secretToken;
+        $header = $secretToken ?? WebhookValidator::getSecretToken();
 
-        if ($expected !== false && !WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken())) {
+        // No secret means refuse, unless the caller opted in. A configured secret
+        // is always required, including when that opt-in is also set.
+        $authorized = $expected === false
+            ? $config->allowUnauthenticatedWebhook
+            : WebhookValidator::validate($expected, $header);
+
+        if (!$authorized) {
             self::respond(403);
             return false;
         }
