@@ -92,7 +92,7 @@ vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TE
 vendor/bin/tgbot webhook:info
 ```
 
-`handle()` answers 403 to requests without the right secret, so only Telegram can call your bot. See [Deployment](Deployment) for the server configuration.
+`handle()` answers 403 when `TELEGRAM_SECRET_TOKEN` is missing or the request does not carry that secret, so only Telegram can call your bot. See [Deployment](Deployment) for the server configuration.
 
 ## Next steps
 

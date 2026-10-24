@@ -31,7 +31,7 @@ use TGbotPHP\Support\Value;
 
 $bot = new Bot(new Config(
     token: Value::env('TELEGRAM_BOT_TOKEN') ?? '',
-    secretToken: Value::env('TELEGRAM_SECRET_TOKEN') ?? false,
+    secretToken: Value::env('TELEGRAM_SECRET_TOKEN') ?? false, // unset: handle() answers 403
 ));
 $bot->setUsername(Value::env('TELEGRAM_BOT_USERNAME'));
 
@@ -162,5 +162,5 @@ Mount your own bot script and override the command to run it.
 | The bot does not answer | `vendor/bin/tgbot bot:info` validates the token |
 | Webhook updates do not arrive | `vendor/bin/tgbot webhook:info` shows the last delivery error |
 | `409 Conflict` when polling | A webhook is still set: `tgbot webhook:delete` |
-| `403` from your webhook | The secret token registered with `webhook:set` differs from `TELEGRAM_SECRET_TOKEN` |
+| `403` from your webhook | `TELEGRAM_SECRET_TOKEN` is unset, or it differs from the secret registered with `webhook:set` |
 | Handler errors | They are sent to `onError()`, or written to the PHP error log |

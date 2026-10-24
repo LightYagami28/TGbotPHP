@@ -28,7 +28,8 @@ jobs:
         coverage: none
         tools: composer
     # Checks every locked package, dev tools included, against known advisories.
-    # For GitHub's own alerts, enable Dependency graph and Dependabot alerts in
-    # Settings > Security.
+    # Version updates are configured in .github/dependabot.yml. Security updates
+    # (automatic pull requests for advisories) are a repository setting an
+    # administrator enables under Settings > Code security > Dependabot.
     - run: composer audit --locked --abandoned=report
 

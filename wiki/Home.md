@@ -16,7 +16,7 @@ $bot->poll();
 
 - **All of Bot API 10.3.** The 185 methods and 27 update types are implemented, and a test checks each one against the official documentation. Methods Telegram adds later work through `call()`, and new parameters through `$options`.
 - **No runtime dependencies.** Only the `curl` and `json` extensions.
-- **Safe by default.** Webhook secret tokens are compared in constant time. Uploads never read a file unless you ask for it. The debug log redacts secrets.
+- **Safe by default.** Webhook requests without a secret token are refused. Configured secrets are compared in constant time. Uploads never read a file unless you ask for it. The debug log redacts secrets.
 - **Correct under load.** Conversations and rate limits use atomic cache updates, so concurrent webhook requests do not overwrite each other.
 - **Testable.** `BotTester` runs your handlers without network access.
 - **Checked.** PHPStan at level 10 with strict rules, 97% line coverage, and end-to-end tests against the real API.

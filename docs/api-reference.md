@@ -47,7 +47,7 @@ $bot->poll(timeout: 30, allowedUpdates: ['message', 'callback_query']);
 $bot->stop();                      // from a handler or a signal handler
 ```
 
-`handle()` returns `false` and sends 403 when the secret token is wrong, and sends 400 when the JSON is invalid. A handler error still gets a 2xx response, so Telegram does not re-deliver the same update forever. The error goes to `onError` or the PHP error log.
+`handle()` returns `false` and sends 403 when no secret token is configured, or the `X-Telegram-Bot-Api-Secret-Token` header does not match. It sends 400 when the JSON is invalid. A handler error still gets a 2xx response, so Telegram does not re-deliver the same update forever. The error goes to `onError` or the PHP error log. Set `allowUnauthenticatedWebhook: true` only to accept requests that have no secret.
 
 `poll()` calls `getMe()` to learn the bot username, retries network and 5xx errors with exponential backoff, and waits out 429 errors. It stops on 401, 404 and 409 errors, for example when a webhook is still set.
 
@@ -96,7 +96,8 @@ use TGbotPHP\Core\RetryPolicy;
 
 new Config(
     token: '123456:ABC...',
-    secretToken: false,           // webhook secret token (1-256 chars: A-Z a-z 0-9 _ -)
+    secretToken: false,           // required for webhooks (1-256 chars: A-Z a-z 0-9 _ -)
+    allowUnauthenticatedWebhook: false, // true accepts webhook requests with no secret
     apiBaseUrl: Config::DEFAULT_API_URL, // or a local Bot API server
     enforceHttps: true,           // set to false only for a local server over plain HTTP
     timeout: 10,                  // seconds; long polling adds its own timeout on top

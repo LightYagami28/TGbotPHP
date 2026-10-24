@@ -50,7 +50,7 @@ $bot->handle();
 
 `handle()`:
 
-- answers **403** when the `X-Telegram-Bot-Api-Secret-Token` header does not match the secret;
+- answers **403** when no secret is configured, or the `X-Telegram-Bot-Api-Secret-Token` header does not match it;
 - answers **400** to a body that is not valid JSON;
 - otherwise processes the update and answers **200**, even when a handler fails: an error status would make Telegram send the same update again and again.
 

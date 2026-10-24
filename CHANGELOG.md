@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- `Bot::handle()` answers 403 when no webhook secret is configured. Set `secretToken` to a value of 1–256 characters (`A-Z a-z 0-9 _ -`). Generate one with `openssl rand -hex 32` and pass the same value as `TELEGRAM_SECRET_TOKEN` to the process and to `webhook:set --secret`. To keep accepting requests that have no secret, set `allowUnauthenticatedWebhook: true` (or call `BotBuilder::allowUnauthenticatedWebhook()`). A configured secret is still checked when that option is on. Long polling is unchanged.
+
 ## [3.0.0] - 2026-09-25
 
 ### Fixed

@@ -1,3 +1,7 @@
+# Version updates. Dependabot security updates (advisory pull requests) are a
+# repository setting: Settings → Code security → Dependabot security updates,
+# with Dependency graph and Dependabot alerts. An administrator has to enable
+# them. Once enabled, the ecosystems below also scope those security updates.
 version: 2
 updates:
   - package-ecosystem: github-actions

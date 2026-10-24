@@ -484,13 +484,51 @@ final class BotTest extends TestCase
     public function testHandleCanRespondBeforeRunningHandlers(): void
     {
         $handled = false;
-        $this->bot->command('start', function () use (&$handled): void {
+
+        // Outside PHP-FPM there is no response to finish: the update is still processed.
+        // This test is not about the secret, so it opts into requests with no secret.
+        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot->command('start', function () use (&$handled): void {
             $handled = true;
         });
 
-        // Outside PHP-FPM there is no response to finish: the update is still processed
-        self::assertTrue($this->bot->handle(Updates::json(Updates::message('/start')), respondFirst: true));
+        self::assertTrue($bot->handle(Updates::json(Updates::message('/start')), respondFirst: true));
         self::assertTrue($handled);
+    }
+
+    public function testHandleRejectsRequestsWhenNoSecretIsConfigured(): void
+    {
+        $calls = 0;
+        $this->bot->command('start', function () use (&$calls): void {
+            $calls++;
+        });
+
+        self::assertFalse($this->bot->getConfig()->allowUnauthenticatedWebhook);
+        self::assertFalse($this->bot->handle(Updates::json(Updates::message('/start')), 'anything'));
+        self::assertSame(0, $calls);
+    }
+
+    public function testHandleCanAllowRequestsWithNoSecret(): void
+    {
+        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $calls = 0;
+        $bot->command('start', function () use (&$calls): void {
+            $calls++;
+        });
+
+        self::assertTrue($bot->handle(Updates::json(Updates::message('/start')), null));
+        self::assertSame(1, $calls);
+    }
+
+    public function testConfiguredSecretIsRequiredEvenWhenUnauthenticatedRequestsAreAllowed(): void
+    {
+        $bot = new Bot(
+            new Config(Updates::TOKEN, secretToken: 'top-secret', allowUnauthenticatedWebhook: true),
+            transport: $this->transport,
+        );
+
+        self::assertFalse($bot->handle(Updates::json(Updates::message('/start')), null));
+        self::assertTrue($bot->handle(Updates::json(Updates::message('/start')), 'top-secret'));
     }
 
     public function testHandleValidatesSecretToken(): void
@@ -510,19 +548,22 @@ final class BotTest extends TestCase
 
     public function testHandleRejectsInvalidJson(): void
     {
-        self::assertFalse($this->bot->handle('{not json', null));
-        self::assertFalse($this->bot->handle('{"foo":1}', null));
+        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+
+        self::assertFalse($bot->handle('{not json', null));
+        self::assertFalse($bot->handle('{"foo":1}', null));
     }
 
     public function testHandleSwallowsHandlerErrors(): void
     {
-        $this->bot->command('boom', function (): void {
+        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot->command('boom', function (): void {
             throw new HandlerFailure('boom');
         });
 
         $previous = ini_set('error_log', '/dev/null');
         try {
-            self::assertTrue($this->bot->handle(Updates::json(Updates::message('/boom')), null));
+            self::assertTrue($bot->handle(Updates::json(Updates::message('/boom')), null));
         } finally {
             ini_set('error_log', (string) $previous);
         }

@@ -8,6 +8,7 @@ Please do not open public issues for security problems. Report them privately wi
 
 | Protection | Where |
 |---|---|
+| Webhook requests without a secret are refused (403) unless `allowUnauthenticatedWebhook` is set | `Bot::handle()` |
 | Webhook secret token checked in constant time | `Bot::handle()`, `WebhookValidator::validate()` |
 | Token format validation (no path injection in API URLs) | `Config` |
 | HTTPS-only API server and webhook URLs | `Config`, `setWebhook()` |
@@ -28,12 +29,16 @@ Please do not open public issues for security problems. Report them privately wi
 
 ### 1. Webhook secret token
 
+A webhook with no secret is refused. Generate the secret with `openssl rand -hex 32` (1–256 characters: `A-Z a-z 0-9 _ -`) and put it in `TELEGRAM_SECRET_TOKEN`.
+
 ```php
 $bot = new Bot(new Config(getenv('TELEGRAM_BOT_TOKEN'), secretToken: getenv('TELEGRAM_SECRET_TOKEN')));
-$bot->handle(); // answers 403 when the header does not match
+$bot->handle(); // 403 when the secret is missing, or the header does not match
 ```
 
 Register the same secret with `vendor/bin/tgbot webhook:set --url=... --secret=...`.
+
+Set `allowUnauthenticatedWebhook: true` only when you intentionally accept requests that have no secret. If `secretToken` is also set, the header must still match.
 
 ### 2. Escape user input
 
@@ -59,4 +64,6 @@ Telegram requires HTTPS for webhooks. Only disable `Config::$enforceHttps` for a
 
 ## Dependencies
 
-TGbotPHP has no runtime dependencies. Dependabot keeps the GitHub Actions up to date.
+TGbotPHP has no runtime dependencies. Version updates for Composer, GitHub Actions and Docker are configured in [`.github/dependabot.yml`](.github/dependabot.yml). `composer audit` runs in CI.
+
+Dependabot security updates, the pull requests that fix known vulnerabilities, are a repository setting. An administrator enables them under **Settings → Code security → Dependabot**: Dependency graph, Dependabot alerts, and Dependabot security updates. This file cannot turn that setting on. Once it is on, `dependabot.yml` also limits which ecosystems those security updates cover.

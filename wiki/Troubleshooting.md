@@ -23,7 +23,7 @@ vendor/bin/tgbot webhook:info   # is a webhook set? what was the last delivery e
 
 | `webhook:info` says | Cause |
 |---|---|
-| `Wrong response from the webhook: 403 Forbidden` | The secret registered with `webhook:set --secret` differs from `TELEGRAM_SECRET_TOKEN` on the server |
+| `Wrong response from the webhook: 403 Forbidden` | `TELEGRAM_SECRET_TOKEN` is unset, or it differs from the secret registered with `webhook:set --secret`. `handle()` refuses requests until a secret is configured |
 | `Wrong response from the webhook: 500` | A PHP fatal error: check the web server's error log |
 | `Wrong response from the webhook: 404` | The URL does not reach `webhook.php` |
 | `SSL error` | The certificate is invalid, self-signed without being uploaded, or does not match the domain |
