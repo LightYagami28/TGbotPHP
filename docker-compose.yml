@@ -2,6 +2,13 @@ services:
   bot:
     build: .
     restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    pids_limit: 100
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     command: php examples/polling.php
@@ -10,6 +17,13 @@ services:
   webhook:
     build: .
     profiles: ["webhook"]
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    pids_limit: 100
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_SECRET_TOKEN=${TELEGRAM_SECRET_TOKEN}
@@ -17,3 +31,8 @@ services:
     ports:
       - "8000:8000"
     command: php -S 0.0.0.0:8000 examples/webhook.php
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 8000) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
