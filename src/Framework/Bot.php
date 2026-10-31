@@ -6,6 +6,7 @@ namespace TGbotPHP\Framework;
 
 use JsonException;
 use stdClass;
+use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Core\Config;
 use TGbotPHP\Core\UpdateParser;
@@ -37,6 +38,7 @@ final class Bot extends ApiClient
     private readonly Kernel $kernel;
     private readonly PluginManager $plugins;
     private ?LongPolling $polling = null;
+    private ?CacheInterface $updateDedup = null;
 
     public function __construct(string|Config $token, ?TransportInterface $transport = null)
     {
@@ -62,6 +64,24 @@ final class Bot extends ApiClient
     public function handle(?string $body = null, ?string $secretTokenHeader = null, bool $respondFirst = false): bool
     {
         return new WebhookHandler($this)->handle($body, $secretTokenHeader, $respondFirst);
+    }
+
+    /**
+     * Ignore a repeated webhook delivery of an update_id already accepted
+     *
+     * The cache entry lives for one day. A handler that fails with HTTP 500
+     * (acknowledgeHandlerErrors disabled) drops the entry so Telegram can retry.
+     */
+    public function deduplicateUpdates(CacheInterface $cache): static
+    {
+        $this->updateDedup = $cache;
+
+        return $this;
+    }
+
+    public function updateDedupCache(): ?CacheInterface
+    {
+        return $this->updateDedup;
     }
 
     /**

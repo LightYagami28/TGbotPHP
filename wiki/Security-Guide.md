@@ -31,7 +31,7 @@ The secret may contain `A-Z a-z 0-9 _ -`, from 1 to 256 characters. Put it in th
 
 To accept requests that have no secret, set `allowUnauthenticatedWebhook: true`. If `secretToken` is set as well, the header must still match. Long polling does not use this option.
 
-**Optionally, check the IP address** as well. Telegram sends webhooks from `149.154.160.0/20` and `91.108.4.0/22`:
+**Optionally, check the IP address** as well. Telegram publishes IPv4 ranges only (`149.154.160.0/20` and `91.108.4.0/22`). `isTelegramIp()` returns false for IPv6 and for a prefix that is not an integer from 0 to 32:
 
 ```php
 use TGbotPHP\Security\WebhookValidator;
@@ -71,7 +71,7 @@ $bot->command('broadcast', function (stdClass $message, Bot $bot, string $text) 
 });
 ```
 
-**Files.** A plain string is always sent as a `file_id` or a URL: the library only reads a local file when you wrap it in `InputFile::fromPath()`. Never pass a path built from user input to `InputFile::fromPath()` or to `downloadFile()`.
+**Files.** A plain string is always sent as a `file_id` or a URL: the library only reads a local file when you wrap it in `InputFile::fromPath()`. Never pass a path built from user input to `InputFile::fromPath()` or to `downloadFile()`. `getFileUrl()` rejects `..`, empty segments and absolute paths. A local Bot API server can return an absolute `file_path`; `downloadFile()` reads it only when `localFileRoot` is an existing directory and the real path stays inside it. A custom `apiBaseUrl` alone does not allow reading the local disk.
 
 **Rate limits.** Protect expensive handlers from floods with the [rate limiter](Conversations#rate-limiting).
 

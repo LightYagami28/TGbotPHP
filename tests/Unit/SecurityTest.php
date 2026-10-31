@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
+use TGbotPHP\Security\LogRedactor;
 use TGbotPHP\Security\WebhookValidator;
 use TGbotPHP\Tests\Support\Updates;
 
@@ -12,7 +14,9 @@ final class SecurityTest extends TestCase
 {
     public function testSecretTokenValidation(): void
     {
-        self::assertTrue(WebhookValidator::validate('', null));
+        self::assertFalse(WebhookValidator::validate('', null));
+        self::assertFalse(WebhookValidator::validate('', ''));
+        self::assertFalse(WebhookValidator::validate('', 'secret'));
         self::assertFalse(WebhookValidator::validate('secret', null));
         self::assertFalse(WebhookValidator::validate('secret', ''));
         self::assertFalse(WebhookValidator::validate('secret', 'wrong'));
@@ -82,6 +86,7 @@ final class SecurityTest extends TestCase
         self::assertNotNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, 0));
     }
 
+    #[RequiresPhpExtension('sodium')]
     public function testWebAppSignatureForThirdParties(): void
     {
         $keyPair = sodium_crypto_sign_keypair();
@@ -104,6 +109,7 @@ final class SecurityTest extends TestCase
         self::assertNull(WebhookValidator::validateWebAppSignature($initData, 12345678, publicKey: 'abcd'), 'Invalid key');
     }
 
+    #[RequiresPhpExtension('sodium')]
     public function testExpiredWebAppSignatureIsRejected(): void
     {
         $keyPair = sodium_crypto_sign_keypair();
@@ -119,6 +125,7 @@ final class SecurityTest extends TestCase
         self::assertSame(['auth_date' => $authDate], WebhookValidator::validateWebAppSignature($initData, 1, 0, $publicKey));
     }
 
+    #[RequiresPhpExtension('sodium')]
     public function testTelegramPublicKeysAreWellFormed(): void
     {
         foreach ([WebhookValidator::WEB_APP_PUBLIC_KEY, WebhookValidator::WEB_APP_TEST_PUBLIC_KEY] as $key) {
@@ -159,5 +166,55 @@ final class SecurityTest extends TestCase
 
         self::assertNotNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, maxAge: 60));
         self::assertNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, maxAge: 30));
+    }
+
+    public function testInvalidCidrPrefixesDoNotMatchEveryAddress(): void
+    {
+        self::assertFalse(WebhookValidator::isTelegramIp('8.8.8.8', ['10.0.0.0/abc']));
+        self::assertFalse(WebhookValidator::isTelegramIp('10.0.0.1', ['10.0.0.0/33']));
+        self::assertFalse(WebhookValidator::isTelegramIp('10.0.0.1', ['10.0.0.0/-1']));
+        self::assertFalse(WebhookValidator::isTelegramIp('10.0.0.1', ['10.0.0.0/32']));
+        self::assertTrue(WebhookValidator::isTelegramIp('10.0.0.1', ['10.0.0.1/32']));
+        self::assertFalse(WebhookValidator::isTelegramIp('2001:db8::1'));
+        self::assertFalse(WebhookValidator::isTelegramIp('::ffff:149.154.167.220'));
+    }
+
+    public function testFutureAuthDateIsRejectedEvenWhenTheAgeCheckIsDisabled(): void
+    {
+        $authDate = (string) (time() + 3600);
+        $secret = hash_hmac('sha256', Updates::TOKEN, 'WebAppData', true);
+        $hash = hash_hmac('sha256', "auth_date=$authDate", $secret);
+        $initData = "auth_date=$authDate&hash=$hash";
+
+        self::assertNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, 0));
+        self::assertNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, 86400));
+        self::assertNull(WebhookValidator::validateWebAppData('auth_date=0&hash=' . str_repeat('ab', 32), Updates::TOKEN, 0));
+        self::assertNull(WebhookValidator::validateWebAppData('auth_date=1&auth_date=2&hash=' . str_repeat('ab', 32), Updates::TOKEN));
+        self::assertNull(WebhookValidator::validateWebAppData('auth_date=%zz', Updates::TOKEN));
+        self::assertNull(WebhookValidator::validateWebAppData(str_repeat('a', 65537), Updates::TOKEN));
+        self::assertFalse(WebhookValidator::validateSignature('body', hash_hmac('sha256', 'body', 'key'), ''));
+        self::assertFalse(WebhookValidator::validateSignature('body', 'not-hex', 'key'));
+    }
+
+    public function testLogRedactorKeepsChatIdsAndHidesTokens(): void
+    {
+        $token = '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw';
+        $context = LogRedactor::context([
+            'chat_id' => 42,
+            'user_id' => 7,
+            'text' => 'hello',
+            'secret_token' => 'super-secret',
+            'nested' => ['provider_token' => 'pay', 'caption' => 'kept'],
+        ]);
+
+        self::assertSame(42, $context['chat_id']);
+        self::assertSame(7, $context['user_id']);
+        self::assertSame('hello', $context['text']);
+        self::assertSame('<redacted>', $context['secret_token']);
+        self::assertIsArray($context['nested']);
+        self::assertSame('<redacted>', $context['nested']['provider_token']);
+        self::assertSame('kept', $context['nested']['caption']);
+        self::assertStringNotContainsString($token, LogRedactor::text("bot $token sent it"));
+        self::assertStringContainsString('<redacted>', LogRedactor::text('https://user:pass@example.com/hook'));
     }
 }

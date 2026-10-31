@@ -160,8 +160,8 @@ class Keyboard
      */
     public static function button(string $text, string $callbackData): array
     {
-        if (strlen($callbackData) > 64) {
-            throw new \InvalidArgumentException('callback_data must be at most 64 bytes');
+        if ($callbackData === '' || strlen($callbackData) > 64) {
+            throw new \InvalidArgumentException('callback_data must be 1 to 64 bytes');
         }
 
         return ['text' => $text, 'callback_data' => $callbackData];

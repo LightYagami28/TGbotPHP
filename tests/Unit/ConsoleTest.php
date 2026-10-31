@@ -205,4 +205,32 @@ final class ConsoleTest extends TestCase
         self::assertSame('deleteMyCommands', $this->transport->lastRequest()['method']);
         self::assertStringContainsString('Commands deleted', $this->readOutput());
     }
+
+    public function testSetWebhookRequiresASecret(): void
+    {
+        $previous = getenv('TELEGRAM_SECRET_TOKEN');
+        putenv('TELEGRAM_SECRET_TOKEN');
+
+        try {
+            self::assertSame(1, $this->runWithToken('webhook:set', '--url=https://example.com/hook'));
+            self::assertStringContainsString('--secret', $this->readErrors());
+            self::assertSame([], $this->transport->requests());
+        } finally {
+            putenv($previous === false ? 'TELEGRAM_SECRET_TOKEN' : 'TELEGRAM_SECRET_TOKEN=' . $previous);
+        }
+    }
+
+    public function testSetWebhookReadsTheSecretFromTheEnvironment(): void
+    {
+        $previous = getenv('TELEGRAM_SECRET_TOKEN');
+        putenv('TELEGRAM_SECRET_TOKEN=from-env-secret');
+        $this->transport->queueResult(true);
+
+        try {
+            self::assertSame(0, $this->runWithToken('webhook:set', '--url=https://example.com/hook'));
+            self::assertSame('from-env-secret', $this->transport->lastRequest()['fields']['secret_token']);
+        } finally {
+            putenv($previous === false ? 'TELEGRAM_SECRET_TOKEN' : 'TELEGRAM_SECRET_TOKEN=' . $previous);
+        }
+    }
 }

@@ -42,7 +42,7 @@ $bot->poll();
 
 ## Requirements
 
-- PHP 8.4 or later, with the `curl` and `json` extensions
+- PHP 8.5 or later, with the `curl` and `json` extensions
 - A public HTTPS URL, only if you receive updates through a webhook
 
 ## Links

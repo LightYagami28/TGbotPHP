@@ -15,4 +15,6 @@
 /phpstan.neon.dist export-ignore
 /phpunit.xml.dist export-ignore
 /.sonarcloud.properties export-ignore
+/.imgbotconfig export-ignore
+/.gitleaks.toml export-ignore
 /start2.png export-ignore

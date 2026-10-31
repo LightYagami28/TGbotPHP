@@ -103,11 +103,18 @@ trait UserMethods
     /**
      * Build the download URL for a file_path returned by getFile()
      *
-     * The URL contains the bot token: never expose it to users.
+     * The path must be relative. `..`, empty segments and control characters
+     * are rejected, and each segment is encoded. The URL contains the bot
+     * token: never expose it to users.
+     *
+     * @throws \InvalidArgumentException When the path is absolute or contains an unsafe segment
      */
     public function getFileUrl(string $filePath): string
     {
-        return $this->config->apiBaseUrl . '/file/bot' . $this->config->token . '/' . ltrim($filePath, '/');
+        $segments = self::filePathSegments($filePath);
+
+        return $this->config->apiBaseUrl . '/file/bot' . $this->config->token . '/'
+            . implode('/', array_map(rawurlencode(...), $segments));
     }
 
     /**
@@ -123,6 +130,7 @@ trait UserMethods
      *
      * @throws ApiException
      * @throws StorageException
+     * @throws \InvalidArgumentException When file_path cannot be turned into a safe URL
      */
     public function downloadFile(string $fileId, ?string $destination = null): string
     {
@@ -151,6 +159,10 @@ trait UserMethods
             $response = $this->getTransport()->get($url, $timeout);
             self::checkDownloadStatus($response->statusCode);
 
+            if (strlen($response->body) > self::MAX_MEMORY_DOWNLOAD) {
+                throw new StorageException('File exceeds the in-memory download limit');
+            }
+
             return $response->body;
         }
 
@@ -172,32 +184,79 @@ trait UserMethods
     }
 
     /**
-     * Absolute paths only come from a local Bot API server, which shares its disk with the bot
+     * Absolute paths are read only from a local Bot API server, and only from
+     * the directory configured as localFileRoot. A custom apiBaseUrl alone is
+     * not enough: a hostile mirror could return /etc/passwd.
      */
     private function isLocalServerFile(string $filePath): bool
     {
-        return $this->config->apiBaseUrl !== Config::DEFAULT_API_URL
-            && str_starts_with($filePath, '/')
-            && is_file($filePath);
+        $root = $this->config->localFileRoot;
+
+        if ($root === null || $this->config->apiBaseUrl === Config::DEFAULT_API_URL) {
+            return false;
+        }
+
+        $real = realpath($filePath);
+
+        if ($real === false || !is_file($real)) {
+            return false;
+        }
+
+        $prefix = rtrim($root, '/') . '/';
+
+        return $real === $root || str_starts_with($real, $prefix);
     }
 
     private function copyLocalFile(string $filePath, ?string $destination): string
     {
+        $real = realpath($filePath);
+
+        if ($real === false || !$this->isLocalServerFile($real)) {
+            throw new StorageException('Refusing to read a file outside the local file root');
+        }
+
         if ($destination === null) {
-            $contents = @file_get_contents($filePath);
+            $size = filesize($real);
+
+            if ($size === false || $size > self::MAX_MEMORY_DOWNLOAD) {
+                throw new StorageException('File exceeds the in-memory download limit');
+            }
+
+            $contents = @file_get_contents($real);
 
             if ($contents === false) {
-                throw new StorageException("Unable to read file: $filePath");
+                throw new StorageException("Unable to read file: $real");
             }
 
             return $contents;
         }
 
-        if (!@copy($filePath, $destination)) {
+        if (!@copy($real, $destination)) {
             throw new StorageException("Unable to write file: $destination");
         }
 
         return $destination;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function filePathSegments(string $filePath): array
+    {
+        if ($filePath === '' || str_starts_with($filePath, '/') || str_contains($filePath, '\\')
+            || preg_match('/[\x00-\x1f\x7f]/', $filePath) === 1) {
+            throw new \InvalidArgumentException('Expected a relative Telegram file path');
+        }
+
+        $segments = explode('/', $filePath);
+
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                throw new \InvalidArgumentException('Invalid Telegram file path segment');
+            }
+        }
+
+        return $segments;
     }
 
     private static function checkDownloadStatus(int $statusCode): void

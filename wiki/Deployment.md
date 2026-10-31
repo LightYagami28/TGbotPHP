@@ -106,7 +106,7 @@ server {
         fastcgi_param SCRIPT_FILENAME $document_root/webhook.php;
         fastcgi_param TELEGRAM_BOT_TOKEN "...";
         fastcgi_param TELEGRAM_SECRET_TOKEN "...";
-        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+        fastcgi_pass unix:/run/php/php8.5-fpm.sock;
     }
 
     location / {

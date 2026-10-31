@@ -25,6 +25,10 @@ class BotBuilder
     private bool|string $debug = false;
     private string|false $secretToken = false;
     private bool $allowUnauthenticatedWebhook = false;
+    private int $maxWebhookBodyBytes = 1024 * 1024;
+    private bool $acknowledgeHandlerErrors = true;
+    private ?string $localFileRoot = null;
+    private ?CacheInterface $updateDedup = null;
     private ?string $username = null;
     private string $apiBaseUrl = Config::DEFAULT_API_URL;
     private bool $enforceHttps = true;
@@ -96,6 +100,43 @@ class BotBuilder
     public function allowUnauthenticatedWebhook(bool $allow = true): self
     {
         $this->allowUnauthenticatedWebhook = $allow;
+        return $this;
+    }
+
+    /**
+     * Reject webhook bodies larger than this many bytes with HTTP 413
+     */
+    public function withMaxWebhookBody(int $bytes): self
+    {
+        $this->maxWebhookBodyBytes = $bytes;
+        return $this;
+    }
+
+    /**
+     * Answer 500 when a handler throws, so Telegram redelivers the update.
+     * The default answers 200 and logs the error.
+     */
+    public function acknowledgeHandlerErrors(bool $acknowledge = true): self
+    {
+        $this->acknowledgeHandlerErrors = $acknowledge;
+        return $this;
+    }
+
+    /**
+     * Directory a local Bot API server may read absolute file paths from
+     */
+    public function withLocalFileRoot(string $directory): self
+    {
+        $this->localFileRoot = $directory;
+        return $this;
+    }
+
+    /**
+     * Skip a webhook delivery whose update_id was already accepted
+     */
+    public function deduplicateUpdates(CacheInterface $cache): self
+    {
+        $this->updateDedup = $cache;
         return $this;
     }
 
@@ -214,9 +255,16 @@ class BotBuilder
             timeout: $this->timeout,
             retry: $this->retry,
             debug: $this->debug,
+            maxWebhookBodyBytes: $this->maxWebhookBodyBytes,
+            acknowledgeHandlerErrors: $this->acknowledgeHandlerErrors,
+            localFileRoot: $this->localFileRoot,
         );
 
         $bot = new Bot($config, $this->transport);
+
+        if ($this->updateDedup !== null) {
+            $bot->deduplicateUpdates($this->updateDedup);
+        }
 
         if ($this->username !== null) {
             $bot->setUsername($this->username);

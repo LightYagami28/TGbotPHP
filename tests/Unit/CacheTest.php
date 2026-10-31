@@ -285,4 +285,98 @@ final class CacheTest extends TestCase
         $sessions->endSession($id);
         self::assertNull($sessions->getSession($id));
     }
+
+    public function testFlushRemovesCacheAndLockFiles(): void
+    {
+        $cache = new FileCache(self::$directory);
+        $cache->put('flush-me', 'v');
+        $cache->update('flush-me', static fn(mixed $value): mixed => $value);
+        $cache->flush();
+
+        $entries = scandir(self::$directory);
+        self::assertSame([], array_values(array_diff($entries === false ? [] : $entries, ['.', '..'])));
+    }
+
+    public function testFileCacheWorksWhenTheDirectoryNameContainsGlobMetacharacters(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-[cache]-' . bin2hex(random_bytes(3));
+        mkdir($directory);
+
+        try {
+            $cache = new FileCache($directory);
+            $cache->put('fresh', 'yes', 60);
+            $cache->put('expired', 'no', 0);
+
+            self::assertSame(1, $cache->prune());
+            self::assertSame('yes', $cache->get('fresh'));
+
+            $cache->update('fresh', static fn(mixed $value): mixed => $value);
+            $cache->flush();
+            $entries = scandir($directory);
+            self::assertSame([], array_values(array_diff($entries === false ? [] : $entries, ['.', '..'])));
+        } finally {
+            $left = scandir($directory);
+            if (is_array($left)) {
+                foreach ($left as $name) {
+                    if ($name !== '.' && $name !== '..') {
+                        unlink($directory . '/' . $name);
+                    }
+                }
+            }
+            rmdir($directory);
+        }
+    }
+
+    public function testExpiredReadDoesNotDeleteAValueReplacedUnderTheLock(): void
+    {
+        $cache = new FileCache(self::$directory);
+        $cache->forget('race');
+        $cache->put('race', 'old', 0);
+
+        $ready = self::$directory . '/race-ready';
+        @unlink($ready);
+
+        // Hold the same stripe lock FileCache uses, then replace the expired
+        // entry. get() must wait and re-read instead of unlinking the new value.
+        $script = sprintf(
+            '$dir = %s; $ready = %s; $hash = hash("sha256", "race");'
+            . ' $lock = fopen($dir . "/" . substr($hash, 0, 2) . ".lock", "c");'
+            . ' if ($lock === false || !flock($lock, LOCK_EX)) { exit(1); }'
+            . ' file_put_contents($ready, "1"); sleep(1);'
+            . ' file_put_contents($dir . "/$hash.cache", serialize(["expires" => time() + 60, "value" => "new"]));'
+            . ' flock($lock, LOCK_UN); fclose($lock);',
+            var_export(self::$directory, true),
+            var_export($ready, true),
+        );
+        $process = proc_open([PHP_BINARY, '-r', $script], [], $pipes);
+        self::assertIsResource($process);
+
+        $deadline = time() + 5;
+        while (!is_file($ready) && time() < $deadline) {
+            usleep(20_000);
+        }
+        self::assertFileExists($ready);
+
+        $seen = $cache->get('race');
+        self::assertSame(0, proc_close($process));
+        self::assertSame('new', $seen);
+        @unlink($ready);
+    }
+
+    public function testRateLimiterRejectsNonPositiveWindows(): void
+    {
+        $limiter = new RateLimiter(new ArrayCache());
+
+        foreach ([[0, 1], [1, 0], [-1, 5]] as [$maxRequests, $windowSeconds]) {
+            try {
+                $limiter->limit('k', $maxRequests, $windowSeconds);
+                self::fail("Accepted limit $maxRequests / $windowSeconds");
+            } catch (\InvalidArgumentException) {
+                // expected
+            }
+        }
+
+        $this->expectException(\InvalidArgumentException::class);
+        $limiter->middleware(1, 0);
+    }
 }

@@ -38,6 +38,21 @@ final class BotBuilderTest extends TestCase
         self::assertSame('http://127.0.0.1:8081', $config->apiBaseUrl);
         self::assertSame(60, $config->timeout);
         self::assertSame($retry, $config->retry);
+
+        $root = sys_get_temp_dir();
+        $cache = new ArrayCache();
+        $built = (new BotBuilder(Updates::TOKEN))
+            ->withMaxWebhookBody(2048)
+            ->acknowledgeHandlerErrors(false)
+            ->withLocalFileRoot($root)
+            ->deduplicateUpdates($cache)
+            ->build();
+
+        self::assertSame(2048, $built->getConfig()->maxWebhookBodyBytes);
+        self::assertFalse($built->getConfig()->acknowledgeHandlerErrors);
+        self::assertSame(realpath($root), $built->getConfig()->localFileRoot);
+        self::assertSame($cache, $built->updateDedupCache());
+        self::assertTrue((new BotBuilder(Updates::TOKEN))->build()->getConfig()->acknowledgeHandlerErrors);
     }
 
     public function testRegistersEveryKindOfHandler(): void

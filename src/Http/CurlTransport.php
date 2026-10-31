@@ -7,15 +7,30 @@ namespace TGbotPHP\Http;
 use CurlHandle;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Exceptions\NetworkException;
+use TGbotPHP\Security\LogRedactor;
 
 /**
  * cURL based transport
+ *
+ * Responses read into memory are capped at MAX_RESPONSE_BYTES so a download
+ * cannot grow without a limit when file_size is missing. download() streams
+ * to disk and is not subject to that cap.
  */
 final class CurlTransport implements TransportInterface
 {
+    /** Same ceiling as UserMethods::MAX_MEMORY_DOWNLOAD */
+    public const int MAX_RESPONSE_BYTES = 20 * 1024 * 1024;
+
     private ?CurlHandle $handle = null;
 
-    public function __construct(private readonly int $connectTimeout = 5) {}
+    public function __construct(
+        private readonly int $connectTimeout = 5,
+        private readonly int $maxResponseBytes = self::MAX_RESPONSE_BYTES,
+    ) {
+        if ($connectTimeout < 1 || $maxResponseBytes < 1) {
+            throw new \InvalidArgumentException('Transport timeout and response limit must be positive');
+        }
+    }
 
     #[\Override]
     public function post(string $url, array $fields, bool $multipart, int $timeout): HttpResponse
@@ -29,7 +44,8 @@ final class CurlTransport implements TransportInterface
             // Passing an array makes cURL build a multipart/form-data body with the proper boundary
             $options[CURLOPT_POSTFIELDS] = $fields;
         } else {
-            $options[CURLOPT_POSTFIELDS] = http_build_query($fields);
+            // The separator must not depend on arg_separator.output in php.ini
+            $options[CURLOPT_POSTFIELDS] = http_build_query($fields, '', '&');
             $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
         }
 
@@ -62,7 +78,7 @@ final class CurlTransport implements TransportInterface
             ]);
 
             if (curl_exec($curl) !== true) {
-                throw new NetworkException('cURL error: ' . curl_error($curl), curl_errno($curl));
+                throw new NetworkException(self::curlFailure($curl), curl_errno($curl));
             }
 
             return curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -76,12 +92,28 @@ final class CurlTransport implements TransportInterface
      */
     private function execute(string $url, array $options): HttpResponse
     {
-        $curl = $this->prepare($url, $options + [CURLOPT_RETURNTRANSFER => true]);
+        $body = '';
+        $limited = false;
+        $curl = $this->prepare($url, $options + [
+            CURLOPT_WRITEFUNCTION => function (CurlHandle $curl, string $chunk) use (&$body, &$limited): int {
+                if (strlen($body) + strlen($chunk) > $this->maxResponseBytes) {
+                    $limited = true;
 
-        $body = curl_exec($curl);
+                    return 0;
+                }
 
-        if (!is_string($body)) {
-            throw new NetworkException('cURL error: ' . curl_error($curl), curl_errno($curl));
+                $body .= $chunk;
+
+                return strlen($chunk);
+            },
+        ]);
+
+        if (curl_exec($curl) !== true) {
+            if ($limited) {
+                throw new NetworkException('Response exceeded the transport byte limit', curl_errno($curl));
+            }
+
+            throw new NetworkException(self::curlFailure($curl), curl_errno($curl));
         }
 
         return new HttpResponse(curl_getinfo($curl, CURLINFO_HTTP_CODE), $body);
@@ -94,6 +126,15 @@ final class CurlTransport implements TransportInterface
      */
     private function prepare(string $url, array $options): CurlHandle
     {
+        $parts = parse_url($url);
+
+        if ($parts === false || !isset($parts['host']) || $parts['host'] === ''
+            || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+            || isset($parts['user']) || isset($parts['pass'])
+            || preg_match('/[\x00-\x20\x7f]/', $url) === 1) {
+            throw new NetworkException('Invalid HTTP transport URL');
+        }
+
         if ($this->handle === null) {
             $handle = curl_init();
 
@@ -117,5 +158,10 @@ final class CurlTransport implements TransportInterface
         ]);
 
         return $this->handle;
+    }
+
+    private static function curlFailure(CurlHandle $curl): string
+    {
+        return 'cURL error: ' . LogRedactor::text(curl_error($curl));
     }
 }
