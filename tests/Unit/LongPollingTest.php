@@ -36,6 +36,19 @@ final class LongPollingTest extends TestCase
         });
     }
 
+    public function testDefaultSleeperWaitsForRetryAfter(): void
+    {
+        $polling = new LongPolling($this->bot);
+        $this->transport
+            ->queueError(429, 'Too Many Requests', ['retry_after' => 1])
+            ->queueResult([]);
+
+        $started = microtime(true);
+        $polling->run(timeout: 0, maxIterations: 1);
+
+        self::assertGreaterThanOrEqual(1.0, microtime(true) - $started);
+    }
+
     public function testWaitsForRetryAfterOnTooManyRequests(): void
     {
         $this->transport

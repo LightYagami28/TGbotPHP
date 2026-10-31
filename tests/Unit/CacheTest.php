@@ -6,6 +6,7 @@ namespace TGbotPHP\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use TGbotPHP\Cache\ArrayCache;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Cache\FileCache;
@@ -15,6 +16,7 @@ use TGbotPHP\Rate\RateLimiter;
 use TGbotPHP\Session\ConversationManager;
 use TGbotPHP\Session\SessionManager;
 use TGbotPHP\Support\Value;
+use TGbotPHP\Tests\Support\RuntimeControls;
 use TGbotPHP\Tests\Support\Updates;
 
 final class CacheTest extends TestCase
@@ -378,5 +380,187 @@ final class CacheTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $limiter->middleware(1, 0);
+    }
+
+    public function testFileCacheRejectsADirectoryThatIsNotWritable(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-ro-' . bin2hex(random_bytes(3));
+        mkdir($directory, 0700);
+        chmod($directory, 0555);
+
+        try {
+            $this->expectException(StorageException::class);
+            $this->expectExceptionMessage('not writable');
+            new FileCache($directory);
+        } finally {
+            chmod($directory, 0700);
+            rmdir($directory);
+        }
+    }
+
+    public function testPruneIgnoresCacheFilesWhoseNameIsNotAHash(): void
+    {
+        $cache = new FileCache(self::$directory);
+        file_put_contents(self::$directory . '/x.cache', 'short');
+
+        self::assertSame(0, $cache->prune());
+        self::assertFileExists(self::$directory . '/x.cache');
+        unlink(self::$directory . '/x.cache');
+    }
+
+    public function testFlushOnAMissingDirectoryListsNothing(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-gone-' . bin2hex(random_bytes(3));
+        $cache = new FileCache($directory);
+        $moved = $directory . '-moved';
+        rename($directory, $moved);
+        touch($directory);
+
+        try {
+            $cache->flush();
+            self::assertFileExists($directory);
+        } finally {
+            unlink($directory);
+            $left = scandir($moved);
+            if (is_array($left)) {
+                foreach ($left as $name) {
+                    if ($name !== '.' && $name !== '..') {
+                        unlink($moved . '/' . $name);
+                    }
+                }
+            }
+            rmdir($moved);
+        }
+    }
+
+    public function testPutReportsADirectoryThatCannotCreateFiles(): void
+    {
+        $cache = new FileCache(self::$directory);
+        $cache->put('locked-stripe', 'v');
+        $stripe = substr(hash('sha256', 'locked-stripe'), 0, 2);
+        $lock = self::$directory . '/' . $stripe . '.lock';
+        chmod($lock, 0666);
+        chmod(self::$directory, 0555);
+
+        try {
+            $cache->put('locked-stripe', 'next');
+            self::fail('Wrote a cache entry into a read-only directory');
+        } catch (StorageException $e) {
+            self::assertStringContainsString('Unable to write cache entry', $e->getMessage());
+        } finally {
+            chmod(self::$directory, 0700);
+        }
+    }
+
+    public function testPruneSkipsAFileRemovedWhileWaitingForTheLock(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-prune-' . bin2hex(random_bytes(3));
+        $cache = new FileCache($directory);
+        $cache->put('prune-race', 'v', 60);
+        $hash = hash('sha256', 'prune-race');
+        $file = $directory . '/' . $hash . '.cache';
+        $ready = $directory . '/prune-ready';
+        @unlink($ready);
+
+        $script = sprintf(
+            '$lock = fopen(%s, "c"); if ($lock === false || !flock($lock, LOCK_EX)) { exit(1); }'
+            . ' file_put_contents(%s, "1"); sleep(1); unlink(%s); flock($lock, LOCK_UN); fclose($lock);',
+            var_export($directory . '/' . substr($hash, 0, 2) . '.lock', true),
+            var_export($ready, true),
+            var_export($file, true),
+        );
+        $process = proc_open([PHP_BINARY, '-r', $script], [], $pipes);
+        self::assertIsResource($process);
+        $deadline = time() + 5;
+        while (!is_file($ready) && time() < $deadline) {
+            usleep(20_000);
+        }
+        self::assertFileExists($ready);
+
+        try {
+            self::assertSame(0, $cache->prune());
+            self::assertSame(0, proc_close($process));
+        } finally {
+            @unlink($ready);
+            $cache->flush();
+            @rmdir($directory);
+        }
+    }
+
+    public function testReadOfADeletedExpiredEntryReturnsNull(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-expire-' . bin2hex(random_bytes(3));
+        $cache = new FileCache($directory);
+        $cache->put('expire-race', 'old', 0);
+        $hash = hash('sha256', 'expire-race');
+        $file = $directory . '/' . $hash . '.cache';
+        $ready = $directory . '/expire-ready';
+        @unlink($ready);
+
+        $script = sprintf(
+            '$lock = fopen(%s, "c"); if ($lock === false || !flock($lock, LOCK_EX)) { exit(1); }'
+            . ' file_put_contents(%s, "1"); sleep(1); unlink(%s); flock($lock, LOCK_UN); fclose($lock);',
+            var_export($directory . '/' . substr($hash, 0, 2) . '.lock', true),
+            var_export($ready, true),
+            var_export($file, true),
+        );
+        $process = proc_open([PHP_BINARY, '-r', $script], [], $pipes);
+        self::assertIsResource($process);
+        $deadline = time() + 5;
+        while (!is_file($ready) && time() < $deadline) {
+            usleep(20_000);
+        }
+        self::assertFileExists($ready);
+
+        try {
+            self::assertNull($cache->get('expire-race'));
+            self::assertSame(0, proc_close($process));
+        } finally {
+            @unlink($ready);
+            $cache->flush();
+            @rmdir($directory);
+        }
+    }
+
+    public function testUnlockOfAStripeThatIsNotHeldDoesNothing(): void
+    {
+        $cache = new FileCache(self::$directory);
+        $unlock = new ReflectionMethod(FileCache::class, 'unlock');
+        $unlock->invoke($cache, 'not-held');
+
+        self::assertFalse($cache->has('not-held'));
+    }
+
+    public function testOpeningALockInAReadOnlyDirectoryIsReported(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-lockro-' . bin2hex(random_bytes(3));
+        $cache = new FileCache($directory);
+        chmod($directory, 0555);
+
+        try {
+            $cache->put('new-key', 'v');
+            self::fail('Opened a lock file in a read-only directory');
+        } catch (StorageException $e) {
+            self::assertStringContainsString('Unable to open cache lock', $e->getMessage());
+        } finally {
+            chmod($directory, 0700);
+            $cache->flush();
+            rmdir($directory);
+        }
+    }
+
+    public function testLockFailureIsReported(): void
+    {
+        $cache = new FileCache(self::$directory);
+        RuntimeControls::$failFlock = true;
+
+        try {
+            $cache->put('no-lock', 'v');
+            self::fail('Locked a stripe whose flock() failed');
+        } catch (StorageException $e) {
+            self::assertStringContainsString('Unable to lock cache stripe', $e->getMessage());
+        } finally {
+            RuntimeControls::reset();
+        }
     }
 }

@@ -19,7 +19,7 @@ $bot->poll();
 - **Safe by default.** Webhook requests without a secret token are refused. Configured secrets are compared in constant time. Uploads never read a file unless you ask for it. The debug log redacts secrets.
 - **Correct under load.** Conversations and rate limits use atomic cache updates, so concurrent webhook requests do not overwrite each other.
 - **Testable.** `BotTester` runs your handlers without network access.
-- **Checked.** PHPStan at level 10 with strict rules, 97% line coverage, and end-to-end tests against the real API.
+- **Checked.** PHPStan at level 10 with strict rules, 100% line coverage, and end-to-end tests against the real API.
 
 ## Guide
 

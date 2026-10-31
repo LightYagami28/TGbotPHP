@@ -10,6 +10,7 @@ use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Http\CurlTransport;
 use TGbotPHP\Support\Value;
+use TGbotPHP\Tests\Support\RuntimeControls;
 
 /**
  * Runs against PHP's built-in server, started for this test class
@@ -169,6 +170,50 @@ final class CurlTransportTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         new CurlTransport(connectTimeout: 0);
+    }
+
+    public function testDownloadRejectsADestinationThatCannotBeOpened(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-dir-' . bin2hex(random_bytes(2));
+        mkdir($directory);
+
+        try {
+            new CurlTransport()->download(self::$baseUrl . '/file', $directory, 5);
+            self::fail('Opened a directory for writing');
+        } catch (NetworkException $e) {
+            self::assertStringContainsString('Unable to open', $e->getMessage());
+        } finally {
+            rmdir($directory);
+        }
+    }
+
+    public function testDownloadReportsAFailedTransfer(): void
+    {
+        $destination = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($destination);
+
+        try {
+            new CurlTransport()->download('http://127.0.0.1:1/', $destination, 2);
+            self::fail('Downloaded from a closed port');
+        } catch (NetworkException $e) {
+            self::assertStringContainsString('cURL error', $e->getMessage());
+        } finally {
+            @unlink($destination);
+        }
+    }
+
+    public function testReportsAFailedCurlInit(): void
+    {
+        RuntimeControls::$failCurlInit = true;
+
+        try {
+            new CurlTransport()->get(self::$baseUrl . '/echo', 5);
+            self::fail('Used a transport whose curl_init() failed');
+        } catch (NetworkException $e) {
+            self::assertSame('Failed to initialize cURL', $e->getMessage());
+        } finally {
+            RuntimeControls::reset();
+        }
     }
 
     /**

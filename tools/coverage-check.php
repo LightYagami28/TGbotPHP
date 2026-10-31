@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Fails when line coverage falls below a minimum
  *
- *     php tools/coverage-check.php coverage.xml 95
+ *     php tools/coverage-check.php coverage.xml 100
  */
 
 $arguments = $_SERVER['argv'] ?? [];
