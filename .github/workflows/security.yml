@@ -33,22 +33,18 @@ jobs:
     # administrator enables under Settings > Code security > Dependabot.
     - run: composer audit --locked --abandoned=report
 
-  codeql:
-    name: CodeQL
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        persist-credentials: false
-    - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
-      with:
-        languages: php
-    - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
-      with:
-        category: /language:php
+  # CodeQL is not run here. codeql-action 4.39.1 (bundle 2.27.3) rejects
+  # `languages: php` at init: "Did not recognize the following languages: php".
+  # The supported set is C/C++, C#, Go, Java/Kotlin, JavaScript/TypeScript,
+  # Python, Ruby, Swift and GitHub Actions. No repository setting adds PHP.
+  #
+  # Dependency review is not run here. The action stops before looking at
+  # the lockfile: "Dependency review is not supported on this repository.
+  # Please ensure that Dependency graph is enabled" at
+  # https://github.com/LightYagami28/TGbotPHP/settings/security_analysis
+  # An admin enables it under Settings → Code security → Dependency graph.
+  # continue-on-error is not used: once the graph is on, that flag would
+  # also hide a real vulnerable dependency.
 
   secrets:
     name: Secret scan
@@ -69,17 +65,4 @@ jobs:
         sudo mv gitleaks /usr/local/bin/gitleaks
     - name: Scan git history
       run: gitleaks detect --source . --redact --no-banner --exit-code 1 --config .gitleaks.toml
-
-  dependency-review:
-    name: Dependency review
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        persist-credentials: false
-    - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
 

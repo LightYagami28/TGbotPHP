@@ -76,7 +76,7 @@ For each method:
 | `tests.yml` | push, pull request | PHPUnit on PHP 8.5 (with coverage in the job summary, at least 95% of lines) and 8.6 (in development, non-blocking) |
 | `analysis.yml` | push, pull request | PHPStan level 10 |
 | `lint.yml` | push, pull request | Code style, workflows (actionlint, zizmor), links between Markdown files |
-| `security.yml` | push to main, pull request, daily | `composer audit`, CodeQL (PHP), gitleaks, and dependency review on pull requests |
+| `security.yml` | push to main, pull request, daily | `composer audit` and a gitleaks scan. CodeQL has no PHP language. Dependency review needs the repository dependency graph |
 | `docker.yml` | changes to the image inputs | Builds the image and runs smoke tests: CLI, autoload, non-root user, no dev files |
 | `wiki.yml` | push to `main` changing `wiki/`, manual | Publishes `wiki/` to the GitHub wiki |
 | `bot-api.yml` | weekly, manual | Compares the official Bot API documentation with `tools/bot-api.json` |
