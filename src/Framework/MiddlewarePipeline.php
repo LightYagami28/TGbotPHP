@@ -42,7 +42,8 @@ final class MiddlewarePipeline
         $reflection = new ReflectionFunction($closure);
 
         $this->middleware[] = $closure;
-        $this->parameterCounts[] = $reflection->isVariadic() ? null : $reflection->getNumberOfParameters();
+        // An optional parameter is not $next: only a required one makes the middleware onion-shaped
+        $this->parameterCounts[] = $reflection->isVariadic() ? null : $reflection->getNumberOfRequiredParameters();
     }
 
     /**
@@ -56,7 +57,9 @@ final class MiddlewarePipeline
     {
         $reached = false;
 
-        $next = function (int $index) use (&$next, &$reached, $update, $core, $arguments): void {
+        /** @var (Closure(int): void)|null $step */
+        $step = null;
+        $step = function (int $index) use (&$step, &$reached, $update, $core, $arguments): void {
             if (!isset($this->middleware[$index])) {
                 $reached = true;
                 $core();
@@ -64,9 +67,11 @@ final class MiddlewarePipeline
             }
 
             $middleware = $this->middleware[$index];
-            $proceed = static fn() => $next($index + 1);
+            $proceed = static function () use (&$step, $index): void {
+                $step($index + 1);
+            };
 
-            // A parameter after the update and the arguments receives $next
+            // A required parameter after the update and the arguments receives $next
             if (($this->parameterCounts[$index] ?? 0) > count($arguments) + 1) {
                 $middleware($update, ...[...$arguments, $proceed]);
                 return;
@@ -77,7 +82,12 @@ final class MiddlewarePipeline
             }
         };
 
-        $next(0);
+        try {
+            $step(0);
+        } finally {
+            // Drop the self-reference so long polling does not wait for the GC
+            $step = null;
+        }
 
         return $reached;
     }

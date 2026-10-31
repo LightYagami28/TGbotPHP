@@ -1,6 +1,6 @@
 # Upgrading from 2.x
 
-3.0 fixes bugs that made 2.x unusable in several places (most methods threw a `TypeError`, uploads were broken, commands did not match), so upgrading is strongly recommended. It needs **PHP 8.4**.
+3.0 fixes bugs that made 2.x unusable in several places (most methods threw a `TypeError`, uploads were broken, commands did not match), so upgrading is strongly recommended. It needs **PHP 8.5**.
 
 ## Constructor
 

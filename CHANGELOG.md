@@ -7,8 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Requires PHP 8.5.** PHP 8.4 is no longer supported. CI runs on PHP 8.5 (coverage) and PHP 8.6 (in development, non-blocking). This is a breaking change.
+
 ### Security
-- `Bot::handle()` answers 403 when no webhook secret is configured. Set `secretToken` to a value of 1–256 characters (`A-Z a-z 0-9 _ -`). Generate one with `openssl rand -hex 32` and pass the same value as `TELEGRAM_SECRET_TOKEN` to the process and to `webhook:set --secret`. To keep accepting requests that have no secret, set `allowUnauthenticatedWebhook: true` (or call `BotBuilder::allowUnauthenticatedWebhook()`). A configured secret is still checked when that option is on. Long polling is unchanged.
+- `Bot::handle()` answers 403 when no webhook secret is configured. Set `secretToken` to a value of 1–256 characters (`A-Z a-z 0-9 _ -`). Generate one with `openssl rand -hex 32` and pass the same value as `TELEGRAM_SECRET_TOKEN` to the process and to `webhook:set --secret`. To keep accepting requests that have no secret, set `allowUnauthenticatedWebhook: true` (or call `BotBuilder::allowUnauthenticatedWebhook()`). A configured secret is still checked when that option is on. The default stays `false`. Long polling is unchanged.
+- `WebhookValidator::validate()` fails closed on an empty secret. `isTelegramIp()` ignores a CIDR prefix that is not an integer from 0 to 32 (a bad prefix used to match every IPv4 address) and documents that only IPv4 ranges are checked.
+- Mini App `auth_date` in the future, missing or not a positive integer is rejected, including when the age check is disabled (`maxAge: 0`). Init data is parsed without `parse_str` (no rewritten names, no duplicate keys, no values over 64 KiB).
+- Webhook bodies are read only up to `maxWebhookBodyBytes` (1 MiB). Larger bodies get HTTP 413. A method other than POST gets HTTP 405.
+- `tgbot webhook:set` requires `--secret` or `TELEGRAM_SECRET_TOKEN`. It no longer registers a webhook that `handle()` will reject with 403.
+- `downloadFile()` / `getFileUrl()` reject `..`, empty segments, absolute paths and control characters, and encode each path segment. Absolute paths from a local Bot API server are read only from `localFileRoot` (realpath, no symlink escape). A custom `apiBaseUrl` alone does not read the local disk.
+- In-memory downloads are capped at 20 MiB on the cURL transport as well as after `file_size`. `http_build_query` always uses `&`.
+- API calls from a webhook handler are not retried and do not `sleep()` on `retry_after`. Elsewhere, network errors and HTTP 5xx are retried with backoff (`RetryPolicy::$transientRetries`, default 1).
+- `FileCache` takes the per-key lock in `put`, `forget`, `prune` and when deleting an expired entry, so a concurrent `update()` cannot lose the value it just wrote. `flush()` removes lock files. Listing entries no longer uses `glob()`.
+- `deduplicateUpdates($cache)` skips a webhook `update_id` already accepted. Set `acknowledgeHandlerErrors: false` to answer 500 on a handler exception so Telegram retries; the update id is then forgotten. The default remains HTTP 200.
+- Debug logs record response status and size, not the body. `LogRedactor` removes bot tokens and credential fields. `chat_id`, `user_id` and message text stay visible. Log files are created mode 0600 without a create/chmod race.
+- `RateLimiter` rejects a non-positive limit or window. `Keyboard::button()` rejects empty `callback_data`. `MessageParser` no longer treats snake_case as Markdown italic, and mentions follow Telegram's 5-character minimum. A route pattern that looks like a regex but does not compile throws at registration.
+- `PluginManager` activates a plugin before storing it, and `unregister()` removes hooks that plugin added during `activate()`. Middleware uses the number of required parameters, so an optional third parameter is not treated as `$next`.
+- CI adds a gitleaks scan (the public test-fixture token is allowlisted). `composer audit` remains. CodeQL is not used: the current bundle does not accept PHP. Dependency review is not used until an admin enables the dependency graph. Workflow permissions stay read-only except where a job must publish.
+
+### Fixed
+- Three Mini App signature tests are skipped with `#[RequiresPhpExtension('sodium')]` when the sodium extension is missing, and still run in CI where sodium is available.
+- CI requires 100% line coverage. Clover reports no branch data with pcov, and the repository has no mutation suite.
 
 ## [3.0.0] - 2026-09-25
 

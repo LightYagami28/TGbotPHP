@@ -36,10 +36,28 @@ readonly class Config
     /** Debug log file, or false for the PHP error log */
     public string|false $debugFile;
 
+    /** Largest webhook body accepted, in bytes. Larger bodies get HTTP 413 */
+    public int $maxWebhookBodyBytes;
+
+    /**
+     * When true, a handler exception still gets HTTP 200 so Telegram does not
+     * redeliver the update forever. Set false to answer 500 and let Telegram retry.
+     */
+    public bool $acknowledgeHandlerErrors;
+
+    /**
+     * Directory a local Bot API server may read files from. Null refuses every
+     * absolute file_path, including when apiBaseUrl is not the public API.
+     */
+    public ?string $localFileRoot;
+
     /**
      * @param string|false $secretToken Webhook secret token (1-256 characters: A-Z a-z 0-9 _ -). Required for webhooks unless $allowUnauthenticatedWebhook is true
      * @param bool|string $debug true logs to the PHP error log, a string logs to that file
-     * @param bool $allowUnauthenticatedWebhook Accept webhook requests with no secret token. Long polling does not use it
+     * @param bool $allowUnauthenticatedWebhook Accept webhook requests with no secret token. Long polling does not use it. The default is false
+     * @param int $maxWebhookBodyBytes Maximum accepted webhook body, in bytes
+     * @param bool $acknowledgeHandlerErrors Answer 200 when a handler throws. False answers 500 so Telegram retries
+     * @param string|null $localFileRoot Existing directory trusted for absolute paths returned by a local Bot API server
      */
     public function __construct(
         string $token,
@@ -50,13 +68,39 @@ readonly class Config
         RetryPolicy $retry = new RetryPolicy(),
         bool|string $debug = false,
         bool $allowUnauthenticatedWebhook = false,
+        int $maxWebhookBodyBytes = 1024 * 1024,
+        bool $acknowledgeHandlerErrors = true,
+        ?string $localFileRoot = null,
     ) {
         if (!self::isValidToken($token)) {
             throw new \InvalidArgumentException('Invalid Telegram bot token');
         }
 
-        if ($enforceHttps && !str_starts_with($apiBaseUrl, 'https://')) {
+        $parts = parse_url($apiBaseUrl);
+
+        if ($parts === false || !isset($parts['host']) || $parts['host'] === ''
+            || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+            || isset($parts['user']) || isset($parts['pass'])
+            || preg_match('/[\x00-\x20\x7f]/', $apiBaseUrl) === 1) {
+            throw new \InvalidArgumentException('API base URL must be an HTTP(S) URL without credentials');
+        }
+
+        if ($enforceHttps && $parts['scheme'] !== 'https') {
             throw new \InvalidArgumentException('API base URL must use HTTPS (disable enforceHttps for a local server)');
+        }
+
+        if ($maxWebhookBodyBytes < 1) {
+            throw new \InvalidArgumentException('Webhook body limit must be a positive number of bytes');
+        }
+
+        if ($localFileRoot !== null) {
+            $realRoot = realpath($localFileRoot);
+
+            if ($realRoot === false || !is_dir($realRoot)) {
+                throw new \InvalidArgumentException('Local file root must be an existing directory');
+            }
+
+            $localFileRoot = $realRoot;
         }
 
         if ($secretToken !== false && preg_match('/^[\w-]{1,256}\z/', $secretToken) !== 1) {
@@ -72,6 +116,9 @@ readonly class Config
         $this->retry = $retry;
         $this->debug = $debug !== false && $debug !== '';
         $this->debugFile = is_string($debug) && $debug !== '' ? $debug : false;
+        $this->maxWebhookBodyBytes = $maxWebhookBodyBytes;
+        $this->acknowledgeHandlerErrors = $acknowledgeHandlerErrors;
+        $this->localFileRoot = $localFileRoot;
     }
 
     /**

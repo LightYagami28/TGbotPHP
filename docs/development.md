@@ -64,7 +64,7 @@ For each method:
   php-cs-fixer check --diff   # or: php-cs-fixer fix
   ```
 
-- PHP 8.4+, `declare(strict_types=1)` everywhere
+- PHP 8.5+, `declare(strict_types=1)` everywhere
 - Full type hints, with generics in PHPDoc (`array<string, mixed>`)
 - PHPStan level 10 (max) with strict rules must pass, with no baseline and no `@phpstan-ignore`
 - Read untyped data (update payloads, decoded JSON, cache entries) through `TGbotPHP\Support\Value`
@@ -73,10 +73,10 @@ For each method:
 
 | Workflow | Runs on | Checks |
 |---|---|---|
-| `tests.yml` | push, pull request | PHPUnit on PHP 8.4 (with coverage in the job summary, at least 95% of lines), 8.5, and 8.6 (in development, non-blocking) |
+| `tests.yml` | push, pull request | PHPUnit on PHP 8.5 (with coverage in the job summary; 100% of lines) and 8.6 (in development, non-blocking) |
 | `analysis.yml` | push, pull request | PHPStan level 10 |
 | `lint.yml` | push, pull request | Code style, workflows (actionlint, zizmor), links between Markdown files |
-| `security.yml` | push to main, pull request, daily | `composer audit` of every locked package |
+| `security.yml` | push to main, pull request, daily | `composer audit` and a gitleaks scan. CodeQL has no PHP language. Dependency review needs the repository dependency graph |
 | `docker.yml` | changes to the image inputs | Builds the image and runs smoke tests: CLI, autoload, non-root user, no dev files |
 | `wiki.yml` | push to `main` changing `wiki/`, manual | Publishes `wiki/` to the GitHub wiki |
 | `bot-api.yml` | weekly, manual | Compares the official Bot API documentation with `tools/bot-api.json` |

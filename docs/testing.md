@@ -9,7 +9,7 @@ composer phpstan       # static analysis (level 10 + strict rules)
 composer check         # both
 ```
 
-CI runs the test suite on PHP 8.4 and 8.5 (plus 8.6, still in development, as a non-blocking job) and PHPStan on every push and pull request. The PHP 8.4 job reports code coverage in its summary.
+CI runs the test suite on PHP 8.5 (with coverage in the job summary; every line must be covered) and on PHP 8.6 (still in development, as a non-blocking job). PHPStan runs on every push and pull request.
 
 ## Test layout
 
@@ -26,7 +26,7 @@ CI runs the test suite on PHP 8.4 and 8.5 (plus 8.6, still in development, as a 
 | `tests/Unit/ConsoleTest.php` | `tgbot` CLI |
 | `tests/Unit/DocumentationTest.php` | The PHP examples of the README, `docs/` and `wiki/`: they parse, and call existing methods with existing parameters. The links between wiki pages |
 
-CI requires at least 95% of the lines to be covered.
+CI requires every line to be covered.
 
 ## Testing your own bot
 

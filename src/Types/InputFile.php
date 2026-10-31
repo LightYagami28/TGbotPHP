@@ -24,14 +24,19 @@ final class InputFile
         private readonly ?string $contents,
         private readonly string $filename,
         private readonly string $mimeType,
-    ) {}
+    ) {
+        if ($filename === '' || preg_match('/[\x00-\x1f\x7f\/\\\\]/', $filename) === 1
+            || preg_match('/[\x00-\x1f\x7f]/', $mimeType) === 1) {
+            throw new InvalidArgumentException('Invalid upload filename or MIME type');
+        }
+    }
 
     /**
      * Upload a file from the local filesystem
      */
     public static function fromPath(string $path, ?string $filename = null, ?string $mimeType = null): self
     {
-        if (!is_file($path) || !is_readable($path)) {
+        if (str_contains($path, '://') || str_contains($path, "\0") || !is_file($path) || !is_readable($path)) {
             throw new InvalidArgumentException("File not found or not readable: $path");
         }
 

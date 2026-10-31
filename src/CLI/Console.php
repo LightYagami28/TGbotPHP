@@ -77,7 +77,7 @@ Commands:
 
 Webhook Management:
   webhook:info        Get webhook info
-  webhook:set         Set webhook URL (--url, optional --secret, --drop-pending)
+  webhook:set         Set webhook URL (--url, --secret or TELEGRAM_SECRET_TOKEN, optional --drop-pending)
   webhook:delete      Delete webhook (optional --drop-pending)
 
 Bot Management:
@@ -140,10 +140,22 @@ EOF);
             return 1;
         }
 
+        $secret = $this->getOption($argv, 'secret');
+
+        if ($secret === null || $secret === '') {
+            $secret = getenv('TELEGRAM_SECRET_TOKEN');
+            $secret = is_string($secret) && $secret !== '' ? $secret : null;
+        }
+
+        if ($secret === null) {
+            $this->error('webhook:set requires --secret or TELEGRAM_SECRET_TOKEN. handle() answers 403 without a secret');
+            return 1;
+        }
+
         $this->bot($argv)->setWebhook(
             url: $url,
             dropPendingUpdates: $this->hasFlag($argv, 'drop-pending'),
-            secretToken: $this->getOption($argv, 'secret'),
+            secretToken: $secret,
         );
 
         $this->write('Webhook set');

@@ -33,3 +33,36 @@ jobs:
     # administrator enables under Settings > Code security > Dependabot.
     - run: composer audit --locked --abandoned=report
 
+  # CodeQL is not run here. codeql-action 4.39.1 (bundle 2.27.3) rejects
+  # `languages: php` at init: "Did not recognize the following languages: php".
+  # The supported set is C/C++, C#, Go, Java/Kotlin, JavaScript/TypeScript,
+  # Python, Ruby, Swift and GitHub Actions. No repository setting adds PHP.
+  #
+  # Dependency review is not run here. The action stops before looking at
+  # the lockfile: "Dependency review is not supported on this repository.
+  # Please ensure that Dependency graph is enabled" at
+  # https://github.com/LightYagami28/TGbotPHP/settings/security_analysis
+  # An admin enables it under Settings → Code security → Dependency graph.
+  # continue-on-error is not used: once the graph is on, that flag would
+  # also hide a real vulnerable dependency.
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        fetch-depth: 0
+    - name: Install gitleaks
+      run: |
+        version=8.30.1
+        archive="gitleaks_${version}_linux_x64.tar.gz"
+        curl --silent --show-error --fail --location --output "$archive" \
+          "https://github.com/gitleaks/gitleaks/releases/download/v${version}/${archive}"
+        echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  ${archive}" | sha256sum --check
+        tar --extract --gzip --file "$archive" gitleaks
+        sudo mv gitleaks /usr/local/bin/gitleaks
+    - name: Scan git history
+      run: gitleaks detect --source . --redact --no-banner --exit-code 1 --config .gitleaks.toml
+

@@ -88,6 +88,13 @@ final class UtilitiesTest extends TestCase
         Keyboard::button('x', str_repeat('a', 65));
     }
 
+    public function testCallbackDataCannotBeEmpty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Keyboard::button('x', '');
+    }
+
     public function testInlineKeyboardBuilder(): void
     {
         $keyboard = InlineKeyboard::make()
@@ -123,6 +130,8 @@ final class UtilitiesTest extends TestCase
         self::assertSame(['add', 'buy milk', 'x'], MessageParser::parseArguments('add "buy milk" x'));
         self::assertSame(['say "hi"', 'C:\\dir', '\\x41'], MessageParser::parseArguments('"say \\"hi\\"" "C:\\\\dir" "\\x41"'));
         self::assertSame(['alice', 'bob_1'], MessageParser::extractMentions('hi @alice and @bob_1, mail me at a@b.com'));
+        self::assertSame([], MessageParser::extractMentions('too short: @abc @abcd'));
+        self::assertSame('my_var_name', MessageParser::stripMarkdown('my_var_name'));
         self::assertSame(['php', 'bots'], MessageParser::extractHashtags('#php and #bots'));
         self::assertSame(['https://example.com/a'], MessageParser::extractUrls('see https://example.com/a.'));
         self::assertSame(['a@b.com'], MessageParser::extractEmails('mail a@b.com'));
@@ -137,7 +146,12 @@ final class UtilitiesTest extends TestCase
         self::assertSame(["page:1\n2", "1\n2"], new Pattern('page:*')->match("page:1\n2"));
         self::assertSame(['id=7', '7'], new Pattern('/^id=(\d+)$/')->match('id=7'));
         self::assertNull(new Pattern('/^id=(\d+)$/')->match('id=x'));
-        self::assertSame(['/[a/'], new Pattern('/[a/')->match('/[a/'), 'Invalid regexes are matched literally');
+        try {
+            new Pattern('/[a/');
+            self::fail('An invalid regular expression was accepted');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('/[a/', $e->getMessage());
+        }
         self::assertTrue(new Pattern('menu')->isExact());
         self::assertFalse(new Pattern('page:*')->isExact());
 
@@ -278,6 +292,28 @@ final class UtilitiesTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         InputFile::fromContents('x', '');
+    }
+
+    public function testInputFileRejectsStreamWrappersAndPathSeparators(): void
+    {
+        try {
+            InputFile::fromPath('php://filter/resource=/etc/passwd');
+            self::fail('Accepted a stream wrapper');
+        } catch (\InvalidArgumentException) {
+            // expected
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($path);
+
+        try {
+            InputFile::fromPath($path, 'a/b.jpg');
+            self::fail('Accepted a filename with a slash');
+        } catch (\InvalidArgumentException) {
+            // expected
+        } finally {
+            unlink($path);
+        }
     }
 
     public function testEventDispatcher(): void
