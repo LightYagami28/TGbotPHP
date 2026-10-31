@@ -63,6 +63,42 @@ $bot->poll();      // long polling
 - **Errors:** typed exceptions (`ApiException`, `TooManyRequestsException`, `NetworkException`), automatic retries after 429 responses, and an `onError()` hook.
 - **Security helpers:** webhook secret token, Telegram IP ranges, Mini App `initData` validation, HTML and MarkdownV2 escaping, per-user rate limiting.
 
+## Configuration
+
+The examples, `docker-compose.yml` and the guides read these environment variables (names only, see [`.env.example`](.env.example)):
+
+| Variable | Needed for | Meaning |
+|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | always | Bot token from @BotFather |
+| `TELEGRAM_SECRET_TOKEN` | webhook | Secret Telegram sends in `X-Telegram-Bot-Api-Secret-Token`; without it `handle()` answers 403 |
+| `TELEGRAM_BOT_USERNAME` | optional | Username used to match `/command@bot` in groups |
+| `OWNER_CHAT_ID` | wiki example only | Chat that receives the example's notifications |
+
+Everything else (API server URL, timeout, retries, debug log, webhook body limit) is set with the `TGbotPHP\Core\Config` constructor, see [SPEC.md](SPEC.md) and [Advanced usage](docs/advanced.md).
+
+## Usage
+
+```bash
+export TELEGRAM_BOT_TOKEN=...            # your token
+php examples/polling.php                 # long polling
+vendor/bin/tgbot bot:info                # check the token
+vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TELEGRAM_SECRET_TOKEN"
+```
+
+## Testing
+
+```bash
+composer test       # PHPUnit
+composer phpstan    # PHPStan level 10
+composer check      # both
+```
+
+Some file-permission tests assume POSIX and fail on Windows; run the suite on Linux, WSL or Docker (CI uses Ubuntu). End-to-end tests against the real API are in [docs/testing.md](docs/testing.md).
+
+## Deployment
+
+Webhook behind an HTTPS reverse proxy, long polling with systemd, or Docker (`docker compose up`, `--profile webhook` for webhooks). See [docs/deployment.md](docs/deployment.md).
+
 ## Documentation
 
 The **[wiki](https://github.com/LightYagami28/TGbotPHP/wiki)** is the user guide: getting started, handling updates, keyboards, conversations, deployment, security, testing, complete examples and an FAQ. Its pages live in [`wiki/`](wiki).
@@ -72,11 +108,13 @@ Reference:
 - [Installation](docs/installation.md)
 - [API reference](docs/api-reference.md)
 - [Advanced usage](docs/advanced.md): middleware, conversations, cache, plugins, errors
+- [Specification](SPEC.md)
 - [Architecture](docs/architecture.md)
 - [Deployment](docs/deployment.md)
 - [Testing](docs/testing.md)
 - [Development](docs/development.md)
 - [Security](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 
 ## Development
