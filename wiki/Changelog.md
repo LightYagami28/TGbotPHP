@@ -13,7 +13,7 @@ The complete history, with migration notes, is in [CHANGELOG.md](https://github.
 - **All of Bot API 10.3**: 185 methods and 27 update types, checked against the official documentation.
 - **Fixed**: methods returning `True` or integers threw a `TypeError`; uploads were broken; commands did not match; Telegram's error descriptions were lost; `answerCallbackQuery` was missing; numeric callback data broke routing; concurrent webhook requests lost conversation data; `reply()` failed in business chats and channel direct messages.
 - **New**: webhook handling with secret token and long polling with backoff; routing for text patterns, callbacks, inline queries and any update type; conversations; middleware that can wrap handlers; `InputFile`; streamed downloads; `BotTester` for testing bots offline; Ed25519 validation of Mini App data; the `tgbot` CLI commands.
-- **Quality**: PHPStan level 10 with strict rules, 97% line coverage, end-to-end tests against the real API. Current CI runs on PHP 8.5 and 8.6.
+- **Quality**: PHPStan level 10 with strict rules, 100% line coverage, end-to-end tests against the real API. Current CI runs on PHP 8.5 and 8.6.
 - **Breaking changes**: see [Upgrading from 2.x](Upgrading-from-2.x).
 
 ## 2.0.0

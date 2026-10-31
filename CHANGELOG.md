@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Three Mini App signature tests are skipped with `#[RequiresPhpExtension('sodium')]` when the sodium extension is missing, and still run in CI where sodium is available.
+- CI requires 100% line coverage. Clover reports no branch data with pcov, and the repository has no mutation suite.
 
 ## [3.0.0] - 2026-09-25
 

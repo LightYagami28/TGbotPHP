@@ -203,7 +203,7 @@ class FileCache implements CacheInterface
         $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
 
         // Readable by the bot only, whatever the umask and the directory permissions
-        if (file_put_contents($tmp, $payload, LOCK_EX) === false || !chmod($tmp, 0600) || !rename($tmp, $path)) {
+        if (@file_put_contents($tmp, $payload, LOCK_EX) === false || !@chmod($tmp, 0600) || !@rename($tmp, $path)) {
             @unlink($tmp);
             throw new StorageException("Unable to write cache entry: $key");
         }
@@ -243,7 +243,7 @@ class FileCache implements CacheInterface
      */
     private function files(string $suffix): array
     {
-        $entries = scandir($this->directory);
+        $entries = @scandir($this->directory);
 
         if ($entries === false) {
             return [];

@@ -47,4 +47,4 @@ jobs:
         { echo '### Code coverage'; echo '```'; cat summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
     - name: Minimum coverage
       if: matrix.coverage != 'none'
-      run: php tools/coverage-check.php coverage.xml 95
+      run: php tools/coverage-check.php coverage.xml 100
