@@ -110,7 +110,8 @@ class MessageParser
      */
     public static function extractMentions(string $text): array
     {
-        if (preg_match_all('/(?<![\w@])@(\w{3,32})/u', $text, $matches) > 0) {
+        // Telegram usernames are 5 to 32 characters
+        if (preg_match_all('/(?<![\w@])@([a-zA-Z0-9_]{5,32})/u', $text, $matches) > 0) {
             return $matches[1];
         }
         return [];
@@ -155,7 +156,8 @@ class MessageParser
             '/\*\*(.+?)\*\*/s',
             '/\*(.+?)\*/s',
             '/__(.+?)__/s',
-            '/_(.+?)_/s',
+            // A word-internal underscore is snake_case, not Markdown italic
+            '/(?<!\w)_(?!\s)(.+?)(?<!\s)_(?!\w)/s',
             '/~(.+?)~/s',
             '/`(.+?)`/s',
         ];

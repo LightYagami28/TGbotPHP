@@ -1,0 +1,8 @@
+title = "TGbotPHP"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public test fixture used by unit tests and the Docker smoke test. It is not a live bot token."
+regexes = ['''123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw''']

@@ -10,6 +10,7 @@ use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Core\Config;
 use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Exceptions\ApiException;
+use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Support\Value;
@@ -28,7 +29,7 @@ final class ApiClientTest extends TestCase
     protected function setUp(): void
     {
         $this->transport = new FakeTransport();
-        $this->client = new ApiClient(new Config(Updates::TOKEN, retry: new RetryPolicy(maxRetries: 2, maxDelay: 0)), $this->transport);
+        $this->client = new ApiClient(new Config(Updates::TOKEN, retry: new RetryPolicy(maxRetries: 2, maxDelay: 0, transientRetries: 0)), $this->transport);
     }
 
     public function testBuildsMethodUrl(): void
@@ -141,8 +142,13 @@ final class ApiClientTest extends TestCase
         self::assertFalse(new Config(Updates::TOKEN, debug: true)->debugFile);
         self::assertSame(1, new Config(Updates::TOKEN)->retry->maxRetries);
         self::assertSame(30, new Config(Updates::TOKEN)->retry->maxDelay);
+        self::assertSame(1, new Config(Updates::TOKEN)->retry->transientRetries);
+        self::assertSame(0, RetryPolicy::none()->transientRetries);
         self::assertFalse(new Config(Updates::TOKEN)->allowUnauthenticatedWebhook);
         self::assertTrue(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true)->allowUnauthenticatedWebhook);
+        self::assertTrue(new Config(Updates::TOKEN)->acknowledgeHandlerErrors);
+        self::assertSame(1024 * 1024, new Config(Updates::TOKEN)->maxWebhookBodyBytes);
+        self::assertNull(new Config(Updates::TOKEN)->localFileRoot);
     }
 
     public function testPreparesFields(): void
@@ -435,15 +441,25 @@ final class ApiClientTest extends TestCase
         self::assertIsString($source);
         file_put_contents($source, 'local-data');
 
+        $destination = $source . '.copy';
         $transport = new FakeTransport();
-        $client = new ApiClient(new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false), $transport);
+        $client = new ApiClient(new Config(
+            Updates::TOKEN,
+            apiBaseUrl: 'http://127.0.0.1:8081',
+            enforceHttps: false,
+            localFileRoot: dirname($source),
+        ), $transport);
+        $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
 
         try {
             self::assertSame('local-data', $client->downloadFile('f'));
-            self::assertSame(['getFile'], $transport->methods());
+            self::assertSame($destination, $client->downloadFile('f', $destination));
+            self::assertSame('local-data', (string) file_get_contents($destination));
+            self::assertSame(['getFile', 'getFile'], $transport->methods());
         } finally {
             unlink($source);
+            @unlink($destination);
         }
     }
 
@@ -578,9 +594,144 @@ final class ApiClientTest extends TestCase
             self::assertCount(2, $lines);
             self::assertMatchesRegularExpression('/^\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] → sendDocument \{/', $lines[0]);
             self::assertStringContainsString('"document":"<file notes.txt>"', $lines[0]);
-            self::assertStringEndsWith('← sendDocument [502] <html>\\n[2030-01-01 00:00:00] forged\\n</html>', $lines[1]);
+            self::assertStringEndsWith('← sendDocument [502] ' . strlen("<html>\n[2030-01-01 00:00:00] forged\n</html>") . ' bytes', $lines[1]);
+            self::assertStringNotContainsString('forged', $lines[1]);
+            self::assertStringNotContainsString('<html>', $lines[1]);
         } finally {
             unlink($log);
         }
+    }
+
+    public function testGetFileUrlEncodesSegmentsAndRejectsTraversal(): void
+    {
+        self::assertSame(
+            'https://api.telegram.org/file/bot' . Updates::TOKEN . '/photos/my%20file.jpg',
+            $this->client->getFileUrl('photos/my file.jpg'),
+        );
+
+        foreach (['../etc/passwd', '/etc/passwd', 'a//b', 'a/./b', "a\nb", 'a\\b', ''] as $path) {
+            try {
+                $this->client->getFileUrl($path);
+                self::fail('Accepted file path ' . $path);
+            } catch (\InvalidArgumentException) {
+                // expected
+            }
+        }
+    }
+
+    public function testRefusesAnUnboundedDownloadWhenFileSizeIsMissing(): void
+    {
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'videos/v.mp4']);
+        $this->transport->queueRaw(str_repeat('x', ApiClient::MAX_MEMORY_DOWNLOAD + 1));
+
+        $this->expectException(StorageException::class);
+        $this->expectExceptionMessage('in-memory download limit');
+
+        $this->client->downloadFile('f');
+    }
+
+    public function testAbsolutePathsAreNotReadWithoutALocalFileRoot(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($source);
+        file_put_contents($source, 'secret');
+
+        $transport = new FakeTransport();
+        $client = new ApiClient(new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false), $transport);
+        $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
+
+        try {
+            $client->downloadFile('f');
+            self::fail('Read a local file without localFileRoot');
+        } catch (\InvalidArgumentException) {
+            self::assertSame('secret', (string) file_get_contents($source));
+            self::assertSame(['getFile'], $transport->methods());
+        } finally {
+            unlink($source);
+        }
+    }
+
+    public function testLocalFileRootRejectsPathsOutsideTheDirectory(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'tgbotphp');
+        self::assertIsString($source);
+        file_put_contents($source, 'secret');
+        $root = sys_get_temp_dir() . '/tgbotphp-root-' . bin2hex(random_bytes(3));
+        mkdir($root);
+
+        $transport = new FakeTransport();
+        $client = new ApiClient(new Config(
+            Updates::TOKEN,
+            apiBaseUrl: 'http://127.0.0.1:8081',
+            enforceHttps: false,
+            localFileRoot: $root,
+        ), $transport);
+        $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
+
+        try {
+            $client->downloadFile('f');
+            self::fail('Read a file outside localFileRoot');
+        } catch (\InvalidArgumentException) {
+            self::assertSame('secret', (string) file_get_contents($source));
+        } finally {
+            unlink($source);
+            rmdir($root);
+        }
+    }
+
+    public function testRetriesNetworkAndServerErrorsWithoutSleepingPastTheCap(): void
+    {
+        $slept = [];
+        $client = new ApiClient(
+            new Config(Updates::TOKEN, retry: new RetryPolicy(maxRetries: 0, maxDelay: 8, transientRetries: 2)),
+            $this->transport,
+        );
+        $client->setRetrySleeper(static function (int $seconds) use (&$slept): void {
+            $slept[] = $seconds;
+        });
+        $this->transport
+            ->queueException(new NetworkException('down'))
+            ->queueRaw('nope', 502)
+            ->queueResult(['id' => 1, 'is_bot' => true, 'first_name' => 'Bot', 'username' => 'retried']);
+
+        $me = $client->getMe();
+
+        self::assertSame('retried', $me['username']);
+        self::assertSame([1, 2], $slept);
+        self::assertCount(3, $this->transport->requests());
+    }
+
+    public function testRejectsApiUrlsWithCredentialsAndImpossibleLimits(): void
+    {
+        try {
+            new Config(Updates::TOKEN, apiBaseUrl: 'https://user:pass@api.telegram.org');
+            self::fail('Accepted credentials in the API URL');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('credentials', $e->getMessage());
+        }
+
+        try {
+            new Config(Updates::TOKEN, maxWebhookBodyBytes: 0);
+            self::fail('Accepted a zero webhook body limit');
+        } catch (\InvalidArgumentException) {
+            // expected
+        }
+
+        try {
+            new Config(Updates::TOKEN, localFileRoot: sys_get_temp_dir() . '/tgbotphp-missing-' . bin2hex(random_bytes(4)));
+            self::fail('Accepted a missing local file root');
+        } catch (\InvalidArgumentException) {
+            // expected
+        }
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->client->call('not a method');
+    }
+
+    public function testRetrySettingsCannotBeNegative(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new RetryPolicy(transientRetries: -1);
     }
 }

@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- PHP 8.4 or higher
+- PHP 8.5 or higher
 - cURL and JSON extensions
 - An HTTPS server, for webhooks only (long polling works anywhere)
 

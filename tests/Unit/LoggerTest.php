@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use TGbotPHP\Support\PrivateFile;
 use TGbotPHP\Utilities\Logger;
 
 final class LoggerTest extends TestCase
@@ -104,5 +105,27 @@ final class LoggerTest extends TestCase
         new Logger($this->file)->info("Hello {name}\r[ERROR] forged", ['name' => $name]);
 
         self::assertSame(['[INFO] Hello Ada\\r[ERROR] forged {"name":{}}'], $this->entries());
+    }
+
+    public function testLogFileIsPrivateAndSecretsAreRedacted(): void
+    {
+        $path = sys_get_temp_dir() . '/tgbotphp-logger-' . bin2hex(random_bytes(4)) . '.log';
+
+        try {
+            new Logger($path)->info('chat {chat_id} said {text} with {token}', [
+                'chat_id' => 42,
+                'text' => 'hello',
+                'token' => '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw',
+            ]);
+
+            self::assertSame('0600', substr(sprintf('%o', fileperms($path)), -4));
+            $contents = (string) file_get_contents($path);
+            self::assertStringContainsString('chat 42 said hello', $contents);
+            self::assertStringContainsString('<redacted>', $contents);
+            self::assertStringNotContainsString('AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw', $contents);
+            PrivateFile::create('php://memory');
+        } finally {
+            @unlink($path);
+        }
     }
 }

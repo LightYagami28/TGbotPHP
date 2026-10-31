@@ -1,7 +1,7 @@
 # FAQ
 
 **Which PHP version do I need?**
-PHP 8.4 or later, with the `curl` and `json` extensions. The library is tested on 8.4, 8.5 and the development version of 8.6.
+PHP 8.5 or later, with the `curl` and `json` extensions. The library is tested on 8.5 and the development version of 8.6.
 
 **Does it have dependencies?**
 No runtime dependencies. PHPUnit, PHPStan and PHP-CS-Fixer are only needed to work on the library itself.

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Utilities;
 
+use TGbotPHP\Security\LogRedactor;
+use TGbotPHP\Support\PrivateFile;
+
 /**
  * Minimal file logger with level threshold
  */
@@ -68,13 +71,14 @@ class Logger
             return;
         }
 
+        $context = LogRedactor::context($context);
         $replacements = [];
         foreach ($context as $key => $value) {
             if (is_scalar($value) || $value instanceof \Stringable) {
                 $replacements['{' . $key . '}'] = (string) $value;
             }
         }
-        $message = strtr($message, $replacements);
+        $message = LogRedactor::text(strtr($message, $replacements));
 
         // Prevent log injection through user supplied values
         $message = str_replace(["\r", "\n"], ['\r', '\n'], $message);
@@ -83,6 +87,7 @@ class Logger
         $contextStr = $context !== [] ? ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR) : '';
         $logLine = "[$timestamp] [$level] $message$contextStr\n";
 
+        PrivateFile::create($this->logFile);
         error_log($logLine, 3, $this->logFile);
     }
 

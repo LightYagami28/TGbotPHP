@@ -135,6 +135,42 @@ final class CurlTransportTest extends TestCase
         new CurlTransport()->get('file:///etc/passwd', 1);
     }
 
+    public function testQuerySeparatorDoesNotDependOnIni(): void
+    {
+        $previous = ini_set('arg_separator.output', ';');
+
+        try {
+            $response = new CurlTransport()->post(self::$baseUrl . '/echo', ['text' => 'a', 'n' => '1'], false, 5);
+            self::assertSame(['text' => 'a', 'n' => '1'], self::decode($response->body)['post']);
+        } finally {
+            if (is_string($previous)) {
+                ini_set('arg_separator.output', $previous);
+            }
+        }
+    }
+
+    public function testCapsInMemoryResponses(): void
+    {
+        $this->expectException(NetworkException::class);
+        $this->expectExceptionMessage('byte limit');
+
+        new CurlTransport(maxResponseBytes: 64)->get(self::$baseUrl . '/file', 5);
+    }
+
+    public function testRejectsUrlsWithCredentials(): void
+    {
+        $this->expectException(NetworkException::class);
+
+        new CurlTransport()->get('http://user:secret@127.0.0.1/', 1);
+    }
+
+    public function testRejectsNonPositiveLimits(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new CurlTransport(connectTimeout: 0);
+    }
+
     /**
      * @return array<string, mixed>
      */

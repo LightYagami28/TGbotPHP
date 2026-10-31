@@ -149,7 +149,7 @@ try {
 }
 ```
 
-429 errors are retried automatically. Change the policy with `new Config($token, retry: new RetryPolicy(maxRetries: 3, maxDelay: 60))`, or disable it with `RetryPolicy::none()`.
+429 errors are retried automatically. Network errors and HTTP 5xx responses are retried with exponential backoff (`transientRetries`, 1 by default). Change the policy with `new Config($token, retry: new RetryPolicy(maxRetries: 3, maxDelay: 60, transientRetries: 2))`, or disable it with `RetryPolicy::none()`. Webhook handlers do not wait: `handle()` answers Telegram instead of sleeping on `retry_after`.
 
 ## Local Bot API server
 
@@ -159,6 +159,7 @@ $bot = new Bot(new Config(
     apiBaseUrl: 'http://localhost:8081',
     enforceHttps: false,
     timeout: 120,
+    localFileRoot: '/var/lib/telegram-bot-api',
 ));
 ```
 
@@ -200,4 +201,4 @@ $logger = new Logger('/var/log/mybot.log', minLevel: 'INFO');
 $logger->info('User {id} started the bot', ['id' => $userId]);
 ```
 
-The logger escapes line breaks in messages, so user input cannot forge log entries.
+The logger escapes line breaks in messages, so user input cannot forge log entries. The file is created mode 0600. Bot tokens and secret fields are redacted; `chat_id` and message text are kept.

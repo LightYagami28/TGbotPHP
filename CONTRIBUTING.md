@@ -14,7 +14,7 @@
 
 ## Guidelines
 
-- PER-CS 2.0 code style (`php-cs-fixer fix`), `declare(strict_types=1)` in every file.
+- PHP 8.5 or later. PER-CS 2.0 code style (`php-cs-fixer fix`), `declare(strict_types=1)` in every file.
 - PHPStan must pass at level 10 without baseline entries or `@phpstan-ignore`.
 - New API methods follow [docs/development.md](docs/development.md#adding-an-api-method).
 - User-facing changes go in [CHANGELOG.md](CHANGELOG.md), and in the guide when they change how the library is used.

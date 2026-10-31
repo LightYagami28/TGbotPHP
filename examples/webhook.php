@@ -40,6 +40,7 @@ $cache = new FileCache(sys_get_temp_dir() . '/tgbotphp-cache');
 $bot = new Bot($config);
 $bot->setUsername(Value::env('TELEGRAM_BOT_USERNAME'));
 $bot->useConversations($cache);
+$bot->deduplicateUpdates($cache);
 
 // At most 20 updates per user per minute
 $bot->middleware((new RateLimiter($cache))->middleware(20, 60));

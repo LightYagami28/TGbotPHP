@@ -51,7 +51,16 @@ final readonly class Pattern
         $end = strrpos($pattern, $pattern[0]);
         $flags = $end === false ? '' : substr($pattern, $end + 1);
 
-        // A string that only looks like a regex ("/path/") but does not compile is matched literally
-        return $end > 0 && preg_match('/^[imsxuUXJD]*\z/', $flags) === 1 && @preg_match($pattern, '') !== false;
+        if ($end <= 0 || preg_match('/^[imsxuUXJD]*\z/', $flags) !== 1) {
+            return false;
+        }
+
+        // A pattern that uses regex delimiters but does not compile is a caller error.
+        // Silencing it would match the text literally and hide the mistake.
+        if (@preg_match($pattern, '') === false) {
+            throw new \InvalidArgumentException('Invalid route pattern: ' . $pattern);
+        }
+
+        return true;
     }
 }

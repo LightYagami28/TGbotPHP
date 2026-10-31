@@ -12,7 +12,7 @@
 composer require lightyagami28/tgbotphp
 ```
 
-You need PHP 8.4 or later with the `curl` and `json` extensions.
+You need PHP 8.5 or later with the `curl` and `json` extensions.
 
 ## 3. Your first bot: long polling
 

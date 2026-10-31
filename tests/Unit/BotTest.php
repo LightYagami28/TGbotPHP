@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use stdClass;
 use TGbotPHP\Cache\ArrayCache;
 use TGbotPHP\Core\Config;
+use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\InvalidTokenException;
@@ -791,5 +792,152 @@ final class BotTest extends TestCase
         } finally {
             unset($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN']);
         }
+    }
+
+    public function testHandleRejectsNonPostAndOversizedBodies(): void
+    {
+        $bot = new Bot(new Config(
+            Updates::TOKEN,
+            allowUnauthenticatedWebhook: true,
+            maxWebhookBodyBytes: 16,
+        ), transport: $this->transport);
+        $body = Updates::json(Updates::message('/start'));
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        try {
+            self::assertFalse($bot->handle($body, null));
+            self::assertSame(405, http_response_code());
+
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            self::assertFalse($bot->handle($body, null));
+            self::assertSame(413, http_response_code());
+        } finally {
+            unset($_SERVER['REQUEST_METHOD']);
+            http_response_code(200);
+        }
+    }
+
+    public function testHandleRejectsEmptyInput(): void
+    {
+        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+
+        try {
+            self::assertFalse($bot->handle(null, null));
+            self::assertSame(400, http_response_code());
+        } finally {
+            http_response_code(200);
+        }
+    }
+
+    public function testHandleCanAnswer500SoTelegramRetries(): void
+    {
+        $bot = new Bot(new Config(
+            Updates::TOKEN,
+            allowUnauthenticatedWebhook: true,
+            acknowledgeHandlerErrors: false,
+        ), transport: $this->transport);
+        $bot->command('boom', static function (): void {
+            throw new HandlerFailure('boom');
+        });
+        $previous = ini_set('error_log', '/dev/null');
+
+        try {
+            self::assertFalse($bot->handle(Updates::json(Updates::message('/boom')), null));
+            self::assertSame(500, http_response_code());
+        } finally {
+            ini_set('error_log', (string) $previous);
+            http_response_code(200);
+        }
+    }
+
+    public function testHandleSkipsARepeatedUpdateId(): void
+    {
+        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot->deduplicateUpdates(new ArrayCache());
+        $calls = 0;
+        $bot->command('start', static function () use (&$calls): void {
+            $calls++;
+        });
+        $body = Updates::json(Updates::message('/start'));
+
+        self::assertTrue($bot->handle($body, null));
+        self::assertTrue($bot->handle($body, null));
+        self::assertSame(1, $calls);
+    }
+
+    public function testFailedHandlerReleasesTheUpdateIdWhenTelegramWillRetry(): void
+    {
+        $bot = new Bot(new Config(
+            Updates::TOKEN,
+            allowUnauthenticatedWebhook: true,
+            acknowledgeHandlerErrors: false,
+        ), transport: $this->transport);
+        $bot->deduplicateUpdates(new ArrayCache());
+        $calls = 0;
+        $bot->command('boom', static function () use (&$calls): void {
+            $calls++;
+            throw new HandlerFailure('boom');
+        });
+        $body = Updates::json(Updates::message('/boom'));
+        $previous = ini_set('error_log', '/dev/null');
+
+        try {
+            self::assertFalse($bot->handle($body, null));
+            self::assertFalse($bot->handle($body, null));
+            self::assertSame(2, $calls);
+        } finally {
+            ini_set('error_log', (string) $previous);
+            http_response_code(200);
+        }
+    }
+
+    public function testWebhookHandlersDoNotBlockOnRetryAfter(): void
+    {
+        $transport = new FakeTransport();
+        $bot = new Bot(new Config(
+            Updates::TOKEN,
+            allowUnauthenticatedWebhook: true,
+            retry: new RetryPolicy(maxRetries: 3, maxDelay: 30),
+        ), $transport);
+        $slept = [];
+        $bot->setRetrySleeper(static function (int $seconds) use (&$slept): void {
+            $slept[] = $seconds;
+        });
+        $bot->command('start', static function (stdClass $message, Bot $bot): void {
+            $bot->sendMessage(1, 'hi');
+        });
+        $previous = ini_set('error_log', '/dev/null');
+
+        try {
+            $transport->queueRaw('down', 503);
+            self::assertTrue($bot->handle(Updates::json(Updates::message('/start')), null));
+            $transport->queueError(429, 'Too Many Requests', ['retry_after' => 15]);
+            self::assertTrue($bot->handle(Updates::json(Updates::message('/start')), null));
+        } finally {
+            ini_set('error_log', (string) $previous);
+        }
+
+        self::assertSame([], $slept);
+        self::assertSame(['sendMessage', 'sendMessage'], $transport->methods());
+    }
+
+    public function testOptionalMiddlewareParameterDoesNotReceiveNext(): void
+    {
+        $sawNext = 'unset';
+        $handled = false;
+        $this->bot->middleware(function (stdClass $update, Bot $bot, ?callable $next = null) use (&$sawNext): bool {
+            $sawNext = $next === null ? 'null' : 'set';
+
+            return true;
+        });
+        $this->bot->command('start', static function () use (&$handled): void {
+            $handled = true;
+        });
+
+        $this->bot->handleUpdate(Updates::message('/start'));
+
+        self::assertSame('null', $sawNext);
+        self::assertTrue($handled);
     }
 }

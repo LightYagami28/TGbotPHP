@@ -53,6 +53,82 @@ final class PluginManagerTest extends TestCase
         self::assertSame('unchanged', $manager->executeHook('missing', 'unchanged'));
     }
 
+    public function testActivateFailureDoesNotRegisterThePluginOrItsHooks(): void
+    {
+        $manager = new PluginManager();
+        $plugin = new class ($manager) implements PluginInterface {
+            public function __construct(private PluginManager $plugins) {}
+
+            #[\Override]
+            public function getName(): string
+            {
+                return 'bad';
+            }
+
+            #[\Override]
+            public function getVersion(): string
+            {
+                return '1';
+            }
+
+            #[\Override]
+            public function activate(): void
+            {
+                $this->plugins->addHook('text', static fn(mixed $value): string => Value::string($value) . '!');
+                throw new \RuntimeException('activate failed');
+            }
+
+            #[\Override]
+            public function deactivate(): void {}
+        };
+
+        try {
+            $manager->register('bad', $plugin);
+            self::fail('A failing plugin was registered');
+        } catch (\RuntimeException $e) {
+            self::assertSame('activate failed', $e->getMessage());
+        }
+
+        self::assertFalse($manager->isActive('bad'));
+        self::assertSame('kept', $manager->executeHook('text', 'kept'));
+    }
+
+    public function testUnregisterRemovesHooksAddedDuringActivate(): void
+    {
+        $manager = new PluginManager();
+        $plugin = new class ($manager) implements PluginInterface {
+            public function __construct(private PluginManager $plugins) {}
+
+            #[\Override]
+            public function getName(): string
+            {
+                return 'stats';
+            }
+
+            #[\Override]
+            public function getVersion(): string
+            {
+                return '1';
+            }
+
+            #[\Override]
+            public function activate(): void
+            {
+                $this->plugins->addHook('text', static fn(mixed $value): string => Value::string($value) . '!');
+            }
+
+            #[\Override]
+            public function deactivate(): void {}
+        };
+
+        $manager->addHook('text', static fn(mixed $value): string => Value::string($value) . '?');
+        $manager->register('stats', $plugin);
+        self::assertSame('kept?!', $manager->executeHook('text', 'kept'));
+
+        $manager->unregister('stats');
+        self::assertSame('kept?', $manager->executeHook('text', 'kept'));
+    }
+
     /**
      * @return PluginInterface&object{calls: list<string>}
      */

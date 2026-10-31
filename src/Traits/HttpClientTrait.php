@@ -8,9 +8,12 @@ use CURLFile;
 use CURLStringFile;
 use JsonSerializable;
 use TGbotPHP\Exceptions\ApiException;
+use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Http\CurlTransport;
 use TGbotPHP\Http\TransportInterface;
+use TGbotPHP\Security\LogRedactor;
+use TGbotPHP\Support\PrivateFile;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Types\InputFile;
 
@@ -28,6 +31,32 @@ trait HttpClientTrait
     private const array SECRET_FIELDS = ['secret_token', 'provider_token'];
 
     private ?TransportInterface $transport = null;
+
+    /** True while a webhook handler is running: retries must not sleep */
+    private bool $handlingWebhook = false;
+
+    /** @var (callable(int): void)|null */
+    private $retrySleeper = null;
+
+    /**
+     * Webhook requests must not block the worker on retry_after
+     *
+     * @internal Used by WebhookHandler
+     */
+    public function setHandlingWebhook(bool $handling): void
+    {
+        $this->handlingWebhook = $handling;
+    }
+
+    /**
+     * Replace sleep() during retries. Tests use it to record the wait
+     *
+     * @param callable(int): void $sleeper
+     */
+    public function setRetrySleeper(callable $sleeper): void
+    {
+        $this->retrySleeper = $sleeper;
+    }
 
     /**
      * Replace the HTTP transport (useful for tests or custom HTTP clients)
@@ -57,35 +86,84 @@ trait HttpClientTrait
         bool $returnResponse = false,
         bool $objects = false,
     ): mixed {
+        if (preg_match('/^[A-Za-z][A-Za-z0-9_]*\z/', $method) !== 1) {
+            throw new \InvalidArgumentException('Invalid Bot API method name');
+        }
+
         [$fields, $multipart] = self::prepareFields($data);
 
         $url = $this->config->apiBaseUrl . '/bot' . $this->config->token . '/' . rawurlencode($method);
         $timeout = $this->config->timeout + max(0, Value::int($data['timeout'] ?? null));
 
         $attempt = 0;
+        $transientAttempt = 0;
 
         while (true) {
-            $this->debugLog("→ $method " . self::describeFields($fields));
+            $this->debugLog('→ ' . $method . ' ' . self::describeFields($fields));
 
-            $response = $this->getTransport()->post($url, $fields, $multipart, $timeout);
+            try {
+                $response = $this->getTransport()->post($url, $fields, $multipart, $timeout);
+            } catch (NetworkException $e) {
+                if (!$this->retryTransient($transientAttempt)) {
+                    throw $e;
+                }
 
-            $this->debugLog("← $method [{$response->statusCode}] " . substr($response->body, 0, 1000));
+                $transientAttempt++;
+                continue;
+            }
+
+            // Status and size only: response bodies contain user data
+            $this->debugLog('← ' . $method . ' [' . $response->statusCode . '] ' . strlen($response->body) . ' bytes');
 
             try {
                 return $this->parseResponse($method, $response->statusCode, $response->body, $returnResponse, $objects);
             } catch (TooManyRequestsException $e) {
                 $retryAfter = $e->getRetryAfter();
 
-                if (!$this->config->retry->allows($attempt, $retryAfter)) {
+                // A webhook worker must not sleep. Polling and CLI calls still wait.
+                if ($this->handlingWebhook || !$this->config->retry->allows($attempt, $retryAfter)) {
                     throw $e;
                 }
 
                 $attempt++;
-                if ($retryAfter > 0) {
-                    sleep($retryAfter);
+                $this->pause($retryAfter);
+            } catch (ApiException $e) {
+                if ($e->getCode() < 500 || !$this->retryTransient($transientAttempt)) {
+                    throw $e;
                 }
+
+                $transientAttempt++;
             }
         }
+    }
+
+    /**
+     * Retry a network error or an HTTP 5xx response, unless this is a webhook request
+     */
+    private function retryTransient(int $attempt): bool
+    {
+        if ($this->handlingWebhook || !$this->config->retry->allowsTransient($attempt)) {
+            return false;
+        }
+
+        $this->pause($this->config->retry->transientDelay($attempt));
+
+        return true;
+    }
+
+    private function pause(int $seconds): void
+    {
+        if ($seconds <= 0) {
+            return;
+        }
+
+        if ($this->retrySleeper !== null) {
+            ($this->retrySleeper)($seconds);
+
+            return;
+        }
+
+        sleep($seconds);
     }
 
     /**
@@ -442,6 +520,7 @@ trait HttpClientTrait
                 in_array($key, self::SECRET_FIELDS, true) => '<redacted>',
                 $value instanceof CURLFile => '<file ' . $value->getPostFilename() . '>',
                 $value instanceof CURLStringFile => '<file ' . $value->postname . '>',
+                is_string($value) => LogRedactor::text($value),
                 default => $value,
             };
         }
@@ -454,9 +533,7 @@ trait HttpClientTrait
      */
     private static function createPrivateFile(string $path): void
     {
-        if (!str_contains($path, '://') && !file_exists($path) && @touch($path)) {
-            @chmod($path, 0600);
-        }
+        PrivateFile::create($path);
     }
 
     private function debugLog(string $line): void
@@ -465,8 +542,8 @@ trait HttpClientTrait
             return;
         }
 
-        // One entry per line, whatever the response contains
-        $line = '[' . date('Y-m-d H:i:s') . '] ' . str_replace(["\r", "\n"], ['\\r', '\\n'], $line) . PHP_EOL;
+        // One entry per line, with tokens removed, whatever the caller interpolated
+        $line = '[' . date('Y-m-d H:i:s') . '] ' . str_replace(["\r", "\n"], ['\\r', '\\n'], LogRedactor::text($line)) . PHP_EOL;
 
         if ($this->config->debugFile !== false) {
             self::createPrivateFile($this->config->debugFile);

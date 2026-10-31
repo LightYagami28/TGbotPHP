@@ -21,6 +21,7 @@ class RateLimiter
      */
     public function limit(string $key, int $maxRequests, int $windowSeconds): bool
     {
+        self::assertWindow($maxRequests, $windowSeconds);
         $allowed = false;
 
         $this->cache->update(
@@ -82,6 +83,8 @@ class RateLimiter
      */
     public function middleware(int $maxRequests, int $windowSeconds, ?callable $onLimited = null): \Closure
     {
+        self::assertWindow($maxRequests, $windowSeconds);
+
         return function (stdClass $update, mixed ...$args) use ($maxRequests, $windowSeconds, $onLimited): bool {
             $user = UpdateParser::getUser($update);
 
@@ -129,5 +132,12 @@ class RateLimiter
     private function cacheKey(string $key): string
     {
         return 'rate:' . $key;
+    }
+
+    private static function assertWindow(int $maxRequests, int $windowSeconds): void
+    {
+        if ($maxRequests <= 0 || $windowSeconds <= 0) {
+            throw new \InvalidArgumentException('Rate limit requires a positive number of requests and a positive window');
+        }
     }
 }

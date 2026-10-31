@@ -9,7 +9,7 @@ composer phpstan       # static analysis (level 10 + strict rules)
 composer check         # both
 ```
 
-CI runs the test suite on PHP 8.4 and 8.5 (plus 8.6, still in development, as a non-blocking job) and PHPStan on every push and pull request. The PHP 8.4 job reports code coverage in its summary.
+CI runs the test suite on PHP 8.5 (with coverage in the job summary, at least 95% of lines) and on PHP 8.6 (still in development, as a non-blocking job). PHPStan runs on every push and pull request.
 
 ## Test layout
 
