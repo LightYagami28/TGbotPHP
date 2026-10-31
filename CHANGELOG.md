@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Debug logs record response status and size, not the body. `LogRedactor` removes bot tokens and credential fields. `chat_id`, `user_id` and message text stay visible. Log files are created mode 0600 without a create/chmod race.
 - `RateLimiter` rejects a non-positive limit or window. `Keyboard::button()` rejects empty `callback_data`. `MessageParser` no longer treats snake_case as Markdown italic, and mentions follow Telegram's 5-character minimum. A route pattern that looks like a regex but does not compile throws at registration.
 - `PluginManager` activates a plugin before storing it, and `unregister()` removes hooks that plugin added during `activate()`. Middleware uses the number of required parameters, so an optional third parameter is not treated as `$next`.
-- CI adds CodeQL for PHP, a gitleaks scan (the public test-fixture token is allowlisted) and dependency review on pull requests. `composer audit` remains. Workflow permissions stay read-only except where a job must publish.
+- CI adds a gitleaks scan (the public test-fixture token is allowlisted). `composer audit` remains. CodeQL is not used: the current bundle does not accept PHP. Dependency review is not used until an admin enables the dependency graph. Workflow permissions stay read-only except where a job must publish.
 
 ### Fixed
 - Three Mini App signature tests are skipped with `#[RequiresPhpExtension('sodium')]` when the sodium extension is missing, and still run in CI where sodium is available.
