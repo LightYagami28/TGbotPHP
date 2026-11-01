@@ -61,7 +61,7 @@ final readonly class WebhookHandler
     {
         $rejected = $this->rejection($secretToken);
 
-        if ($rejected !== null) {
+        if ($rejected !== 200) {
             return $rejected;
         }
 
@@ -76,9 +76,9 @@ final readonly class WebhookHandler
     }
 
     /**
-     * @return int|null The HTTP status to refuse the request with, or null when it may proceed
+     * @return int The HTTP status to refuse the request with, or 200 when it may proceed
      */
-    private function rejection(?string $secretToken): ?int
+    private function rejection(?string $secretToken): int
     {
         if (self::isWrongMethod()) {
             return 405;
@@ -88,9 +88,14 @@ final readonly class WebhookHandler
             return 403;
         }
 
+        return $this->hasUsableLimit() ? 200 : 413;
+    }
+
+    private function hasUsableLimit(): bool
+    {
         $limit = $this->bot->getConfig()->maxWebhookBodyBytes;
 
-        return $limit >= 1 && $limit < PHP_INT_MAX ? null : 413;
+        return $limit >= 1 && $limit < PHP_INT_MAX;
     }
 
     private static function isWrongMethod(): bool
@@ -130,7 +135,7 @@ final readonly class WebhookHandler
 
     private function dispatch(stdClass $update, bool $respondFirst): bool
     {
-        $updateId = Value::nullableInt($update->update_id ?? null);
+        $updateId = self::updateId($update);
         $dedup = $this->bot->updateDedupCache();
 
         if ($this->isDuplicate($dedup, $updateId)) {
@@ -144,17 +149,23 @@ final readonly class WebhookHandler
             self::finishRequest();
         }
 
-        if (!$this->process($update, $dedup, $updateId)) {
-            self::respond(500);
+        $accepted = $this->process($update, $dedup, $updateId);
 
-            return false;
+        if (!$accepted || !$respondFirst) {
+            self::answer($accepted);
         }
 
-        if (!$respondFirst) {
-            self::respond(200);
-        }
+        return $accepted;
+    }
 
-        return true;
+    private static function updateId(stdClass $update): ?int
+    {
+        return Value::nullableInt($update->update_id ?? null);
+    }
+
+    private static function answer(bool $accepted): void
+    {
+        self::respond($accepted ? 200 : 500);
     }
 
     /**

@@ -107,6 +107,7 @@ trait CollectsHandlers
         $this->registerKeyed($bot);
         $this->registerUpdates($bot);
         $this->registerEvents($bot);
+        $this->registerExtras($bot);
     }
 
     private function registerKeyed(Bot $bot): void
@@ -141,18 +142,21 @@ trait CollectsHandlers
 
     private function registerEvents(Bot $bot): void
     {
+        foreach ($this->events as $event => $handlers) {
+            foreach ($handlers as $handler) {
+                $bot->on($event, $handler);
+            }
+        }
+    }
+
+    private function registerExtras(Bot $bot): void
+    {
         if ($this->fallback !== null) {
             $bot->fallback($this->fallback);
         }
 
         foreach ($this->middleware as $handler) {
             $bot->middleware($handler);
-        }
-
-        foreach ($this->events as $event => $handlers) {
-            foreach ($handlers as $handler) {
-                $bot->on($event, $handler);
-            }
         }
 
         foreach ($this->plugins as $plugin) {
