@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Tests\Unit;
 
 use JsonSerializable;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
@@ -228,6 +229,61 @@ final class FullCoverageTest extends TestCase
             self::assertSame(['litespeed'], RuntimeControls::$finished);
         } finally {
             RuntimeControls::reset();
+        }
+    }
+
+    public function testLegacyConstructorOptionsStillWorkAndAreDeprecated(): void
+    {
+        $deprecations = 0;
+        set_error_handler(static function () use (&$deprecations): bool {
+            $deprecations++;
+
+            return true;
+        }, E_USER_DEPRECATED);
+
+        try {
+            $named = new Config(Updates::TOKEN, maxWebhookBodyBytes: 10, allowUnauthenticatedWebhook: true, acknowledgeHandlerErrors: false, localFileRoot: sys_get_temp_dir());
+            $positional = new Config(Updates::TOKEN, false, Config::DEFAULT_API_URL, true, 10, new RetryPolicy(), false, true, 20, false, null);
+        } finally {
+            restore_error_handler();
+        }
+
+        self::assertSame(2, $deprecations);
+        self::assertTrue($named->allowUnauthenticatedWebhook);
+        self::assertSame(10, $named->maxWebhookBodyBytes);
+        self::assertFalse($named->acknowledgeHandlerErrors);
+        self::assertSame(realpath(sys_get_temp_dir()), $named->localFileRoot);
+        self::assertTrue($positional->allowUnauthenticatedWebhook);
+        self::assertSame(20, $positional->maxWebhookBodyBytes);
+        self::assertNull($positional->localFileRoot);
+    }
+
+    /**
+     * @return array<string, array{callable(): Config}>
+     */
+    public static function invalidLegacyOptions(): array
+    {
+        return [
+            'unknown name' => [static fn(): Config => new Config(Updates::TOKEN, bogus: true)],
+            'unknown position' => [static fn(): Config => new Config(Updates::TOKEN, false, Config::DEFAULT_API_URL, true, 10, new RetryPolicy(), false, true, 1, true, null, 'extra')],
+            'zero limit' => [static fn(): Config => new Config(Updates::TOKEN, maxWebhookBodyBytes: 0)],
+            'missing root' => [static fn(): Config => new Config(Updates::TOKEN, localFileRoot: '/no/such/directory/here')],
+        ];
+    }
+
+    /**
+     * @param callable(): Config $build
+     */
+    #[DataProvider('invalidLegacyOptions')]
+    public function testInvalidLegacyOptionsAreRejected(callable $build): void
+    {
+        set_error_handler(static fn(): bool => true, E_USER_DEPRECATED);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $build();
+        } finally {
+            restore_error_handler();
         }
     }
 

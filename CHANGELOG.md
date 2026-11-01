@@ -9,17 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `Config::__construct` takes the seven core options only. The webhook and
-  local-file options moved to immutable `with*()` methods:
-  `withUnauthenticatedWebhook()`, `withWebhookBodyLimit()`,
-  `withHandlerErrorsAcknowledged()`, `withLocalFileRoot()`. This is a breaking
-  change.
-- `WebhookValidator::TELEGRAM_IP_RANGES` is replaced by
-  `WebhookValidator::telegramIpRanges()`, which reads
-  `src/Security/telegram-ip-ranges.json`. This is a breaking change.
+- The webhook and local-file options of `Config` are set with immutable
+  `with*()` methods: `withUnauthenticatedWebhook()`, `withWebhookBodyLimit()`,
+  `withHandlerErrorsAcknowledged()`, `withLocalFileRoot()`.
+- `WebhookValidator::telegramIpRanges()` reads
+  `src/Security/telegram-ip-ranges.json`.
 - **Requires PHP 8.5.** PHP 8.4 is no longer supported. CI runs on PHP 8.5
   (coverage) and PHP 8.6 (in development, non-blocking). This is a breaking
   change.
+
+### Deprecated
+
+- Passing `allowUnauthenticatedWebhook`, `maxWebhookBodyBytes`,
+  `acknowledgeHandlerErrors` and `localFileRoot` to `Config::__construct()`
+  still works and raises `E_USER_DEPRECATED`. Use the `with*()` methods.
+- `WebhookValidator::TELEGRAM_IP_RANGES` is kept; use `telegramIpRanges()`.
 
 ### Security
 

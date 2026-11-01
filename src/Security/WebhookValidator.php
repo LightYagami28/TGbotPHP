@@ -9,6 +9,14 @@ namespace TGbotPHP\Security;
  */
 class WebhookValidator
 {
+    /**
+     * @deprecated Use telegramIpRanges(), which reads telegram-ip-ranges.json
+     */
+    public const array TELEGRAM_IP_RANGES = [
+        '149.154.160.0/20',
+        '91.108.4.0/22',
+    ];
+
     private const string HEX_64 = '/^[a-fA-F0-9]{64}\z/';
 
     /** Ed25519 key Telegram signs Mini App data with (production) */
