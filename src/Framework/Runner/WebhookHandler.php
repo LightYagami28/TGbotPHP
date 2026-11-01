@@ -87,21 +87,25 @@ final readonly class WebhookHandler
             return 405;
         }
 
-        $expected = $config->secretToken;
-
-        // No secret means refuse, unless the caller opted in. A configured secret
-        // is always required, including when that opt-in is also set.
-        $authorized = $expected === false
-            ? $config->allowUnauthenticatedWebhook
-            : WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken());
-
-        if (!$authorized) {
+        if (!$this->isAuthorized($secretToken)) {
             return 403;
         }
 
         $limit = $config->maxWebhookBodyBytes;
 
         return $limit < 1 || $limit >= PHP_INT_MAX ? 413 : null;
+    }
+
+    private function isAuthorized(?string $secretToken): bool
+    {
+        $config = $this->bot->getConfig();
+        $expected = $config->secretToken;
+
+        // No secret means refuse, unless the caller opted in. A configured secret
+        // is always required, including when that opt-in is also set.
+        return $expected === false
+            ? $config->allowUnauthenticatedWebhook
+            : WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken());
     }
 
     private static function readInput(int $limit): string
