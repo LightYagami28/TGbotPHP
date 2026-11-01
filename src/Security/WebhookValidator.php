@@ -89,10 +89,9 @@ class WebhookValidator
      */
     public static function telegramIpRanges(): array
     {
-        /** @var string[] $ranges */
-        $ranges = json_decode((string) file_get_contents(__DIR__ . '/telegram-ip-ranges.json'), true, 4, JSON_THROW_ON_ERROR);
+        $json = (string) file_get_contents(__DIR__ . '/telegram-ip-ranges.json');
 
-        return $ranges;
+        return array_values(array_filter((array) json_decode($json, true, 4, JSON_THROW_ON_ERROR), is_string(...)));
     }
 
     private static function inRange(int $address, string $range): bool
