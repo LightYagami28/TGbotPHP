@@ -232,7 +232,7 @@ final class FullCoverageTest extends TestCase
         }
     }
 
-    public function testLegacyConstructorOptionsStillWorkAndAreDeprecated(): void
+    public function testLegacyNamedOptionsStillWorkAndAreDeprecated(): void
     {
         $deprecations = 0;
         set_error_handler(static function () use (&$deprecations): bool {
@@ -242,20 +242,31 @@ final class FullCoverageTest extends TestCase
         }, E_USER_DEPRECATED);
 
         try {
-            $named = new Config(Updates::TOKEN, maxWebhookBodyBytes: 10, allowUnauthenticatedWebhook: true, acknowledgeHandlerErrors: false, localFileRoot: sys_get_temp_dir());
-            $positional = new Config(Updates::TOKEN, false, Config::DEFAULT_API_URL, true, 10, new RetryPolicy(), false, true, 20, false, null);
+            $config = new Config(Updates::TOKEN, maxWebhookBodyBytes: 10, allowUnauthenticatedWebhook: true, acknowledgeHandlerErrors: false, localFileRoot: sys_get_temp_dir());
         } finally {
             restore_error_handler();
         }
 
-        self::assertSame(2, $deprecations);
-        self::assertTrue($named->allowUnauthenticatedWebhook);
-        self::assertSame(10, $named->maxWebhookBodyBytes);
-        self::assertFalse($named->acknowledgeHandlerErrors);
-        self::assertSame(realpath(sys_get_temp_dir()), $named->localFileRoot);
-        self::assertTrue($positional->allowUnauthenticatedWebhook);
-        self::assertSame(20, $positional->maxWebhookBodyBytes);
-        self::assertNull($positional->localFileRoot);
+        self::assertSame(1, $deprecations);
+        self::assertTrue($config->allowUnauthenticatedWebhook);
+        self::assertSame(10, $config->maxWebhookBodyBytes);
+        self::assertFalse($config->acknowledgeHandlerErrors);
+        self::assertSame(realpath(sys_get_temp_dir()), $config->localFileRoot);
+    }
+
+    public function testLegacyPositionalOptionsStillWork(): void
+    {
+        set_error_handler(static fn(): bool => true, E_USER_DEPRECATED);
+
+        try {
+            $config = new Config(Updates::TOKEN, false, Config::DEFAULT_API_URL, true, 10, new RetryPolicy(), false, true, 20, false, null);
+        } finally {
+            restore_error_handler();
+        }
+
+        self::assertTrue($config->allowUnauthenticatedWebhook);
+        self::assertSame(20, $config->maxWebhookBodyBytes);
+        self::assertNull($config->localFileRoot);
     }
 
     /**
