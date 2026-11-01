@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace TGbotPHP\Framework\Runner;
 
 use JsonException;
+use stdClass;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Security\WebhookValidator;
 use TGbotPHP\Support\Value;
-use stdClass;
 use Throwable;
 
 /**
