@@ -5,7 +5,10 @@ The complete history, with migration notes, is in [CHANGELOG.md](https://github.
 ## Unreleased
 
 - **PHP 8.5** or later. PHP 8.4 is no longer supported.
-- **Security**: `handle()` answers 403 unless a webhook secret is configured (`TELEGRAM_SECRET_TOKEN`, `openssl rand -hex 32`). Set `allowUnauthenticatedWebhook: true` to keep the previous behavior. See [CHANGELOG.md](https://github.com/LightYagami28/TGbotPHP/blob/main/CHANGELOG.md).
+- **Security**: `handle()` answers 403 unless a webhook secret is configured
+  (`TELEGRAM_SECRET_TOKEN`, `openssl rand -hex 32`). Call
+  `Config::withUnauthenticatedWebhook()` to keep the previous behavior. See
+  [CHANGELOG.md](https://github.com/LightYagami28/TGbotPHP/blob/main/CHANGELOG.md).
 
 ## 3.0.0
 

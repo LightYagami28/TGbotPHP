@@ -19,6 +19,8 @@ use TGbotPHP\Support\Value;
  */
 class FileCache implements CacheInterface
 {
+    private const string ENTRY_SUFFIX = '.cache';
+
     private string $directory;
 
     /**
@@ -105,7 +107,7 @@ class FileCache implements CacheInterface
     #[\Override]
     public function flush(): void
     {
-        foreach ([...$this->files('.cache'), ...$this->files('.lock'), ...$this->files('.tmp')] as $file) {
+        foreach ([...$this->files(self::ENTRY_SUFFIX), ...$this->files('.lock'), ...$this->files('.tmp')] as $file) {
             @unlink($file);
         }
     }
@@ -123,7 +125,7 @@ class FileCache implements CacheInterface
     {
         $removed = 0;
 
-        foreach ($this->files('.cache') as $file) {
+        foreach ($this->files(self::ENTRY_SUFFIX) as $file) {
             $stripe = self::stripeOf(basename($file));
 
             if ($stripe === null) {
@@ -168,7 +170,16 @@ class FileCache implements CacheInterface
             return $entry;
         }
 
-        // Re-read under the lock. The file may have been replaced since the check above.
+        return $this->readLocked($key, $path);
+    }
+
+    /**
+     * Re-read under the lock: the file may have been replaced since the unlocked check
+     *
+     * @return array{expires: ?int, value: mixed}|null
+     */
+    private function readLocked(string $key, string $path): ?array
+    {
         $this->lock($key);
 
         try {
@@ -180,13 +191,13 @@ class FileCache implements CacheInterface
 
             $entry = $this->decode($fresh);
 
-            if ($entry === null || self::isExpired($entry)) {
-                @unlink($path);
-
-                return null;
+            if ($entry !== null && !self::isExpired($entry)) {
+                return $entry;
             }
 
-            return $entry;
+            @unlink($path);
+
+            return null;
         } finally {
             $this->unlock($key);
         }
@@ -318,13 +329,13 @@ class FileCache implements CacheInterface
 
     private static function stripeOf(string $basename): ?string
     {
-        $hash = substr($basename, 0, -strlen('.cache'));
+        $hash = substr($basename, 0, -strlen(self::ENTRY_SUFFIX));
 
         return strlen($hash) >= 2 ? substr($hash, 0, 2) : null;
     }
 
     private function path(string $key): string
     {
-        return $this->directory . '/' . hash('sha256', $key) . '.cache';
+        return $this->directory . '/' . hash('sha256', $key) . self::ENTRY_SUFFIX;
     }
 }

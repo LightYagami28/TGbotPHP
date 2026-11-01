@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Tests\Unit;
 
 use JsonSerializable;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
@@ -167,7 +168,7 @@ final class FullCoverageTest extends TestCase
     public function testBotAccessorsConversationsAndWebhookFinishers(): void
     {
         $transport = new FakeTransport();
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), $transport);
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), $transport);
 
         self::assertNull($bot->getUpdate());
         $bot->command('start', static function (): void {});
@@ -210,7 +211,7 @@ final class FullCoverageTest extends TestCase
 
     public function testWebhookCanFinishTheRequestOnFastcgiAndLitespeed(): void
     {
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), new FakeTransport());
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), new FakeTransport());
         $body = Updates::json(Updates::message('/start'));
 
         RuntimeControls::$fastcgi = true;
@@ -231,13 +232,77 @@ final class FullCoverageTest extends TestCase
         }
     }
 
+    public function testLegacyNamedOptionsStillWorkAndAreDeprecated(): void
+    {
+        $deprecations = 0;
+        set_error_handler(static function () use (&$deprecations): bool {
+            $deprecations++;
+
+            return true;
+        }, E_USER_DEPRECATED);
+
+        try {
+            $config = new Config(Updates::TOKEN, maxWebhookBodyBytes: 10, allowUnauthenticatedWebhook: true, acknowledgeHandlerErrors: false, localFileRoot: sys_get_temp_dir());
+        } finally {
+            restore_error_handler();
+        }
+
+        self::assertSame(1, $deprecations);
+        self::assertTrue($config->allowUnauthenticatedWebhook);
+        self::assertSame(10, $config->maxWebhookBodyBytes);
+        self::assertFalse($config->acknowledgeHandlerErrors);
+        self::assertSame(realpath(sys_get_temp_dir()), $config->localFileRoot);
+    }
+
+    public function testLegacyPositionalOptionsStillWork(): void
+    {
+        set_error_handler(static fn(): bool => true, E_USER_DEPRECATED);
+
+        try {
+            $config = new Config(Updates::TOKEN, false, Config::DEFAULT_API_URL, true, 10, new RetryPolicy(), false, true, 20, false, null);
+        } finally {
+            restore_error_handler();
+        }
+
+        self::assertTrue($config->allowUnauthenticatedWebhook);
+        self::assertSame(20, $config->maxWebhookBodyBytes);
+        self::assertNull($config->localFileRoot);
+    }
+
+    /**
+     * @return array<string, array{callable(): Config}>
+     */
+    public static function invalidLegacyOptions(): array
+    {
+        return [
+            'unknown name' => [static fn(): Config => new Config(Updates::TOKEN, bogus: true)],
+            'unknown position' => [static fn(): Config => new Config(Updates::TOKEN, false, Config::DEFAULT_API_URL, true, 10, new RetryPolicy(), false, true, 1, true, null, 'extra')],
+            'zero limit' => [static fn(): Config => new Config(Updates::TOKEN, maxWebhookBodyBytes: 0)],
+            'missing root' => [static fn(): Config => new Config(Updates::TOKEN, localFileRoot: '/no/such/directory/here')],
+        ];
+    }
+
+    /**
+     * @param callable(): Config $build
+     */
+    #[DataProvider('invalidLegacyOptions')]
+    public function testInvalidLegacyOptionsAreRejected(callable $build): void
+    {
+        set_error_handler(static fn(): bool => true, E_USER_DEPRECATED);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $build();
+        } finally {
+            restore_error_handler();
+        }
+    }
+
     public function testWebhookRejectsABodyLimitOfPhpIntMax(): void
     {
         $bot = new Bot(new Config(
             Updates::TOKEN,
-            allowUnauthenticatedWebhook: true,
-            maxWebhookBodyBytes: PHP_INT_MAX,
-        ), new FakeTransport());
+        )->withUnauthenticatedWebhook(true)->withWebhookBodyLimit(PHP_INT_MAX), new FakeTransport());
 
         self::assertFalse($bot->handle('{}', null));
         self::assertSame(413, http_response_code());
@@ -352,9 +417,8 @@ final class FullCoverageTest extends TestCase
             Updates::TOKEN,
             apiBaseUrl: 'http://127.0.0.1:9',
             enforceHttps: false,
-            localFileRoot: $root,
             retry: RetryPolicy::none(),
-        ), $localTransport);
+        )->withLocalFileRoot($root), $localTransport);
         $localTransport->queueResult(['file_id' => 'f', 'file_path' => $missing]);
 
         try {

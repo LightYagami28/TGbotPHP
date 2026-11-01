@@ -159,8 +159,7 @@ $bot = new Bot(new Config(
     apiBaseUrl: 'http://localhost:8081',
     enforceHttps: false,
     timeout: 120,
-    localFileRoot: '/var/lib/telegram-bot-api',
-));
+)->withLocalFileRoot('/var/lib/telegram-bot-api'));
 ```
 
 ## Custom HTTP transport

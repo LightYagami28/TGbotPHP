@@ -38,7 +38,9 @@ $bot->handle(); // 403 when the secret is missing, or the header does not match
 
 Register the same secret with `vendor/bin/tgbot webhook:set --url=... --secret=...`.
 
-Set `allowUnauthenticatedWebhook: true` only when you intentionally accept requests that have no secret. If `secretToken` is also set, the header must still match.
+Call `Config::withUnauthenticatedWebhook()` only when you intentionally accept
+requests that have no secret. If `secretToken` is also set, the header must
+still match.
 
 ### 2. Escape user input
 

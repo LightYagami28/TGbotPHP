@@ -8,10 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- **Requires PHP 8.5.** PHP 8.4 is no longer supported. CI runs on PHP 8.5 (coverage) and PHP 8.6 (in development, non-blocking). This is a breaking change.
+
+- The webhook and local-file options of `Config` are set with immutable
+  `with*()` methods: `withUnauthenticatedWebhook()`, `withWebhookBodyLimit()`,
+  `withHandlerErrorsAcknowledged()`, `withLocalFileRoot()`.
+- `WebhookValidator::telegramIpRanges()` reads
+  `src/Security/telegram-ip-ranges.json`.
+- **Requires PHP 8.5.** PHP 8.4 is no longer supported. CI runs on PHP 8.5
+  (coverage) and PHP 8.6 (in development, non-blocking). This is a breaking
+  change.
+
+### Deprecated
+
+- Passing `allowUnauthenticatedWebhook`, `maxWebhookBodyBytes`,
+  `acknowledgeHandlerErrors` and `localFileRoot` to `Config::__construct()`
+  still works and raises `E_USER_DEPRECATED`. Use the `with*()` methods.
+- `WebhookValidator::TELEGRAM_IP_RANGES` is kept; use `telegramIpRanges()`.
 
 ### Security
-- `Bot::handle()` answers 403 when no webhook secret is configured. Set `secretToken` to a value of 1–256 characters (`A-Z a-z 0-9 _ -`). Generate one with `openssl rand -hex 32` and pass the same value as `TELEGRAM_SECRET_TOKEN` to the process and to `webhook:set --secret`. To keep accepting requests that have no secret, set `allowUnauthenticatedWebhook: true` (or call `BotBuilder::allowUnauthenticatedWebhook()`). A configured secret is still checked when that option is on. The default stays `false`. Long polling is unchanged.
+
+- `Bot::handle()` answers 403 when no webhook secret is configured. Set
+  `secretToken` to a value of 1–256 characters (`A-Z a-z 0-9 _ -`). Generate one
+  with `openssl rand -hex 32` and pass the same value as `TELEGRAM_SECRET_TOKEN`
+  to the process and to `webhook:set --secret`. To keep accepting requests that
+  have no secret, call `Config::withUnauthenticatedWebhook()` (or
+  `BotBuilder::allowUnauthenticatedWebhook()`). A configured secret is still
+  checked when that option is on. The default stays `false`. Long polling is
+  unchanged.
 - `WebhookValidator::validate()` fails closed on an empty secret. `isTelegramIp()` ignores a CIDR prefix that is not an integer from 0 to 32 (a bad prefix used to match every IPv4 address) and documents that only IPv4 ranges are checked.
 - Mini App `auth_date` in the future, missing or not a positive integer is rejected, including when the age check is disabled (`maxAge: 0`). Init data is parsed without `parse_str` (no rewritten names, no duplicate keys, no values over 64 KiB).
 - Webhook bodies are read only up to `maxWebhookBodyBytes` (1 MiB). Larger bodies get HTTP 413. A method other than POST gets HTTP 405.
@@ -20,7 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In-memory downloads are capped at 20 MiB on the cURL transport as well as after `file_size`. `http_build_query` always uses `&`.
 - API calls from a webhook handler are not retried and do not `sleep()` on `retry_after`. Elsewhere, network errors and HTTP 5xx are retried with backoff (`RetryPolicy::$transientRetries`, default 1).
 - `FileCache` takes the per-key lock in `put`, `forget`, `prune` and when deleting an expired entry, so a concurrent `update()` cannot lose the value it just wrote. `flush()` removes lock files. Listing entries no longer uses `glob()`.
-- `deduplicateUpdates($cache)` skips a webhook `update_id` already accepted. Set `acknowledgeHandlerErrors: false` to answer 500 on a handler exception so Telegram retries; the update id is then forgotten. The default remains HTTP 200.
+- `deduplicateUpdates($cache)` skips a webhook `update_id` already accepted.
+  Call `withHandlerErrorsAcknowledged(false)` to answer 500 on a handler
+  exception so Telegram retries; the update id is then forgotten. The default
+  remains HTTP 200.
 - Debug logs record response status and size, not the body. `LogRedactor` removes bot tokens and credential fields. `chat_id`, `user_id` and message text stay visible. Log files are created mode 0600 without a create/chmod race.
 - `RateLimiter` rejects a non-positive limit or window. `Keyboard::button()` rejects empty `callback_data`. `MessageParser` no longer treats snake_case as Markdown italic, and mentions follow Telegram's 5-character minimum. A route pattern that looks like a regex but does not compile throws at registration.
 - `PluginManager` activates a plugin before storing it, and `unregister()` removes hooks that plugin added during `activate()`. Middleware uses the number of required parameters, so an optional third parameter is not treated as `$next`.

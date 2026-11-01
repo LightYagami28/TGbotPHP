@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Framework\Runner;
 
 use JsonException;
+use stdClass;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Framework\Bot;
@@ -40,61 +41,104 @@ final readonly class WebhookHandler
      */
     public function handle(?string $body = null, ?string $secretToken = null, bool $respondFirst = false): bool
     {
-        $config = $this->bot->getConfig();
-        $method = $_SERVER['REQUEST_METHOD'] ?? null;
+        $received = $this->receive($body, $secretToken);
 
-        if (is_string($method) && strcasecmp($method, 'POST') !== 0) {
-            self::respond(405);
+        if (is_int($received)) {
+            self::respond($received);
 
             return false;
         }
 
+        return $this->dispatch($received, $respondFirst);
+    }
+
+    /**
+     * Check the request and parse its body
+     *
+     * @return stdClass|int The update, or the HTTP status to answer with
+     */
+    private function receive(?string $body, ?string $secretToken): stdClass|int
+    {
+        $rejected = $this->rejection($secretToken);
+
+        if ($rejected !== 200) {
+            return $rejected;
+        }
+
+        $limit = $this->bot->getConfig()->maxWebhookBodyBytes;
+        $body ??= self::readInput($limit);
+
+        if (strlen($body) > $limit) {
+            return 413;
+        }
+
+        return self::parseBody($body);
+    }
+
+    /**
+     * @return int The HTTP status to refuse the request with, or 200 when it may proceed
+     */
+    private function rejection(?string $secretToken): int
+    {
+        if (self::isWrongMethod()) {
+            return 405;
+        }
+
+        if (!$this->isAuthorized($secretToken)) {
+            return 403;
+        }
+
+        return $this->hasUsableLimit() ? 200 : 413;
+    }
+
+    private function hasUsableLimit(): bool
+    {
+        $limit = $this->bot->getConfig()->maxWebhookBodyBytes;
+
+        return $limit >= 1 && $limit < PHP_INT_MAX;
+    }
+
+    private static function isWrongMethod(): bool
+    {
+        $method = $_SERVER['REQUEST_METHOD'] ?? null;
+
+        return is_string($method) && strcasecmp($method, 'POST') !== 0;
+    }
+
+    private function isAuthorized(?string $secretToken): bool
+    {
+        $config = $this->bot->getConfig();
         $expected = $config->secretToken;
-        $header = $secretToken ?? WebhookValidator::getSecretToken();
 
         // No secret means refuse, unless the caller opted in. A configured secret
         // is always required, including when that opt-in is also set.
-        $authorized = $expected === false
+        return $expected === false
             ? $config->allowUnauthenticatedWebhook
-            : WebhookValidator::validate($expected, $header);
+            : WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken());
+    }
 
-        if (!$authorized) {
-            self::respond(403);
+    private static function readInput(int $limit): string
+    {
+        $read = file_get_contents('php://input', false, null, 0, max(0, $limit) + 1);
 
-            return false;
-        }
+        return is_string($read) ? $read : '';
+    }
 
-        $limit = $config->maxWebhookBodyBytes;
-
-        if ($limit < 1 || $limit >= PHP_INT_MAX) {
-            self::respond(413);
-
-            return false;
-        }
-
-        if ($body === null) {
-            $read = file_get_contents('php://input', false, null, 0, $limit + 1);
-            $body = is_string($read) ? $read : '';
-        }
-
-        if (strlen($body) > $limit) {
-            self::respond(413);
-
-            return false;
-        }
-
+    private static function parseBody(string $body): stdClass|int
+    {
         try {
-            $update = UpdateParser::parse($body);
+            return UpdateParser::parse($body);
         } catch (JsonException) {
-            self::respond(400);
-
-            return false;
+            return 400;
         }
+    }
 
-        $updateId = Value::nullableInt($update->update_id ?? null);
+    private function dispatch(stdClass $update, bool $respondFirst): bool
+    {
+        $updateId = self::updateId($update);
         $dedup = $this->bot->updateDedupCache();
 
-        if ($dedup !== null && $updateId !== null && !$this->claim($dedup, $updateId)) {
+        if ($this->isDuplicate($dedup, $updateId)) {
             self::respond(200);
 
             return true;
@@ -105,31 +149,67 @@ final readonly class WebhookHandler
             self::finishRequest();
         }
 
+        $accepted = $this->process($update, $dedup, $updateId);
+
+        if (!$accepted || !$respondFirst) {
+            self::answer($accepted);
+        }
+
+        return $accepted;
+    }
+
+    private static function updateId(stdClass $update): ?int
+    {
+        return Value::nullableInt($update->update_id ?? null);
+    }
+
+    private static function answer(bool $accepted): void
+    {
+        self::respond($accepted ? 200 : 500);
+    }
+
+    /**
+     * @return bool False when a handler failed and Telegram must retry the update
+     */
+    private function process(stdClass $update, ?CacheInterface $dedup, ?int $updateId): bool
+    {
         $this->bot->setHandlingWebhook(true);
 
         try {
             $this->bot->processUpdate($update);
+
+            return true;
         } catch (Throwable $e) {
             error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
 
-            if (!$config->acknowledgeHandlerErrors) {
-                if ($dedup !== null && $updateId !== null) {
-                    $dedup->forget(self::dedupKey($updateId));
-                }
-
-                self::respond(500);
-
-                return false;
+            if ($this->bot->getConfig()->acknowledgeHandlerErrors) {
+                return true;
             }
+
+            $this->release($dedup, $updateId);
+
+            return false;
         } finally {
             $this->bot->setHandlingWebhook(false);
         }
+    }
 
-        if (!$respondFirst) {
-            self::respond(200);
+    /**
+     * True when the update id was already claimed by an earlier delivery
+     */
+    private function isDuplicate(?CacheInterface $dedup, ?int $updateId): bool
+    {
+        return $dedup !== null && $updateId !== null && !$this->claim($dedup, $updateId);
+    }
+
+    /**
+     * Forget the update id so Telegram's retry is processed
+     */
+    private function release(?CacheInterface $dedup, ?int $updateId): void
+    {
+        if ($dedup !== null && $updateId !== null) {
+            $dedup->forget(self::dedupKey($updateId));
         }
-
-        return true;
     }
 
     /**

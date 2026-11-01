@@ -10,14 +10,14 @@ namespace TGbotPHP\Security;
 class WebhookValidator
 {
     /**
-     * IP ranges Telegram sends webhooks from
-     *
-     * @see https://core.telegram.org/bots/webhooks#the-short-version
+     * @deprecated Use telegramIpRanges(), which reads telegram-ip-ranges.json
      */
     public const array TELEGRAM_IP_RANGES = [
         '149.154.160.0/20',
         '91.108.4.0/22',
     ];
+
+    private const string HEX_64 = '/^[a-fA-F0-9]{64}\z/';
 
     /** Ed25519 key Telegram signs Mini App data with (production) */
     public const string WEB_APP_PUBLIC_KEY = 'e7bf03a2fa4602af4580703d88dda5bb59f32ed8b02a56c187fe7d34caed242d';
@@ -42,7 +42,7 @@ class WebhookValidator
      */
     public static function validateSignature(string $body, string $signature, string $secret): bool
     {
-        if ($secret === '' || preg_match('/^[a-fA-F0-9]{64}\z/', $signature) !== 1) {
+        if ($secret === '' || preg_match(self::HEX_64, $signature) !== 1) {
             return false;
         }
 
@@ -71,8 +71,9 @@ class WebhookValidator
      *
      * @param string[] $ranges
      */
-    public static function isTelegramIp(string $ip, array $ranges = self::TELEGRAM_IP_RANGES): bool
+    public static function isTelegramIp(string $ip, ?array $ranges = null): bool
     {
+        $ranges ??= self::telegramIpRanges();
         $address = ip2long($ip);
 
         if ($address === false) {
@@ -80,21 +81,39 @@ class WebhookValidator
         }
 
         foreach ($ranges as $range) {
-            [$subnet, $bits] = explode('/', $range, 2) + [1 => '32'];
-            $subnetLong = ip2long($subnet);
-
-            if ($subnetLong === false || preg_match('/^(?:[0-9]|[12]\d|3[0-2])\z/', $bits) !== 1) {
-                continue;
-            }
-
-            $mask = -1 << (32 - (int) $bits);
-
-            if (($address & $mask) === ($subnetLong & $mask)) {
+            if (self::inRange($address, $range)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * IP ranges Telegram sends webhooks from, read from telegram-ip-ranges.json
+     *
+     * @see https://core.telegram.org/bots/webhooks#the-short-version
+     * @return string[]
+     */
+    public static function telegramIpRanges(): array
+    {
+        $json = (string) file_get_contents(__DIR__ . '/telegram-ip-ranges.json');
+
+        return array_values(array_filter((array) json_decode($json, true, 4, JSON_THROW_ON_ERROR), is_string(...)));
+    }
+
+    private static function inRange(int $address, string $range): bool
+    {
+        [$subnet, $bits] = explode('/', $range, 2) + [1 => '32'];
+        $subnetLong = ip2long($subnet);
+
+        if ($subnetLong === false || preg_match('/^(?:\d|[12]\d|3[0-2])\z/', $bits) !== 1) {
+            return false;
+        }
+
+        $mask = -1 << (32 - (int) $bits);
+
+        return ($address & $mask) === ($subnetLong & $mask);
     }
 
     /**
@@ -116,7 +135,7 @@ class WebhookValidator
         $hash = $fields['hash'] ?? '';
         unset($fields['hash']);
 
-        if (preg_match('/^[a-fA-F0-9]{64}\z/', $hash) !== 1) {
+        if (preg_match(self::HEX_64, $hash) !== 1) {
             return null;
         }
 
@@ -150,7 +169,7 @@ class WebhookValidator
 
         $fields = self::parseInitData($initData);
 
-        if ($fields === null || $botId <= 0 || preg_match('/^[a-fA-F0-9]{64}\z/', $publicKey) !== 1) {
+        if ($fields === null || $botId <= 0 || preg_match(self::HEX_64, $publicKey) !== 1) {
             return null;
         }
 
@@ -192,7 +211,7 @@ class WebhookValidator
             $name = urldecode($name);
             $value = urldecode($value);
 
-            if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*\z/', $name) !== 1
+            if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
                 || array_key_exists($name, $fields)
                 || preg_match('/[\x00\r\n]/', $value) === 1) {
                 return null;
@@ -213,7 +232,7 @@ class WebhookValidator
     {
         $date = $fields['auth_date'] ?? '';
 
-        if ($maxAge < 0 || preg_match('/^[1-9][0-9]*\z/', $date) !== 1) {
+        if ($maxAge < 0 || preg_match('/^[1-9]\d*\z/', $date) !== 1) {
             return false;
         }
 
