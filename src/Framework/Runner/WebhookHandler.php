@@ -66,22 +66,13 @@ final readonly class WebhookHandler
         }
 
         $limit = $this->bot->getConfig()->maxWebhookBodyBytes;
-
-        if ($limit < 1 || $limit >= PHP_INT_MAX) {
-            return 413;
-        }
-
         $body ??= self::readInput($limit);
 
         if (strlen($body) > $limit) {
             return 413;
         }
 
-        try {
-            return UpdateParser::parse($body);
-        } catch (JsonException) {
-            return 400;
-        }
+        return self::parseBody($body);
     }
 
     /**
@@ -104,15 +95,29 @@ final readonly class WebhookHandler
             ? $config->allowUnauthenticatedWebhook
             : WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken());
 
-        return $authorized ? null : 403;
+        if (!$authorized) {
+            return 403;
+        }
+
+        $limit = $config->maxWebhookBodyBytes;
+
+        return $limit < 1 || $limit >= PHP_INT_MAX ? 413 : null;
     }
 
-    /** @param int<1, max> $limit */
     private static function readInput(int $limit): string
     {
-        $read = file_get_contents('php://input', false, null, 0, $limit + 1);
+        $read = file_get_contents('php://input', false, null, 0, max(0, $limit) + 1);
 
         return is_string($read) ? $read : '';
+    }
+
+    private static function parseBody(string $body): stdClass|int
+    {
+        try {
+            return UpdateParser::parse($body);
+        } catch (JsonException) {
+            return 400;
+        }
     }
 
     private function dispatch(stdClass $update, bool $respondFirst): bool
