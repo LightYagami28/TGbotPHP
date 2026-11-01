@@ -200,7 +200,7 @@ final class SecurityTest extends TestCase
 
     public function testLogRedactorKeepsChatIdsAndHidesTokens(): void
     {
-        $token = '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw';
+        $token = '123456789:' . str_repeat('x', 35);
         $context = LogRedactor::context([
             'chat_id' => 42,
             'user_id' => 7,
