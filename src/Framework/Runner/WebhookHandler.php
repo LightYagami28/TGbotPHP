@@ -59,6 +59,36 @@ final readonly class WebhookHandler
      */
     private function receive(?string $body, ?string $secretToken): stdClass|int
     {
+        $rejected = $this->rejection($secretToken);
+
+        if ($rejected !== null) {
+            return $rejected;
+        }
+
+        $limit = $this->bot->getConfig()->maxWebhookBodyBytes;
+
+        if ($limit < 1 || $limit >= PHP_INT_MAX) {
+            return 413;
+        }
+
+        $body ??= self::readInput($limit);
+
+        if (strlen($body) > $limit) {
+            return 413;
+        }
+
+        try {
+            return UpdateParser::parse($body);
+        } catch (JsonException) {
+            return 400;
+        }
+    }
+
+    /**
+     * @return int|null The HTTP status to refuse the request with, or null when it may proceed
+     */
+    private function rejection(?string $secretToken): ?int
+    {
         $config = $this->bot->getConfig();
         $method = $_SERVER['REQUEST_METHOD'] ?? null;
 
@@ -74,30 +104,15 @@ final readonly class WebhookHandler
             ? $config->allowUnauthenticatedWebhook
             : WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken());
 
-        if (!$authorized) {
-            return 403;
-        }
+        return $authorized ? null : 403;
+    }
 
-        $limit = $config->maxWebhookBodyBytes;
+    /** @param int<1, max> $limit */
+    private static function readInput(int $limit): string
+    {
+        $read = file_get_contents('php://input', false, null, 0, $limit + 1);
 
-        if ($limit < 1 || $limit >= PHP_INT_MAX) {
-            return 413;
-        }
-
-        if ($body === null) {
-            $read = file_get_contents('php://input', false, null, 0, $limit + 1);
-            $body = is_string($read) ? $read : '';
-        }
-
-        if (strlen($body) > $limit) {
-            return 413;
-        }
-
-        try {
-            return UpdateParser::parse($body);
-        } catch (JsonException) {
-            return 400;
-        }
+        return is_string($read) ? $read : '';
     }
 
     private function dispatch(stdClass $update, bool $respondFirst): bool
