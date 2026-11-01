@@ -184,15 +184,18 @@ class FileCache implements CacheInterface
 
         try {
             $fresh = @file_get_contents($path);
-            $entry = is_string($fresh) ? $this->decode($fresh) : null;
+
+            if (!is_string($fresh)) {
+                return null;
+            }
+
+            $entry = $this->decode($fresh);
 
             if ($entry !== null && !self::isExpired($entry)) {
                 return $entry;
             }
 
-            if (is_string($fresh)) {
-                @unlink($path);
-            }
+            @unlink($path);
 
             return null;
         } finally {

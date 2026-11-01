@@ -80,10 +80,7 @@ final readonly class WebhookHandler
      */
     private function rejection(?string $secretToken): ?int
     {
-        $config = $this->bot->getConfig();
-        $method = $_SERVER['REQUEST_METHOD'] ?? null;
-
-        if (is_string($method) && strcasecmp($method, 'POST') !== 0) {
+        if (self::isWrongMethod()) {
             return 405;
         }
 
@@ -91,9 +88,16 @@ final readonly class WebhookHandler
             return 403;
         }
 
-        $limit = $config->maxWebhookBodyBytes;
+        $limit = $this->bot->getConfig()->maxWebhookBodyBytes;
 
-        return $limit < 1 || $limit >= PHP_INT_MAX ? 413 : null;
+        return $limit >= 1 && $limit < PHP_INT_MAX ? null : 413;
+    }
+
+    private static function isWrongMethod(): bool
+    {
+        $method = $_SERVER['REQUEST_METHOD'] ?? null;
+
+        return is_string($method) && strcasecmp($method, 'POST') !== 0;
     }
 
     private function isAuthorized(?string $secretToken): bool
@@ -140,21 +144,10 @@ final readonly class WebhookHandler
             self::finishRequest();
         }
 
-        $this->bot->setHandlingWebhook(true);
+        if (!$this->process($update, $dedup, $updateId)) {
+            self::respond(500);
 
-        try {
-            $this->bot->processUpdate($update);
-        } catch (Throwable $e) {
-            error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
-
-            if (!$this->bot->getConfig()->acknowledgeHandlerErrors) {
-                $this->release($dedup, $updateId);
-                self::respond(500);
-
-                return false;
-            }
-        } finally {
-            $this->bot->setHandlingWebhook(false);
+            return false;
         }
 
         if (!$respondFirst) {
@@ -162,6 +155,32 @@ final readonly class WebhookHandler
         }
 
         return true;
+    }
+
+    /**
+     * @return bool False when a handler failed and Telegram must retry the update
+     */
+    private function process(stdClass $update, ?CacheInterface $dedup, ?int $updateId): bool
+    {
+        $this->bot->setHandlingWebhook(true);
+
+        try {
+            $this->bot->processUpdate($update);
+
+            return true;
+        } catch (Throwable $e) {
+            error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
+
+            if ($this->bot->getConfig()->acknowledgeHandlerErrors) {
+                return true;
+            }
+
+            $this->release($dedup, $updateId);
+
+            return false;
+        } finally {
+            $this->bot->setHandlingWebhook(false);
+        }
     }
 
     /**

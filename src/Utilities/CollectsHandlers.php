@@ -104,6 +104,13 @@ trait CollectsHandlers
 
     private function registerHandlers(Bot $bot): void
     {
+        $this->registerKeyed($bot);
+        $this->registerUpdates($bot);
+        $this->registerEvents($bot);
+    }
+
+    private function registerKeyed(Bot $bot): void
+    {
         foreach ($this->commands as $command => $handler) {
             $bot->command((string) $command, $handler);
         }
@@ -115,7 +122,10 @@ trait CollectsHandlers
         foreach ($this->texts as $pattern => $handler) {
             $bot->hears((string) $pattern, $handler);
         }
+    }
 
+    private function registerUpdates(Bot $bot): void
+    {
         foreach ($this->inlineQueries as $pattern => $handler) {
             $bot->inlineQuery((string) $pattern, $handler);
         }
@@ -127,7 +137,10 @@ trait CollectsHandlers
         foreach ($this->updates as [$type, $handler]) {
             $bot->onUpdate($type, $handler);
         }
+    }
 
+    private function registerEvents(Bot $bot): void
+    {
         if ($this->fallback !== null) {
             $bot->fallback($this->fallback);
         }

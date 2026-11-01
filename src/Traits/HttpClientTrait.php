@@ -134,24 +134,31 @@ trait HttpClientTrait
         int &$transientAttempt,
     ): HttpResponse {
         while (true) {
-            $this->debugLog('→ ' . $method . ' ' . self::describeFields($fields));
-
             try {
-                $response = $this->getTransport()->post($url, $fields, $multipart, $timeout);
+                return $this->postLogged($method, $url, $fields, $multipart, $timeout);
             } catch (NetworkException $e) {
                 if (!$this->retryTransient($transientAttempt)) {
                     throw $e;
                 }
 
                 $transientAttempt++;
-                continue;
             }
-
-            // Status and size only: response bodies contain user data
-            $this->debugLog('← ' . $method . ' [' . $response->statusCode . '] ' . strlen($response->body) . ' bytes');
-
-            return $response;
         }
+    }
+
+    /**
+     * @param array<string, mixed> $fields
+     */
+    private function postLogged(string $method, string $url, array $fields, bool $multipart, int $timeout): HttpResponse
+    {
+        $this->debugLog('→ ' . $method . ' ' . self::describeFields($fields));
+
+        $response = $this->getTransport()->post($url, $fields, $multipart, $timeout);
+
+        // Status and size only: response bodies contain user data
+        $this->debugLog('← ' . $method . ' [' . $response->statusCode . '] ' . strlen($response->body) . ' bytes');
+
+        return $response;
     }
 
     /**
