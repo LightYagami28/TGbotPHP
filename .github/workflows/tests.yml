@@ -11,8 +11,6 @@ concurrency:
 
 jobs:
   tests:
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     name: PHP ${{ matrix.php-version }}${{ matrix.experimental && ' (in development)' || '' }}
     runs-on: ubuntu-latest
     # PHP 8.6 is still in development: its job reports problems early without blocking the build
@@ -31,7 +29,6 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-        fetch-depth: 0
     - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
       with:
         php-version: ${{ matrix.php-version }}
@@ -51,6 +48,3 @@ jobs:
     - name: Minimum coverage
       if: matrix.coverage != 'none'
       run: php tools/coverage-check.php coverage.xml 100
-    - name: SonarCloud analysis
-      if: matrix.coverage != 'none' && env.SONAR_TOKEN != ''
-      uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
