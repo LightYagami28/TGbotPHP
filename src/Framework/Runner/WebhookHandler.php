@@ -120,7 +120,7 @@ final readonly class WebhookHandler
         $updateId = Value::nullableInt($update->update_id ?? null);
         $dedup = $this->bot->updateDedupCache();
 
-        if ($dedup !== null && $updateId !== null && !$this->claim($dedup, $updateId)) {
+        if ($this->isDuplicate($dedup, $updateId)) {
             self::respond(200);
 
             return true;
@@ -139,10 +139,7 @@ final readonly class WebhookHandler
             error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
 
             if (!$this->bot->getConfig()->acknowledgeHandlerErrors) {
-                if ($dedup !== null && $updateId !== null) {
-                    $dedup->forget(self::dedupKey($updateId));
-                }
-
+                $this->release($dedup, $updateId);
                 self::respond(500);
 
                 return false;
@@ -156,6 +153,24 @@ final readonly class WebhookHandler
         }
 
         return true;
+    }
+
+    /**
+     * True when the update id was already claimed by an earlier delivery
+     */
+    private function isDuplicate(?CacheInterface $dedup, ?int $updateId): bool
+    {
+        return $dedup !== null && $updateId !== null && !$this->claim($dedup, $updateId);
+    }
+
+    /**
+     * Forget the update id so Telegram's retry is processed
+     */
+    private function release(?CacheInterface $dedup, ?int $updateId): void
+    {
+        if ($dedup !== null && $updateId !== null) {
+            $dedup->forget(self::dedupKey($updateId));
+        }
     }
 
     /**
