@@ -111,7 +111,7 @@ class MessageParser
     public static function extractMentions(string $text): array
     {
         // Telegram usernames are 5 to 32 characters
-        if (preg_match_all('/(?<![\w@])@([a-zA-Z0-9_]{5,32})/u', $text, $matches) > 0) {
+        if (preg_match_all('/(?<![\w@])@([a-zA-Z0-9_]{5,32})/u', $text, $matches) > 0) { // NOSONAR php:S6353: with /u, \w also matches non-ASCII letters; usernames are ASCII
             return $matches[1];
         }
         return [];

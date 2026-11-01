@@ -26,7 +26,7 @@ use TGbotPHP\Utilities\Keyboard;
 
 $secret = Value::env('TELEGRAM_SECRET_TOKEN');
 if ($secret === null) {
-    throw new RuntimeException('Set TELEGRAM_SECRET_TOKEN before serving this webhook. Generate one with: openssl rand -hex 32');
+    throw new UnexpectedValueException('Set TELEGRAM_SECRET_TOKEN before serving this webhook. Generate one with: openssl rand -hex 32');
 }
 
 $config = new Config(

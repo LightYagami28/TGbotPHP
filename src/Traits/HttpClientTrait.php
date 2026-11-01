@@ -11,6 +11,7 @@ use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Http\CurlTransport;
+use TGbotPHP\Http\HttpResponse;
 use TGbotPHP\Http\TransportInterface;
 use TGbotPHP\Security\LogRedactor;
 use TGbotPHP\Support\PrivateFile;
@@ -86,7 +87,7 @@ trait HttpClientTrait
         bool $returnResponse = false,
         bool $objects = false,
     ): mixed {
-        if (preg_match('/^[A-Za-z][A-Za-z0-9_]*\z/', $method) !== 1) {
+        if (preg_match('/^[A-Za-z]\w*\z/', $method) !== 1) {
             throw new \InvalidArgumentException('Invalid Bot API method name');
         }
 
@@ -98,6 +99,40 @@ trait HttpClientTrait
         $attempt = 0;
         $transientAttempt = 0;
 
+        while (true) {
+            $response = $this->sendRetrying($method, $url, $fields, $multipart, $timeout, $transientAttempt);
+
+            try {
+                return $this->parseResponse($method, $response->statusCode, $response->body, $returnResponse, $objects);
+            } catch (TooManyRequestsException $e) {
+                if (!$this->retryRateLimited($e, $attempt)) {
+                    throw $e;
+                }
+
+                $attempt++;
+            } catch (ApiException $e) {
+                if ($e->getCode() < 500 || !$this->retryTransient($transientAttempt)) {
+                    throw $e;
+                }
+
+                $transientAttempt++;
+            }
+        }
+    }
+
+    /**
+     * Post the request, retrying network errors; $transientAttempt is shared with the 5xx retries
+     *
+     * @param array<string, mixed> $fields
+     */
+    private function sendRetrying(
+        string $method,
+        string $url,
+        array $fields,
+        bool $multipart,
+        int $timeout,
+        int &$transientAttempt,
+    ): HttpResponse {
         while (true) {
             $this->debugLog('→ ' . $method . ' ' . self::describeFields($fields));
 
@@ -115,26 +150,25 @@ trait HttpClientTrait
             // Status and size only: response bodies contain user data
             $this->debugLog('← ' . $method . ' [' . $response->statusCode . '] ' . strlen($response->body) . ' bytes');
 
-            try {
-                return $this->parseResponse($method, $response->statusCode, $response->body, $returnResponse, $objects);
-            } catch (TooManyRequestsException $e) {
-                $retryAfter = $e->getRetryAfter();
-
-                // A webhook worker must not sleep. Polling and CLI calls still wait.
-                if ($this->handlingWebhook || !$this->config->retry->allows($attempt, $retryAfter)) {
-                    throw $e;
-                }
-
-                $attempt++;
-                $this->pause($retryAfter);
-            } catch (ApiException $e) {
-                if ($e->getCode() < 500 || !$this->retryTransient($transientAttempt)) {
-                    throw $e;
-                }
-
-                $transientAttempt++;
-            }
+            return $response;
         }
+    }
+
+    /**
+     * Wait out a 429 when allowed; false means the caller must give up
+     */
+    private function retryRateLimited(TooManyRequestsException $e, int $attempt): bool
+    {
+        $retryAfter = $e->getRetryAfter();
+
+        // A webhook worker must not sleep. Polling and CLI calls still wait.
+        if ($this->handlingWebhook || !$this->config->retry->allows($attempt, $retryAfter)) {
+            return false;
+        }
+
+        $this->pause($retryAfter);
+
+        return true;
     }
 
     /**

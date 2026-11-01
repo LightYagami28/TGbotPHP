@@ -19,6 +19,8 @@ class WebhookValidator
         '91.108.4.0/22',
     ];
 
+    private const string HEX_64 = '/^[a-fA-F0-9]{64}\z/';
+
     /** Ed25519 key Telegram signs Mini App data with (production) */
     public const string WEB_APP_PUBLIC_KEY = 'e7bf03a2fa4602af4580703d88dda5bb59f32ed8b02a56c187fe7d34caed242d';
 
@@ -42,7 +44,7 @@ class WebhookValidator
      */
     public static function validateSignature(string $body, string $signature, string $secret): bool
     {
-        if ($secret === '' || preg_match('/^[a-fA-F0-9]{64}\z/', $signature) !== 1) {
+        if ($secret === '' || preg_match(self::HEX_64, $signature) !== 1) {
             return false;
         }
 
@@ -80,21 +82,26 @@ class WebhookValidator
         }
 
         foreach ($ranges as $range) {
-            [$subnet, $bits] = explode('/', $range, 2) + [1 => '32'];
-            $subnetLong = ip2long($subnet);
-
-            if ($subnetLong === false || preg_match('/^(?:[0-9]|[12]\d|3[0-2])\z/', $bits) !== 1) {
-                continue;
-            }
-
-            $mask = -1 << (32 - (int) $bits);
-
-            if (($address & $mask) === ($subnetLong & $mask)) {
+            if (self::inRange($address, $range)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static function inRange(int $address, string $range): bool
+    {
+        [$subnet, $bits] = explode('/', $range, 2) + [1 => '32'];
+        $subnetLong = ip2long($subnet);
+
+        if ($subnetLong === false || preg_match('/^(?:\d|[12]\d|3[0-2])\z/', $bits) !== 1) {
+            return false;
+        }
+
+        $mask = -1 << (32 - (int) $bits);
+
+        return ($address & $mask) === ($subnetLong & $mask);
     }
 
     /**
@@ -116,7 +123,7 @@ class WebhookValidator
         $hash = $fields['hash'] ?? '';
         unset($fields['hash']);
 
-        if (preg_match('/^[a-fA-F0-9]{64}\z/', $hash) !== 1) {
+        if (preg_match(self::HEX_64, $hash) !== 1) {
             return null;
         }
 
@@ -150,7 +157,7 @@ class WebhookValidator
 
         $fields = self::parseInitData($initData);
 
-        if ($fields === null || $botId <= 0 || preg_match('/^[a-fA-F0-9]{64}\z/', $publicKey) !== 1) {
+        if ($fields === null || $botId <= 0 || preg_match(self::HEX_64, $publicKey) !== 1) {
             return null;
         }
 
@@ -192,7 +199,7 @@ class WebhookValidator
             $name = urldecode($name);
             $value = urldecode($value);
 
-            if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*\z/', $name) !== 1
+            if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
                 || array_key_exists($name, $fields)
                 || preg_match('/[\x00\r\n]/', $value) === 1) {
                 return null;
@@ -213,7 +220,7 @@ class WebhookValidator
     {
         $date = $fields['auth_date'] ?? '';
 
-        if ($maxAge < 0 || preg_match('/^[1-9][0-9]*\z/', $date) !== 1) {
+        if ($maxAge < 0 || preg_match('/^[1-9]\d*\z/', $date) !== 1) {
             return false;
         }
 

@@ -106,24 +106,20 @@ class PluginManager
     private function dropOwnedHooks(string $name): void
     {
         foreach ($this->hooks as $hook => $priorities) {
+            $remaining = [];
+
             foreach ($priorities as $priority => $callbacks) {
-                $kept = [];
+                $kept = array_values(array_filter($callbacks, static fn(array $entry): bool => $entry['owner'] !== $name));
 
-                foreach ($callbacks as $entry) {
-                    if ($entry['owner'] !== $name) {
-                        $kept[] = $entry;
-                    }
-                }
-
-                if ($kept === []) {
-                    unset($this->hooks[$hook][$priority]);
-                } else {
-                    $this->hooks[$hook][$priority] = $kept;
+                if ($kept !== []) {
+                    $remaining[$priority] = $kept;
                 }
             }
 
-            if ($this->hooks[$hook] === []) {
+            if ($remaining === []) {
                 unset($this->hooks[$hook]);
+            } else {
+                $this->hooks[$hook] = $remaining;
             }
         }
     }

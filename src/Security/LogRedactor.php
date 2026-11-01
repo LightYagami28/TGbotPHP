@@ -52,11 +52,7 @@ final class LogRedactor
 
     private static function value(mixed $value, string $key, int $depth): mixed
     {
-        if ($depth >= 8) {
-            return '<redacted>';
-        }
-
-        if ($key !== '' && preg_match(self::SECRET_KEY, $key) === 1) {
+        if ($depth >= 8 || ($key !== '' && preg_match(self::SECRET_KEY, $key) === 1)) {
             return '<redacted>';
         }
 

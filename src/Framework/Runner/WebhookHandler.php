@@ -10,6 +10,7 @@ use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Security\WebhookValidator;
 use TGbotPHP\Support\Value;
+use stdClass;
 use Throwable;
 
 /**
@@ -40,36 +41,47 @@ final readonly class WebhookHandler
      */
     public function handle(?string $body = null, ?string $secretToken = null, bool $respondFirst = false): bool
     {
-        $config = $this->bot->getConfig();
-        $method = $_SERVER['REQUEST_METHOD'] ?? null;
+        $received = $this->receive($body, $secretToken);
 
-        if (is_string($method) && strcasecmp($method, 'POST') !== 0) {
-            self::respond(405);
+        if (is_int($received)) {
+            self::respond($received);
 
             return false;
         }
 
+        return $this->dispatch($received, $respondFirst);
+    }
+
+    /**
+     * Check the request and parse its body
+     *
+     * @return stdClass|int The update, or the HTTP status to answer with
+     */
+    private function receive(?string $body, ?string $secretToken): stdClass|int
+    {
+        $config = $this->bot->getConfig();
+        $method = $_SERVER['REQUEST_METHOD'] ?? null;
+
+        if (is_string($method) && strcasecmp($method, 'POST') !== 0) {
+            return 405;
+        }
+
         $expected = $config->secretToken;
-        $header = $secretToken ?? WebhookValidator::getSecretToken();
 
         // No secret means refuse, unless the caller opted in. A configured secret
         // is always required, including when that opt-in is also set.
         $authorized = $expected === false
             ? $config->allowUnauthenticatedWebhook
-            : WebhookValidator::validate($expected, $header);
+            : WebhookValidator::validate($expected, $secretToken ?? WebhookValidator::getSecretToken());
 
         if (!$authorized) {
-            self::respond(403);
-
-            return false;
+            return 403;
         }
 
         $limit = $config->maxWebhookBodyBytes;
 
         if ($limit < 1 || $limit >= PHP_INT_MAX) {
-            self::respond(413);
-
-            return false;
+            return 413;
         }
 
         if ($body === null) {
@@ -78,19 +90,18 @@ final readonly class WebhookHandler
         }
 
         if (strlen($body) > $limit) {
-            self::respond(413);
-
-            return false;
+            return 413;
         }
 
         try {
-            $update = UpdateParser::parse($body);
+            return UpdateParser::parse($body);
         } catch (JsonException) {
-            self::respond(400);
-
-            return false;
+            return 400;
         }
+    }
 
+    private function dispatch(stdClass $update, bool $respondFirst): bool
+    {
         $updateId = Value::nullableInt($update->update_id ?? null);
         $dedup = $this->bot->updateDedupCache();
 
@@ -112,7 +123,7 @@ final readonly class WebhookHandler
         } catch (Throwable $e) {
             error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
 
-            if (!$config->acknowledgeHandlerErrors) {
+            if (!$this->bot->getConfig()->acknowledgeHandlerErrors) {
                 if ($dedup !== null && $updateId !== null) {
                     $dedup->forget(self::dedupKey($updateId));
                 }

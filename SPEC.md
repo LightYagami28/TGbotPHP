@@ -67,6 +67,7 @@ See [SECURITY.md](SECURITY.md). Summary: webhooks without a secret are refused; 
 - Updates and results are `stdClass`, not generated typed classes.
 - Some file-permission tests assume POSIX and fail on Windows.
 - Telegram limits (rate, file size) apply and are not enforced locally except by `RateLimiter` per user.
+- SonarCloud: coverage comes from the PHPUnit Clover report (`coverage.xml`), uploaded by the Tests workflow when the `SONAR_TOKEN` secret exists. `bin/`, `examples/` and `tools/` are excluded from coverage (`sonar.coverage.exclusions`): entry points, samples and maintenance scripts outside the unit suite. Two smells are kept on purpose: `Config::__construct` (11 optional named parameters, public API) and the fluent `BotBuilder` (25 setters).
 
 ## Roadmap
 
