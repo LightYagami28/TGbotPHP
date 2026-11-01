@@ -29,7 +29,9 @@ vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TE
 
 The secret may contain `A-Z a-z 0-9 _ -`, from 1 to 256 characters. Put it in the environment of the PHP process (`TELEGRAM_SECRET_TOKEN`) and pass the same value to `webhook:set --secret`. An empty or unset secret is not a secret: `handle()` keeps answering 403.
 
-To accept requests that have no secret, call `Config::withUnauthenticatedWebhook()`. If `secretToken` is set as well, the header must still match. Long polling does not use this option.
+To accept requests that have no secret, call
+`Config::withUnauthenticatedWebhook()`. If `secretToken` is set as well, the
+header must still match. Long polling does not use this option.
 
 **Optionally, check the IP address** as well. Telegram publishes IPv4 ranges only (`149.154.160.0/20` and `91.108.4.0/22`). `isTelegramIp()` returns false for IPv6 and for a prefix that is not an integer from 0 to 32:
 

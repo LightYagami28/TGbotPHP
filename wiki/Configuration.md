@@ -17,14 +17,16 @@ $bot = new Bot(new Config(
     timeout: 10,                                     // seconds per request
     retry: new RetryPolicy(maxRetries: 1, maxDelay: 30),
     debug: false,                                    // true, or a log file path
-)->withUnauthenticatedWebhook(false));              // true accepts webhook requests with no secret
+)
+    // true accepts webhook requests with no secret
+    ->withUnauthenticatedWebhook(false));
 ```
 
 | Option | Default | Meaning |
 |---|---|---|
 | `token` | required | The token from @BotFather. A malformed token throws `InvalidArgumentException` |
 | `secretToken` | `false` | Secret that Telegram sends with every webhook request. 1–256 characters: `A-Z a-z 0-9 _ -`. Required for `handle()` unless the next option is true |
-| `withUnauthenticatedWebhook()` | `false` | Accept webhook requests that do not present a secret. A configured `secretToken` is still checked |
+| `withUnauthenticatedWebhook()` | `false` | Accept requests with no secret |
 | `apiBaseUrl` | `https://api.telegram.org` | Bot API server |
 | `enforceHttps` | `true` | Refuse an `apiBaseUrl` without HTTPS |
 | `timeout` | `10` | Timeout of each request in seconds. Long polling adds its own timeout on top |

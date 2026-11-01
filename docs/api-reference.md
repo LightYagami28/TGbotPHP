@@ -47,7 +47,18 @@ $bot->poll(timeout: 30, allowedUpdates: ['message', 'callback_query']);
 $bot->stop();                      // from a handler or a signal handler
 ```
 
-`handle()` returns `false` and sends 403 when no secret token is configured, or the `X-Telegram-Bot-Api-Secret-Token` header does not match. It sends 405 when the HTTP method is not POST, 413 when the body is larger than the limit of `withWebhookBodyLimit()` (1 MiB by default) and 400 when the JSON is invalid. A handler exception is logged and, by default, still answered with 200, so Telegram does not redeliver the same update forever. Call `withHandlerErrorsAcknowledged(false)` to answer 500 and let Telegram retry. `deduplicateUpdates($cache)` remembers `update_id` for a day so a timeout redelivery is not applied twice; the id is forgotten when the answer is 500. The error goes to `onError` or the PHP error log. Call `withUnauthenticatedWebhook()` only to accept requests that have no secret. The default is false.
+`handle()` returns `false` and sends 403 when no secret token is configured, or
+the `X-Telegram-Bot-Api-Secret-Token` header does not match. It sends 405 when
+the HTTP method is not POST, 413 when the body is larger than the limit of
+`withWebhookBodyLimit()` (1 MiB by default) and 400 when the JSON is invalid. A
+handler exception is logged and, by default, still answered with 200, so
+Telegram does not redeliver the same update forever. Call
+`withHandlerErrorsAcknowledged(false)` to answer 500 and let Telegram retry.
+`deduplicateUpdates($cache)` remembers `update_id` for a day so a timeout
+redelivery is not applied twice; the id is forgotten when the answer is 500. The
+error goes to `onError` or the PHP error log. Call
+`withUnauthenticatedWebhook()` only to accept requests that have no secret. The
+default is false.
 
 During `handle()`, API calls are not retried and `retry_after` is not slept on: a PHP-FPM worker must stay free to answer Telegram. Polling and other calls still follow `RetryPolicy`, including network errors and HTTP 5xx (`transientRetries`).
 
@@ -105,13 +116,18 @@ new Config(
     retry: new RetryPolicy(maxRetries: 1, maxDelay: 30, transientRetries: 1), // 429, and network/5xx
     debug: false,                 // true: PHP error log; a string: log file path
 )
-    ->withUnauthenticatedWebhook(false)      // true accepts webhook requests with no secret
-    ->withWebhookBodyLimit(1048576)          // larger webhook bodies get HTTP 413
-    ->withHandlerErrorsAcknowledged(true)    // false answers 500 so Telegram retries a failed handler
-    ->withLocalFileRoot('/var/lib/telegram-bot-api'); // directory a local Bot API server may read files from
+    // true accepts webhook requests with no secret
+    ->withUnauthenticatedWebhook(false)
+    // larger webhook bodies get HTTP 413
+    ->withWebhookBodyLimit(1048576)
+    // false answers 500 so Telegram retries a failed handler
+    ->withHandlerErrorsAcknowledged(true)
+    // directory a local Bot API server may read files from
+    ->withLocalFileRoot('/var/lib/telegram-bot-api');
 ```
 
-`Config` is immutable: its properties are read-only, and each `with*()` method returns a modified copy.
+`Config` is immutable: its properties are read-only, and each `with*()` method
+returns a modified copy.
 ```
 
 ## ApiClient methods
