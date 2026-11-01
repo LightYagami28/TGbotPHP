@@ -12,20 +12,19 @@ use TGbotPHP\Framework\Bot;
 $bot = new Bot(new Config(
     token: getenv('TELEGRAM_BOT_TOKEN'),
     secretToken: getenv('TELEGRAM_SECRET_TOKEN'),   // required for webhooks; openssl rand -hex 32
-    allowUnauthenticatedWebhook: false,             // true accepts webhook requests with no secret
     apiBaseUrl: Config::DEFAULT_API_URL,             // or a local Bot API server
     enforceHttps: true,
     timeout: 10,                                     // seconds per request
     retry: new RetryPolicy(maxRetries: 1, maxDelay: 30),
     debug: false,                                    // true, or a log file path
-));
+)->withUnauthenticatedWebhook(false));              // true accepts webhook requests with no secret
 ```
 
 | Option | Default | Meaning |
 |---|---|---|
 | `token` | required | The token from @BotFather. A malformed token throws `InvalidArgumentException` |
 | `secretToken` | `false` | Secret that Telegram sends with every webhook request. 1–256 characters: `A-Z a-z 0-9 _ -`. Required for `handle()` unless the next option is true |
-| `allowUnauthenticatedWebhook` | `false` | Accept webhook requests that do not present a secret. A configured `secretToken` is still checked |
+| `withUnauthenticatedWebhook()` | `false` | Accept webhook requests that do not present a secret. A configured `secretToken` is still checked |
 | `apiBaseUrl` | `https://api.telegram.org` | Bot API server |
 | `enforceHttps` | `true` | Refuse an `apiBaseUrl` without HTTPS |
 | `timeout` | `10` | Timeout of each request in seconds. Long polling adds its own timeout on top |

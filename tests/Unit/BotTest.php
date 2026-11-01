@@ -488,7 +488,7 @@ final class BotTest extends TestCase
 
         // Outside PHP-FPM there is no response to finish: the update is still processed.
         // This test is not about the secret, so it opts into requests with no secret.
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), transport: $this->transport);
         $bot->command('start', function () use (&$handled): void {
             $handled = true;
         });
@@ -511,7 +511,7 @@ final class BotTest extends TestCase
 
     public function testHandleCanAllowRequestsWithNoSecret(): void
     {
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), transport: $this->transport);
         $calls = 0;
         $bot->command('start', function () use (&$calls): void {
             $calls++;
@@ -524,7 +524,7 @@ final class BotTest extends TestCase
     public function testConfiguredSecretIsRequiredEvenWhenUnauthenticatedRequestsAreAllowed(): void
     {
         $bot = new Bot(
-            new Config(Updates::TOKEN, secretToken: 'top-secret', allowUnauthenticatedWebhook: true),
+            new Config(Updates::TOKEN, secretToken: 'top-secret')->withUnauthenticatedWebhook(true),
             transport: $this->transport,
         );
 
@@ -549,7 +549,7 @@ final class BotTest extends TestCase
 
     public function testHandleRejectsInvalidJson(): void
     {
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), transport: $this->transport);
 
         self::assertFalse($bot->handle('{not json', null));
         self::assertFalse($bot->handle('{"foo":1}', null));
@@ -557,7 +557,7 @@ final class BotTest extends TestCase
 
     public function testHandleSwallowsHandlerErrors(): void
     {
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), transport: $this->transport);
         $bot->command('boom', function (): void {
             throw new HandlerFailure('boom');
         });
@@ -798,9 +798,7 @@ final class BotTest extends TestCase
     {
         $bot = new Bot(new Config(
             Updates::TOKEN,
-            allowUnauthenticatedWebhook: true,
-            maxWebhookBodyBytes: 16,
-        ), transport: $this->transport);
+        )->withUnauthenticatedWebhook(true)->withWebhookBodyLimit(16), transport: $this->transport);
         $body = Updates::json(Updates::message('/start'));
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -820,7 +818,7 @@ final class BotTest extends TestCase
 
     public function testHandleRejectsEmptyInput(): void
     {
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), transport: $this->transport);
 
         try {
             self::assertFalse($bot->handle(null, null));
@@ -834,9 +832,7 @@ final class BotTest extends TestCase
     {
         $bot = new Bot(new Config(
             Updates::TOKEN,
-            allowUnauthenticatedWebhook: true,
-            acknowledgeHandlerErrors: false,
-        ), transport: $this->transport);
+        )->withUnauthenticatedWebhook(true)->withHandlerErrorsAcknowledged(false), transport: $this->transport);
         $bot->command('boom', static function (): void {
             throw new HandlerFailure('boom');
         });
@@ -853,7 +849,7 @@ final class BotTest extends TestCase
 
     public function testHandleSkipsARepeatedUpdateId(): void
     {
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), transport: $this->transport);
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), transport: $this->transport);
         $bot->deduplicateUpdates(new ArrayCache());
         $calls = 0;
         $bot->command('start', static function () use (&$calls): void {
@@ -870,9 +866,7 @@ final class BotTest extends TestCase
     {
         $bot = new Bot(new Config(
             Updates::TOKEN,
-            allowUnauthenticatedWebhook: true,
-            acknowledgeHandlerErrors: false,
-        ), transport: $this->transport);
+        )->withUnauthenticatedWebhook(true)->withHandlerErrorsAcknowledged(false), transport: $this->transport);
         $bot->deduplicateUpdates(new ArrayCache());
         $calls = 0;
         $bot->command('boom', static function () use (&$calls): void {
@@ -897,9 +891,8 @@ final class BotTest extends TestCase
         $transport = new FakeTransport();
         $bot = new Bot(new Config(
             Updates::TOKEN,
-            allowUnauthenticatedWebhook: true,
             retry: new RetryPolicy(maxRetries: 3, maxDelay: 30),
-        ), $transport);
+        )->withUnauthenticatedWebhook(true), $transport);
         $slept = [];
         $bot->setRetrySleeper(static function (int $seconds) use (&$slept): void {
             $slept[] = $seconds;

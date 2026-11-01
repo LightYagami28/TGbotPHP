@@ -52,12 +52,8 @@ readonly class Config
     public ?string $localFileRoot;
 
     /**
-     * @param string|false $secretToken Webhook secret token (1-256 characters: A-Z a-z 0-9 _ -). Required for webhooks unless $allowUnauthenticatedWebhook is true
+     * @param string|false $secretToken Webhook secret token (1-256 characters: A-Z a-z 0-9 _ -). Required for webhooks unless withUnauthenticatedWebhook() is used
      * @param bool|string $debug true logs to the PHP error log, a string logs to that file
-     * @param bool $allowUnauthenticatedWebhook Accept webhook requests with no secret token. Long polling does not use it. The default is false
-     * @param int $maxWebhookBodyBytes Maximum accepted webhook body, in bytes
-     * @param bool $acknowledgeHandlerErrors Answer 200 when a handler throws. False answers 500 so Telegram retries
-     * @param string|null $localFileRoot Existing directory trusted for absolute paths returned by a local Bot API server
      */
     public function __construct(
         string $token,
@@ -67,10 +63,6 @@ readonly class Config
         int $timeout = 10,
         RetryPolicy $retry = new RetryPolicy(),
         bool|string $debug = false,
-        bool $allowUnauthenticatedWebhook = false,
-        int $maxWebhookBodyBytes = 1024 * 1024,
-        bool $acknowledgeHandlerErrors = true,
-        ?string $localFileRoot = null,
     ) {
         if (!self::isValidToken($token)) {
             throw new \InvalidArgumentException('Invalid Telegram bot token');
@@ -89,36 +81,65 @@ readonly class Config
             throw new \InvalidArgumentException('API base URL must use HTTPS (disable enforceHttps for a local server)');
         }
 
-        if ($maxWebhookBodyBytes < 1) {
-            throw new \InvalidArgumentException('Webhook body limit must be a positive number of bytes');
-        }
-
-        if ($localFileRoot !== null) {
-            $realRoot = realpath($localFileRoot);
-
-            if ($realRoot === false || !is_dir($realRoot)) {
-                throw new \InvalidArgumentException('Local file root must be an existing directory');
-            }
-
-            $localFileRoot = $realRoot;
-        }
-
         if ($secretToken !== false && preg_match('/^[\w-]{1,256}\z/', $secretToken) !== 1) {
             throw new \InvalidArgumentException('Secret token must be 1-256 characters: A-Z, a-z, 0-9, _ and -');
         }
 
         $this->token = $token;
         $this->secretToken = $secretToken;
-        $this->allowUnauthenticatedWebhook = $allowUnauthenticatedWebhook;
+        $this->allowUnauthenticatedWebhook = false;
         $this->apiBaseUrl = rtrim($apiBaseUrl, '/');
         $this->enforceHttps = $enforceHttps;
         $this->timeout = max(1, $timeout);
         $this->retry = $retry;
         $this->debug = $debug !== false && $debug !== '';
         $this->debugFile = is_string($debug) && $debug !== '' ? $debug : false;
-        $this->maxWebhookBodyBytes = $maxWebhookBodyBytes;
-        $this->acknowledgeHandlerErrors = $acknowledgeHandlerErrors;
-        $this->localFileRoot = $localFileRoot;
+        $this->maxWebhookBodyBytes = 1024 * 1024;
+        $this->acknowledgeHandlerErrors = true;
+        $this->localFileRoot = null;
+    }
+
+    /**
+     * Accept webhook requests that do not present a secret token. Long polling does not use it.
+     * The default is false; a configured secret token is still required when this is on.
+     */
+    public function withUnauthenticatedWebhook(bool $allow = true): static
+    {
+        return clone($this, ['allowUnauthenticatedWebhook' => $allow]);
+    }
+
+    /**
+     * Largest accepted webhook body, in bytes
+     */
+    public function withWebhookBodyLimit(int $bytes): static
+    {
+        if ($bytes < 1) {
+            throw new \InvalidArgumentException('Webhook body limit must be a positive number of bytes');
+        }
+
+        return clone($this, ['maxWebhookBodyBytes' => $bytes]);
+    }
+
+    /**
+     * Answer 200 when a handler throws (default). False answers 500 so Telegram retries
+     */
+    public function withHandlerErrorsAcknowledged(bool $acknowledge = true): static
+    {
+        return clone($this, ['acknowledgeHandlerErrors' => $acknowledge]);
+    }
+
+    /**
+     * Existing directory trusted for absolute paths returned by a local Bot API server
+     */
+    public function withLocalFileRoot(string $directory): static
+    {
+        $realRoot = realpath($directory);
+
+        if ($realRoot === false || !is_dir($realRoot)) {
+            throw new \InvalidArgumentException('Local file root must be an existing directory');
+        }
+
+        return clone($this, ['localFileRoot' => $realRoot]);
     }
 
     /**

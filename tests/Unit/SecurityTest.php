@@ -33,6 +33,7 @@ final class SecurityTest extends TestCase
 
     public function testTelegramIpRanges(): void
     {
+        self::assertCount(2, WebhookValidator::telegramIpRanges());
         self::assertTrue(WebhookValidator::isTelegramIp('149.154.167.220'));
         self::assertTrue(WebhookValidator::isTelegramIp('91.108.6.1'));
         self::assertFalse(WebhookValidator::isTelegramIp('149.154.176.1'));

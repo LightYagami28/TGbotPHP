@@ -167,7 +167,7 @@ final class FullCoverageTest extends TestCase
     public function testBotAccessorsConversationsAndWebhookFinishers(): void
     {
         $transport = new FakeTransport();
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), $transport);
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), $transport);
 
         self::assertNull($bot->getUpdate());
         $bot->command('start', static function (): void {});
@@ -210,7 +210,7 @@ final class FullCoverageTest extends TestCase
 
     public function testWebhookCanFinishTheRequestOnFastcgiAndLitespeed(): void
     {
-        $bot = new Bot(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true), new FakeTransport());
+        $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), new FakeTransport());
         $body = Updates::json(Updates::message('/start'));
 
         RuntimeControls::$fastcgi = true;
@@ -235,9 +235,7 @@ final class FullCoverageTest extends TestCase
     {
         $bot = new Bot(new Config(
             Updates::TOKEN,
-            allowUnauthenticatedWebhook: true,
-            maxWebhookBodyBytes: PHP_INT_MAX,
-        ), new FakeTransport());
+        )->withUnauthenticatedWebhook(true)->withWebhookBodyLimit(PHP_INT_MAX), new FakeTransport());
 
         self::assertFalse($bot->handle('{}', null));
         self::assertSame(413, http_response_code());
@@ -352,9 +350,8 @@ final class FullCoverageTest extends TestCase
             Updates::TOKEN,
             apiBaseUrl: 'http://127.0.0.1:9',
             enforceHttps: false,
-            localFileRoot: $root,
             retry: RetryPolicy::none(),
-        ), $localTransport);
+        )->withLocalFileRoot($root), $localTransport);
         $localTransport->queueResult(['file_id' => 'f', 'file_path' => $missing]);
 
         try {

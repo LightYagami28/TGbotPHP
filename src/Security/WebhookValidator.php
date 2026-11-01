@@ -9,16 +9,6 @@ namespace TGbotPHP\Security;
  */
 class WebhookValidator
 {
-    /**
-     * IP ranges Telegram sends webhooks from
-     *
-     * @see https://core.telegram.org/bots/webhooks#the-short-version
-     */
-    public const array TELEGRAM_IP_RANGES = [
-        '149.154.160.0/20',
-        '91.108.4.0/22',
-    ];
-
     private const string HEX_64 = '/^[a-fA-F0-9]{64}\z/';
 
     /** Ed25519 key Telegram signs Mini App data with (production) */
@@ -73,8 +63,9 @@ class WebhookValidator
      *
      * @param string[] $ranges
      */
-    public static function isTelegramIp(string $ip, array $ranges = self::TELEGRAM_IP_RANGES): bool
+    public static function isTelegramIp(string $ip, ?array $ranges = null): bool
     {
+        $ranges ??= self::telegramIpRanges();
         $address = ip2long($ip);
 
         if ($address === false) {
@@ -88,6 +79,20 @@ class WebhookValidator
         }
 
         return false;
+    }
+
+    /**
+     * IP ranges Telegram sends webhooks from, read from telegram-ip-ranges.json
+     *
+     * @see https://core.telegram.org/bots/webhooks#the-short-version
+     * @return string[]
+     */
+    public static function telegramIpRanges(): array
+    {
+        /** @var string[] $ranges */
+        $ranges = json_decode((string) file_get_contents(__DIR__ . '/telegram-ip-ranges.json'), true, 4, JSON_THROW_ON_ERROR);
+
+        return $ranges;
     }
 
     private static function inRange(int $address, string $range): bool

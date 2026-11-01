@@ -145,7 +145,7 @@ final class ApiClientTest extends TestCase
         self::assertSame(1, new Config(Updates::TOKEN)->retry->transientRetries);
         self::assertSame(0, RetryPolicy::none()->transientRetries);
         self::assertFalse(new Config(Updates::TOKEN)->allowUnauthenticatedWebhook);
-        self::assertTrue(new Config(Updates::TOKEN, allowUnauthenticatedWebhook: true)->allowUnauthenticatedWebhook);
+        self::assertTrue(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true)->allowUnauthenticatedWebhook);
         self::assertTrue(new Config(Updates::TOKEN)->acknowledgeHandlerErrors);
         self::assertSame(1024 * 1024, new Config(Updates::TOKEN)->maxWebhookBodyBytes);
         self::assertNull(new Config(Updates::TOKEN)->localFileRoot);
@@ -447,8 +447,7 @@ final class ApiClientTest extends TestCase
             Updates::TOKEN,
             apiBaseUrl: 'http://127.0.0.1:8081',
             enforceHttps: false,
-            localFileRoot: dirname($source),
-        ), $transport);
+        )->withLocalFileRoot(dirname($source)), $transport);
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
 
@@ -664,8 +663,7 @@ final class ApiClientTest extends TestCase
             Updates::TOKEN,
             apiBaseUrl: 'http://127.0.0.1:8081',
             enforceHttps: false,
-            localFileRoot: $root,
-        ), $transport);
+        )->withLocalFileRoot($root), $transport);
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
 
         try {
@@ -711,14 +709,14 @@ final class ApiClientTest extends TestCase
         }
 
         try {
-            new Config(Updates::TOKEN, maxWebhookBodyBytes: 0);
+            new Config(Updates::TOKEN)->withWebhookBodyLimit(0);
             self::fail('Accepted a zero webhook body limit');
         } catch (\InvalidArgumentException) {
             // expected
         }
 
         try {
-            new Config(Updates::TOKEN, localFileRoot: sys_get_temp_dir() . '/tgbotphp-missing-' . bin2hex(random_bytes(4)));
+            new Config(Updates::TOKEN)->withLocalFileRoot(sys_get_temp_dir() . '/tgbotphp-missing-' . bin2hex(random_bytes(4)));
             self::fail('Accepted a missing local file root');
         } catch (\InvalidArgumentException) {
             // expected
