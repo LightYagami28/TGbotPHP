@@ -9,7 +9,6 @@ use TGbotPHP\Core\Config;
 use TGbotPHP\Core\RetryPolicy;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Http\TransportInterface;
-use TGbotPHP\Plugin\PluginInterface;
 
 /**
  * Fluent bot factory
