@@ -9,14 +9,6 @@ namespace TGbotPHP\Security;
  */
 class WebhookValidator
 {
-    /**
-     * @deprecated Use telegramIpRanges(), which reads telegram-ip-ranges.json
-     */
-    public const array TELEGRAM_IP_RANGES = [
-        '149.154.160.0/20',
-        '91.108.4.0/22',
-    ];
-
     private const string HEX_64 = '/^[a-fA-F0-9]{64}\z/';
 
     /** Ed25519 key Telegram signs Mini App data with (production) */
@@ -196,31 +188,32 @@ class WebhookValidator
     private static function parseInitData(string $initData): ?array
     {
         // parse_str rewrites names, keeps the last duplicate and stops at max_input_vars.
-        if ($initData === '' || strlen($initData) > 65536) {
-            return null;
-        }
-
         $fields = [];
+        $valid = $initData !== '' && strlen($initData) <= 65536;
 
-        foreach (explode('&', $initData) as $pair) {
-            if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
-                return null;
+        if ($valid) {
+            foreach (explode('&', $initData) as $pair) {
+                if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
+                    $valid = false;
+                    break;
+                }
+
+                [$name, $value] = explode('=', $pair, 2);
+                $name = urldecode($name);
+                $value = urldecode($value);
+
+                if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
+                    || array_key_exists($name, $fields)
+                    || preg_match('/[\x00\r\n]/', $value) === 1) {
+                    $valid = false;
+                    break;
+                }
+
+                $fields[$name] = $value;
             }
-
-            [$name, $value] = explode('=', $pair, 2);
-            $name = urldecode($name);
-            $value = urldecode($value);
-
-            if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
-                || array_key_exists($name, $fields)
-                || preg_match('/[\x00\r\n]/', $value) === 1) {
-                return null;
-            }
-
-            $fields[$name] = $value;
         }
 
-        return $fields;
+        return $valid ? $fields : null;
     }
 
     /**
