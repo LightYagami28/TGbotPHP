@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `withHandlerErrorsAcknowledged()`, `withLocalFileRoot()`.
 - `WebhookValidator::telegramIpRanges()` reads
   `src/Security/telegram-ip-ranges.json`.
+- Removed the deprecated `WebhookValidator::TELEGRAM_IP_RANGES` constant; use
+  `WebhookValidator::telegramIpRanges()` so Telegram's ranges are loaded from
+  the maintained JSON file.
 - **Requires PHP 8.5.** PHP 8.4 is no longer supported. CI runs on PHP 8.5
   (coverage) and PHP 8.6 (in development, non-blocking). This is a breaking
   change.
@@ -23,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Passing `allowUnauthenticatedWebhook`, `maxWebhookBodyBytes`,
   `acknowledgeHandlerErrors` and `localFileRoot` to `Config::__construct()`
   still works and raises `E_USER_DEPRECATED`. Use the `with*()` methods.
-- `WebhookValidator::TELEGRAM_IP_RANGES` is kept; use `telegramIpRanges()`.
 
 ### Security
 
