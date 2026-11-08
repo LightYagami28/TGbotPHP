@@ -88,5 +88,9 @@ final class Kernel
         }
 
         $this->events->dispatch('error', $e, $update, $bot);
+
+        if (!$bot->getConfig()->acknowledgeHandlerErrors) {
+            throw $e;
+        }
     }
 }

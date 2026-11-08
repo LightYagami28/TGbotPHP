@@ -380,7 +380,7 @@ trait HttpClientTrait
      */
     private function parseResponse(string $method, int $statusCode, string $body, bool $returnResponse, bool $objects = false): mixed
     {
-        $result = $objects ? self::successfulResultAsObjects($body) : null;
+        $result = $objects && $statusCode >= 200 && $statusCode < 300 ? self::successfulResultAsObjects($body) : null;
 
         if ($result === null) {
             $response = self::decodeResponse($method, $statusCode, $body);
@@ -425,7 +425,7 @@ trait HttpClientTrait
 
         $decoded = Value::map($decoded);
 
-        if (($decoded['ok'] ?? false) !== true) {
+        if (($decoded['ok'] ?? false) !== true || $statusCode < 200 || $statusCode >= 300) {
             throw self::errorFromResponse($method, $statusCode, $decoded);
         }
 

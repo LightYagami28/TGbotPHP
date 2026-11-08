@@ -128,4 +128,12 @@ final class LoggerTest extends TestCase
             @unlink($path);
         }
     }
-}
+
+    public function testUnknownLevelIsLoggedAsDebug(): void
+    {
+        $logger = new Logger($this->file);
+
+        $logger->log('verbose', 'custom level');
+
+        self::assertSame(['[DEBUG] custom level'], $this->entries());
+    }}

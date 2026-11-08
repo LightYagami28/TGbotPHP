@@ -233,4 +233,13 @@ final class ConsoleTest extends TestCase
             putenv($previous === false ? 'TELEGRAM_SECRET_TOKEN' : 'TELEGRAM_SECRET_TOKEN=' . $previous);
         }
     }
-}
+
+    public function testErrorOutputIsRedactedAndSingleLine(): void
+    {
+        $this->transport->queueError(400, "bad\nline 123456:ABCDEFGHIJ");
+
+        self::assertSame(1, $this->console->run(['tgbot', 'bot:info', '--token=' . Updates::TOKEN]));
+        $errors = $this->readErrors();
+        self::assertStringContainsString('bad\nline <redacted>', $errors);
+        self::assertSame(1, substr_count($errors, "\n"));
+    }}

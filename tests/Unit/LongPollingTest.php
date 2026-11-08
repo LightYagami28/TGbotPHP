@@ -185,4 +185,29 @@ final class LongPollingTest extends TestCase
 
         self::assertSame([1], $this->waits);
     }
-}
+
+    public function testInvalidUpdateIdsAreSkipped(): void
+    {
+        $this->transport->queueResult([
+            ['update_id' => -1] + Updates::message('negative'),
+            ['update_id' => PHP_INT_MAX] + Updates::message('max'),
+        ]);
+        $seen = 0;
+        $this->bot->onUpdate('message', function () use (&$seen): void {
+            $seen++;
+        });
+
+        $this->polling->run(timeout: 0, maxIterations: 1);
+
+        self::assertSame(0, $seen);
+    }
+
+    public function testStartListenerFailuresStopThePolling(): void
+    {
+        $this->bot->on('polling.started', static function (): never {
+            throw new \RuntimeException('start');
+        });
+
+        $this->expectExceptionMessage('start');
+        $this->polling->run(timeout: 0, maxIterations: 1);
+    }}
