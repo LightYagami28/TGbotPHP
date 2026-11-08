@@ -210,4 +210,5 @@ final class LongPollingTest extends TestCase
 
         $this->expectExceptionMessage('start');
         $this->polling->run(timeout: 0, maxIterations: 1);
-    }}
+    }
+}

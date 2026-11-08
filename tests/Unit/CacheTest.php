@@ -574,4 +574,5 @@ final class CacheTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $sessions->setSessionData($id, 'user_id', 8);
-    }}
+    }
+}

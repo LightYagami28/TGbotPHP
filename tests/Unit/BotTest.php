@@ -965,4 +965,5 @@ final class BotTest extends TestCase
         }
 
         self::assertSame(1, $seen);
-    }}
+    }
+}

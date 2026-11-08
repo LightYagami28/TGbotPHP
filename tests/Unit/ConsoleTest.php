@@ -242,4 +242,5 @@ final class ConsoleTest extends TestCase
         $errors = $this->readErrors();
         self::assertStringContainsString('bad\nline <redacted>', $errors);
         self::assertSame(1, substr_count($errors, "\n"));
-    }}
+    }
+}

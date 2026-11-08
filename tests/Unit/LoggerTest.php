@@ -136,4 +136,5 @@ final class LoggerTest extends TestCase
         $logger->log('verbose', 'custom level');
 
         self::assertSame(['[DEBUG] custom level'], $this->entries());
-    }}
+    }
+}
