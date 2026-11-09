@@ -66,8 +66,9 @@ class Logger
     public function log(string $level, string $message, array $context = []): void
     {
         $level = strtoupper($level);
+        $level = isset(self::LEVELS[$level]) ? $level : 'DEBUG';
 
-        if (!$this->enabled || (self::LEVELS[$level] ?? 0) < $this->minLevel) {
+        if (!$this->enabled || self::LEVELS[$level] < $this->minLevel) {
             return;
         }
 

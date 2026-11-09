@@ -186,6 +186,9 @@ final class CacheTest extends TestCase
 
     public function testFileCacheFilesAreOnlyReadableByTheOwner(): void
     {
+        if (PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('POSIX permissions are not Windows ACLs');
+        }
         // A directory created by someone else, with the default permissions
         $directory = self::$directory . '-perm';
         @mkdir($directory);
@@ -562,5 +565,14 @@ final class CacheTest extends TestCase
         } finally {
             RuntimeControls::reset();
         }
+    }
+
+    public function testSessionIdentityIsReserved(): void
+    {
+        $sessions = new SessionManager(new ArrayCache());
+        $id = $sessions->startSession(7);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $sessions->setSessionData($id, 'user_id', 8);
     }
 }

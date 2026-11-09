@@ -63,6 +63,9 @@ final class ApiClientTest extends TestCase
 
     public function testDebugLogIsCreatedPrivate(): void
     {
+        if (PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('POSIX permissions are not Windows ACLs');
+        }
         $log = sys_get_temp_dir() . '/tgbotphp-debug-' . bin2hex(random_bytes(4)) . '.log';
 
         try {

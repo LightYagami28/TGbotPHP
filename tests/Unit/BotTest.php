@@ -933,4 +933,37 @@ final class BotTest extends TestCase
         self::assertSame('null', $sawNext);
         self::assertTrue($handled);
     }
+
+    public function testUpdateIdMustBeANonNegativeInteger(): void
+    {
+        foreach (['"1"', '-1', '1.5', (string) PHP_INT_MAX] as $id) {
+            try {
+                UpdateParser::parse('{"update_id":' . $id . '}');
+                self::fail("update_id $id accepted");
+            } catch (\JsonException $e) {
+                self::assertStringContainsString('update_id', $e->getMessage());
+            }
+        }
+    }
+
+    public function testHandledErrorsAreRethrownWhenNotAcknowledged(): void
+    {
+        $bot = new Bot((new Config(Updates::TOKEN))->withHandlerErrorsAcknowledged(false), new FakeTransport());
+        $seen = 0;
+        $bot->onError(function () use (&$seen): void {
+            $seen++;
+        });
+        $bot->onUpdate('message', static function (): never {
+            throw new \RuntimeException('boom');
+        });
+
+        try {
+            $bot->handleUpdate(Updates::message('hi'));
+            self::fail('The error was swallowed');
+        } catch (\RuntimeException $e) {
+            self::assertSame('boom', $e->getMessage());
+        }
+
+        self::assertSame(1, $seen);
+    }
 }
