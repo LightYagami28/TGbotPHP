@@ -1,18 +1,22 @@
 # Files that belong to the repository, not to the documentation site.
 # They are read on GitHub, where they keep their own format.
+# A pattern with a leading slash matches the root of the repository only.
 
 # The landing page of the site replaces the readme.
-README.md
+/README.md
 
 # The project files: the wiki changelog and the links of the landing page
 # point to them on GitHub.
-CHANGELOG.md
-CONTRIBUTING.md
-SECURITY.md
-SPEC.md
-SUPPORT.md
-CODE_OF_CONDUCT.md
+/CHANGELOG.md
+/CONTRIBUTING.md
+/SECURITY.md
+/SPEC.md
+/SUPPORT.md
+/CODE_OF_CONDUCT.md
 
 # The sidebar and the footer of the GitHub wiki.
-wiki/_Sidebar.md
-wiki/_Footer.md
+/wiki/_Sidebar.md
+/wiki/_Footer.md
+
+# The home of the wiki: the landing page of the site replaces it.
+/wiki/Home.md

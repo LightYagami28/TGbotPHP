@@ -97,4 +97,4 @@ Third-party actions are pinned to commit SHAs and updated by Dependabot. Workflo
 
 ## Contributing
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md)
+See [CONTRIBUTING.md](https://github.com/LightYagami28/TGbotPHP/blob/main/CONTRIBUTING.md)
