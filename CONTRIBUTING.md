@@ -26,11 +26,11 @@ The documentation is published in three places, from the same Markdown:
 
 | Place | Source | Notes |
 | --- | --- | --- |
-| [GitHub Wiki](https://github.com/LightYagami28/TGbotPHP/wiki) | `wiki/` | Published by the `Wiki` workflow, without the frontmatter |
-| Docs7 site | `docs.json` | The navigation lists every page of `docs/` and `wiki/` |
-| Context7 | `context7.json` | The library indexed for the coding agents, with the rules of `context7.json` |
+| [GitHub Wiki](https://github.com/LightYagami28/TGbotPHP/wiki) | `wiki/` | Published by the `Wiki` workflow, without the front matter |
+| Documentation site | `docs.json` | The navigation lists every page of `docs/` and `wiki/` |
+| Context7 library | `context7.json` | The library indexed for the coding agents, with the rules of `context7.json` |
 
-The pages of `docs/` and `wiki/` start with a frontmatter that titles and
+The pages of `docs/` and `wiki/` start with a front matter that titles and
 describes them:
 
 ```yaml
@@ -42,7 +42,7 @@ icon: rocket
 ```
 
 The title replaces the level 1 heading of the page, so the body starts at the
-level 2 headings. GitHub shows the frontmatter as a plain block, so the root
-files of the repository keep their first heading and no frontmatter.
+level 2 headings. GitHub shows the front matter as a plain block, so the root
+files of the repository keep their first heading and no front matter.
 
 Report security problems privately, as described in [SECURITY.md](SECURITY.md).
