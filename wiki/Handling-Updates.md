@@ -1,4 +1,9 @@
-# Handling Updates
+---
+title: "Handling updates"
+description: "Command, text pattern, callback query and inline query handlers, handlers for any update type, the routing order and how to read payloads."
+icon: inbox
+---
+
 
 Telegram delivers everything that happens to your bot as an [update](https://core.telegram.org/bots/api#update): a message, a button press, a user joining a group, a payment... You register a handler for the updates you care about, and the bot calls it.
 

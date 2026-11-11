@@ -24,3 +24,8 @@ phpstan.neon
 Thumbs.db
 .php-cs-fixer.cache
 !.env.example
+
+# Docs7 local preview
+.docs7/
+.docs7-dev.log
+.docs7-dev.err

@@ -1,5 +1,5 @@
 # Support
 
-Per domande, bug o richieste usa le [issue](https://github.com/LightYagami28/TGbotPHP/issues) del repository.
+For questions, bugs or feature requests, use the repository [issues](https://github.com/LightYagami28/TGbotPHP/issues).
 
-Per segnalazioni di sicurezza vedi [SECURITY.md](SECURITY.md).
+For security reports, see [SECURITY.md](SECURITY.md).

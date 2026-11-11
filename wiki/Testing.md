@@ -1,4 +1,9 @@
-# Testing
+---
+title: "Testing"
+description: "BotTester, FakeUpdate, Telegram's answers, conversations and time, and the end-to-end tests against the real API."
+icon: vial
+---
+
 
 `TGbotPHP\Testing` ships with the library. With it you test your handlers the way you test the rest of your code: fast, offline, and without a real bot.
 

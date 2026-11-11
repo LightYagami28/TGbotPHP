@@ -1,4 +1,9 @@
-# Deployment
+---
+title: "Deployment"
+description: "Run TGbotPHP behind a webhook with Nginx and PHP-FPM, with systemd long polling or with Docker, and scale the state."
+icon: server
+---
+
 
 A bot receives updates in one of two ways:
 
@@ -17,7 +22,7 @@ Only `public/` (or wherever your entry point is) should be reachable over HTTP, 
 
 ### 2. Entry point
 
-`public/webhook.php` (see [`examples/webhook.php`](../examples/webhook.php) for a complete bot):
+`public/webhook.php` (see [`examples/webhook.php`](https://github.com/LightYagami28/TGbotPHP/blob/main/examples/webhook.php) for a complete bot):
 
 ```php
 <?php
@@ -136,7 +141,7 @@ sudo systemctl enable --now telegram-bot
 journalctl -u telegram-bot -f
 ```
 
-With the `pcntl` extension, handle `SIGTERM` to stop cleanly between updates (see [`examples/polling.php`](../examples/polling.php)).
+With the `pcntl` extension, handle `SIGTERM` to stop cleanly between updates (see [`examples/polling.php`](https://github.com/LightYagami28/TGbotPHP/blob/main/examples/polling.php)).
 
 ### Docker
 

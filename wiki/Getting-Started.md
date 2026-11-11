@@ -1,4 +1,9 @@
-# Getting Started
+---
+title: "Getting started"
+description: "Create a bot, install the library and run your first bot with long polling, then the same bot behind a webhook."
+icon: rocket
+---
+
 
 ## 1. Create a bot
 

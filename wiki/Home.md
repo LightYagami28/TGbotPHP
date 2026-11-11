@@ -1,4 +1,9 @@
-# TGbotPHP
+---
+title: "TGbotPHP"
+description: "What TGbotPHP is, why it exists, the requirements and the map of the guide."
+icon: house
+---
+
 
 TGbotPHP is a PHP library for the [Telegram Bot API](https://core.telegram.org/bots/api). It gives you a typed client for every API method and a small framework on top: routing, conversations, middleware, webhooks and long polling.
 

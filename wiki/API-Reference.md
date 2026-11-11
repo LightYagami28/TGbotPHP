@@ -1,4 +1,9 @@
-# API Reference
+---
+title: "API reference"
+description: "How to call the Telegram Bot API methods: parameters, results, formatting, file downloads and errors."
+icon: code
+---
+
 
 `Bot` extends `ApiClient`, which has a method for every method of the [Bot API](https://core.telegram.org/bots/api) (version 10.3). Use `ApiClient` alone when you only need to send messages, without handlers:
 

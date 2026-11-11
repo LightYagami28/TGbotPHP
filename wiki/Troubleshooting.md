@@ -1,4 +1,9 @@
-# Troubleshooting
+---
+title: "Troubleshooting"
+description: "The bot does not answer, webhook problems, conversations that forget the state, Telegram errors, uploads and downloads, and how to debug them."
+icon: triangle-exclamation
+---
+
 
 Start with the CLI: it checks the token and the webhook in seconds.
 

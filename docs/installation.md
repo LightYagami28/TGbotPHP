@@ -1,4 +1,9 @@
-# Installation Guide
+---
+title: "Installation"
+description: "Install TGbotPHP with Composer, get a bot token from BotFather, and run your first bot with long polling or a webhook."
+icon: download
+---
+
 
 ## Requirements
 
@@ -123,5 +128,5 @@ $bot = new Bot(new Config(
 
 - [API Reference](api-reference.md)
 - [Advanced Features](advanced.md)
-- [Examples](../examples)
+- [Examples](https://github.com/LightYagami28/TGbotPHP/tree/main/examples)
 - [Security Guide](../SECURITY.md)

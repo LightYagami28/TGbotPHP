@@ -1,4 +1,9 @@
-# Changelog
+---
+title: "Changelog"
+description: "The changes of every release, with the migration notes."
+icon: clock-rotate-left
+---
+
 
 The complete history, with migration notes, is in [CHANGELOG.md](https://github.com/LightYagami28/TGbotPHP/blob/main/CHANGELOG.md). Releases are published on the [releases page](https://github.com/LightYagami28/TGbotPHP/releases).
 

@@ -23,14 +23,28 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-    - name: Push wiki/ to the wiki repository
+    - name: Copy the pages without their frontmatter
+      run: |
+        pages="$RUNNER_TEMP/pages"
+        mkdir -p "$pages"
+        cp wiki/*.md "$pages/"
+        # The frontmatter titles the pages on the Docs7 site; the wiki shows
+        # its own title, so it is removed before publishing.
+        for page in "$pages"/*.md; do
+          awk '
+            NR == 1 && $0 == "---" { frontmatter = 1; next }
+            frontmatter == 1 && $0 == "---" { frontmatter = 0; next }
+            frontmatter == 0 { print }
+          ' "$page" > "$page.tmp" && mv "$page.tmp" "$page"
+        done
+    - name: Push the wiki pages to the wiki repository
       env:
         GH_TOKEN: ${{ github.token }}
         REPOSITORY: ${{ github.repository }}
       run: |
         wiki="$RUNNER_TEMP/wiki"
         git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.wiki.git" "$wiki"
-        rsync --archive --delete --exclude .git wiki/ "$wiki/"
+        rsync --archive --delete --exclude .git "$RUNNER_TEMP/pages/" "$wiki/"
         cd "$wiki"
         git add --all
         if git diff --cached --quiet; then

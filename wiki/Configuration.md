@@ -1,4 +1,9 @@
-# Configuration
+---
+title: "Configuration"
+description: "The Config object, the retry policy, the debug log, a local Bot API server, a custom HTTP transport, the BotBuilder and the command line tool."
+icon: sliders
+---
+
 
 ## Config
 
