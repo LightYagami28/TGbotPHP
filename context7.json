@@ -1,0 +1,42 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "url": "https://context7.com/lightyagami28/tgbotphp",
+  "public_key": "pk_CNDowHt2WCx9q2obOel6V",
+  "projectTitle": "TGbotPHP",
+  "description": "PHP framework for the Telegram Bot API: typed API client for every Bot API method, routing, middleware, conversations, webhooks, long polling, a tgbot CLI and a BotTester testing kit.",
+  "folders": [
+    "docs",
+    "wiki"
+  ],
+  "excludeFolders": [
+    "vendor",
+    "tests",
+    "tools",
+    "bin",
+    "examples",
+    ".github",
+    ".gitlab",
+    ".phpstan.cache",
+    ".phpunit.cache"
+  ],
+  "excludeFiles": [
+    "CHANGELOG.md",
+    "LICENSE",
+    "composer.lock",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "SPEC.md",
+    "CODEOWNERS",
+    ".markdownlint.json"
+  ],
+  "rules": [
+    "Build handlers on TGbotPHP\\Framework\\Bot: command(), hears(), callback(), inlineQuery(), state() and onUpdate(). Every handler receives the update payload first, then the Bot, then the data of the route.",
+    "Read the bot token from the TELEGRAM_BOT_TOKEN environment variable or from TGbotPHP\\Core\\Config, and keep it out of the source code.",
+    "Escape user-controlled text with TGbotPHP\\Utilities\\Formatter::escape() before sending it in HTML parse mode.",
+    "Upload local files with TGbotPHP\\Types\\InputFile; a plain string is sent as a file_id or as a URL.",
+    "Pass the optional parameters of a Bot API method in the trailing array $options, using the names from the official Telegram documentation.",
+    "Use TGbotPHP\\Core\\Config and its with*() methods for timeouts, retries, debug logging and webhook limits; the object is immutable.",
+    "Use TGbotPHP\\Testing\\BotTester and TGbotPHP\\Testing\\FakeUpdate to test handlers without network access.",
+    "Run webhooks with $bot->handle() and long polling with $bot->poll(); handle() never retries API calls so the worker can answer Telegram."
+  ]
+}

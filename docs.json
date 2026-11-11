@@ -1,0 +1,66 @@
+{
+  "$schema": "https://context7.com/schema/docs7.json",
+  "name": "TGbotPHP",
+  "colors": {
+    "primary": "#2AABEE"
+  },
+  "theme": "mint",
+  "filterSidebar": true,
+  "poweredByDocs7": true,
+  "feedback": {
+    "thumbsRating": true
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting started",
+        "pages": [
+          "index",
+          "docs/installation",
+          "wiki/Getting-Started"
+        ]
+      },
+      {
+        "group": "Guide",
+        "pages": [
+          "wiki/Handling-Updates",
+          "wiki/Keyboards-and-Callbacks",
+          "wiki/Conversations",
+          "wiki/Middleware-and-Events",
+          "wiki/Examples"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "docs/api-reference",
+          "wiki/API-Reference",
+          "wiki/Configuration",
+          "docs/advanced"
+        ]
+      },
+      {
+        "group": "Operations",
+        "pages": [
+          "docs/deployment",
+          "wiki/Deployment",
+          "wiki/Security-Guide",
+          "SECURITY",
+          "docs/testing",
+          "wiki/Testing",
+          "wiki/Troubleshooting",
+          "wiki/FAQ"
+        ]
+      },
+      {
+        "group": "Project",
+        "pages": [
+          "docs/architecture",
+          "docs/development",
+          "wiki/Upgrading-from-2.x",
+          "CHANGELOG"
+        ]
+      }
+    ]
+  }
+}

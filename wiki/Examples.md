@@ -1,4 +1,9 @@
-# Examples
+---
+title: "Examples"
+description: "Complete bots: a menu with pages, a feedback form, group moderation, inline search, selling with Telegram Stars and streaming an answer."
+icon: list
+---
+
 
 Complete bots you can copy. Each one runs with long polling (`$bot->poll()`); replace it with `$bot->handle()` behind a webhook. The repository's [`examples/`](https://github.com/LightYagami28/TGbotPHP/tree/main/examples) directory has two more.
 

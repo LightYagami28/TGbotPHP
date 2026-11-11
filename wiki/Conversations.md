@@ -1,4 +1,9 @@
-# Conversations
+---
+title: "Conversations"
+description: "Multi-step dialogs with a state per user, where the state is stored, concurrent updates, sessions and rate limiting."
+icon: comments
+---
+
 
 A conversation asks the user several questions in a row: a sign-up form, an order, a quiz. The bot keeps a **state** for each user in each chat, and routes their next message to the handler of that state.
 

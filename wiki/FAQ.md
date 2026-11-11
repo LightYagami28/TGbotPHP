@@ -1,4 +1,9 @@
-# FAQ
+---
+title: "FAQ"
+description: "The questions that come up most often: PHP version, dependencies, webhook or polling, Bot API support, update types, return values and sending messages on your own."
+icon: circle-question
+---
+
 
 **Which PHP version do I need?**
 PHP 8.5 or later, with the `curl` and `json` extensions. The library is tested on 8.5 and the development version of 8.6.
