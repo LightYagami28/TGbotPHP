@@ -5,7 +5,7 @@ PHP library for the [Telegram Bot API](https://core.telegram.org/bots/api), with
 [![Tests](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml)
 [![Code Analysis](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml)
 [![PHP](https://img.shields.io/badge/PHP-8.5%2B-777bb4)](https://www.php.net/)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue)](https://github.com/LightYagami28/TGbotPHP/blob/main/LICENSE)
 
 Fork of [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotPHP).
 
@@ -50,7 +50,7 @@ $bot->poll();      // long polling
 // Webhook: set secretToken first (examples/webhook.php), then $bot->handle();
 ```
 
-[`examples/`](examples) has a [long polling bot](examples/polling.php) and a [webhook bot](examples/webhook.php) with conversations and rate limiting.
+[`examples/`](https://github.com/LightYagami28/TGbotPHP/tree/main/examples) has a [long polling bot](https://github.com/LightYagami28/TGbotPHP/blob/main/examples/polling.php) and a [webhook bot](https://github.com/LightYagami28/TGbotPHP/blob/main/examples/webhook.php) with conversations and rate limiting.
 
 ## What it covers
 
@@ -65,7 +65,7 @@ $bot->poll();      // long polling
 
 ## Configuration
 
-The examples, `docker-compose.yml` and the guides read these environment variables (names only, see [`.env.example`](.env.example)):
+The examples, `docker-compose.yml` and the guides read these environment variables (names only, see [`.env.example`](https://github.com/LightYagami28/TGbotPHP/blob/main/.env.example)):
 
 | Variable | Needed for | Meaning |
 |---|---|---|
@@ -129,4 +129,4 @@ End-to-end tests against the real API are described in [docs/testing.md](docs/te
 
 ## License
 
-Apache License 2.0, see [LICENSE](LICENSE). This project is a fork of [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotPHP), released under the same license.
+Apache License 2.0, see [LICENSE](https://github.com/LightYagami28/TGbotPHP/blob/main/LICENSE). This project is a fork of [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotPHP), released under the same license.
