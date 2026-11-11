@@ -45,7 +45,6 @@
           "docs/deployment",
           "wiki/Deployment",
           "wiki/Security-Guide",
-          "SECURITY",
           "docs/testing",
           "wiki/Testing",
           "wiki/Troubleshooting",
@@ -58,7 +57,7 @@
           "docs/architecture",
           "docs/development",
           "wiki/Upgrading-from-2.x",
-          "CHANGELOG"
+          "wiki/Changelog"
         ]
       }
     ]

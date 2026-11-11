@@ -66,6 +66,6 @@ Telegram requires HTTPS for webhooks. Only disable `Config::$enforceHttps` for a
 
 ## Dependencies
 
-TGbotPHP has no runtime dependencies. Version updates for Composer, GitHub Actions and Docker are configured in [`.github/dependabot.yml`](.github/dependabot.yml). `composer audit` runs in CI.
+TGbotPHP has no runtime dependencies. Version updates for Composer, GitHub Actions and Docker are configured in [`.github/dependabot.yml`](https://github.com/LightYagami28/TGbotPHP/blob/main/.github/dependabot.yml). `composer audit` runs in CI.
 
 Dependabot security updates, the pull requests that fix known vulnerabilities, are a repository setting. An administrator enables them under **Settings → Code security → Dependabot**: Dependency graph, Dependabot alerts, and Dependabot security updates. This file cannot turn that setting on. Once it is on, `dependabot.yml` also limits which ecosystems those security updates cover.

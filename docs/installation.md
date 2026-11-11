@@ -129,4 +129,4 @@ $bot = new Bot(new Config(
 - [API Reference](api-reference.md)
 - [Advanced Features](advanced.md)
 - [Examples](https://github.com/LightYagami28/TGbotPHP/tree/main/examples)
-- [Security Guide](../SECURITY.md)
+- [Security Guide](https://github.com/LightYagami28/TGbotPHP/blob/main/SECURITY.md)
