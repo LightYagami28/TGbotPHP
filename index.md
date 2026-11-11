@@ -60,7 +60,7 @@ The examples, `docker-compose.yml` and the guides read these environment variabl
 | `TELEGRAM_BOT_USERNAME` | optional | Username used to match `/command@bot` in groups |
 | `OWNER_CHAT_ID` | wiki example only | Chat that receives the example's notifications |
 
-Everything else (API server URL, timeout, retries, debug log, webhook body limit) is set with the `TGbotPHP\Core\Config` constructor, see [Configuration](wiki/Configuration) and [Advanced usage](docs/advanced).
+Everything else (API server URL, timeout, retries, debug log, webhook body limit) is set with the `TGbotPHP\Core\Config` constructor, see [Configuration](wiki/Configuration.md) and [Advanced usage](docs/advanced.md).
 
 ## The command line tool
 
@@ -72,17 +72,17 @@ vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TE
 
 ## Where to go next
 
-- [Getting started](wiki/Getting-Started): install the library and run your first bot
-- [Handling updates](wiki/Handling-Updates): commands, patterns, buttons and the routing order
-- [Keyboards and callbacks](wiki/Keyboards-and-Callbacks): build the buttons and read the presses
-- [Conversations](wiki/Conversations): multi-step dialogs with state per user
-- [Middleware and events](wiki/Middleware-and-Events): run code around every update
-- [API reference](docs/api-reference): every method, the `Config` options, the exceptions and the utilities
-- [Deployment](docs/deployment): webhook, systemd, Docker
-- [Security guide](wiki/Security-Guide): the token, webhook secrets, user input and Mini Apps
-- [Testing](docs/testing): `BotTester`, `FakeUpdate` and the end-to-end suite
-- [Troubleshooting](wiki/Troubleshooting): what to check when the bot does not answer
-- [FAQ](wiki/FAQ): the questions that come up most often
+- [Getting started](wiki/Getting-Started.md): install the library and run your first bot
+- [Handling updates](wiki/Handling-Updates.md): commands, patterns, buttons and the routing order
+- [Keyboards and callbacks](wiki/Keyboards-and-Callbacks.md): build the buttons and read the presses
+- [Conversations](wiki/Conversations.md): multi-step dialogs with state per user
+- [Middleware and events](wiki/Middleware-and-Events.md): run code around every update
+- [API reference](docs/api-reference.md): every method, the `Config` options, the exceptions and the utilities
+- [Deployment](docs/deployment.md): webhook, systemd, Docker
+- [Security guide](wiki/Security-Guide.md): the token, webhook secrets, user input and Mini Apps
+- [Testing](docs/testing.md): `BotTester`, `FakeUpdate` and the end-to-end suite
+- [Troubleshooting](wiki/Troubleshooting.md): what to check when the bot does not answer
+- [FAQ](wiki/FAQ.md): the questions that come up most often
 
 ## Project
 
