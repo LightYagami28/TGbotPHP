@@ -1,81 +1,202 @@
-# Specification
+# SPEC: TGbotPHP
 
-## Purpose
+## Obiettivo
 
-TGbotPHP is a PHP library (Composer package `lightyagami28/tgbotphp`, namespace `TGbotPHP\`) for building Telegram bots on the [Bot API](https://core.telegram.org/bots/api). It provides a typed API client, update routing, middleware, conversations, webhook and long polling runners, and test helpers. It has no runtime dependencies beyond `ext-curl` and `ext-json`.
+TGbotPHP è finito quando la libreria PHP (pacchetto Composer
+`lightyagami28/tgbotphp`, namespace `TGbotPHP\`) copre tutti i metodi e i tipi
+di aggiornamento dell'ultima versione della Bot API di Telegram, con coverage di
+riga al 100%, PHPStan livello 10 senza errori, zero avvisi nei test e
+documentazione allineata al codice. Non ha dipendenze a runtime oltre a
+`ext-curl` e `ext-json`.
 
-## Features
+## Stato attuale verificato
 
-- Every Bot API 10.3 method, with parameter names and result types checked against the official documentation by `BotApiCoverageTest`; `call()` for methods added later.
-- File upload (`InputFile`, albums, stickers) and `downloadFile()`.
-- Routing of commands (with `/cmd@bot` and deep-link payload), text patterns, callbacks, inline queries and any update type.
-- Middleware pipeline, event dispatcher, plugins, per-user sessions and multi-step conversations.
-- Webhook runner (`handle()`) and long polling runner (`poll()`), with backoff on errors.
-- Typed exceptions, 429 handling with `retry_after`, configurable retry policy.
-- Security helpers: secret token, Telegram IP ranges, Mini App `initData` validation, escaping, rate limiting, log redaction.
-- Testing with `BotTester`, `FakeUpdate` and `FakeTransport`, without network.
-- CLI `bin/tgbot`: `webhook:info`, `webhook:set`, `webhook:delete`, `bot:info`, `bot:test`, `commands:list`, `commands:delete`.
+Letto dai file il 2026-11-11, ramo `main`. Repo pubblico, licenza Apache-2.0,
+fork di OpenTelegramFiles/TGbotPHP.
 
-## Architecture
+| Componente | Valore | File |
+| --- | --- | --- |
+| PHP | `>=8.5` (CI su 8.5; 8.6 sperimentale e non bloccante) | `composer.json`, `.github/workflows/tests.yml` |
+| Estensioni | `curl`, `json` obbligatorie; `sodium` facoltativa | `composer.json` |
+| Bot API coperta | 10.3 | `tools/bot-api.json` |
+| PHPUnit | ^13.4 | `composer.json` |
+| PHPStan | ^2.3, livello 10 (+ phpstan-phpunit ^2.1, phpstan-strict-rules ^2.1) | `composer.json`, `phpstan.neon.dist` |
+| Stile del codice | PER-CS 2.0 con php-cs-fixer | `.php-cs-fixer.dist.php`, `lint.yml` |
+| Docker | `php:8.5-cli`, multi-stage, utente non root | `Dockerfile` |
+| actions/checkout | v7.0.1 (SHA) | `tests.yml` |
+| shivammathur/setup-php | 2.40.0 (SHA) | `tests.yml` |
 
-Three layers, see [docs/architecture.md](docs/architecture.md):
+Workflow presenti: `tests` (PHPUnit), `analysis` (PHPStan), `lint`
+(php-cs-fixer, actionlint, zizmor), `security` (push, PR e ogni giorno alle
+05:17), `bot-api` (ogni lunedì alle 06:17), `docker`, `e2e` (solo manuale,
+contro la API reale), `release` (tag `v*.*.*`), `wiki`, `sonar-linux` (push e
+PR), `sonar-macos` e `sonar-windows` (solo manuali). Dependabot:
+`github-actions`, `composer`, `docker`.
 
-1. `Framework\Bot` (facade), `Kernel`, `Router`, `MiddlewarePipeline`, `EventDispatcher`, runners `WebhookHandler` and `LongPolling`.
-2. `Core\ApiClient` with one trait per API area in `Methods\`, and `Traits\HttpClientTrait` (encoding, error mapping, retries).
-3. `Http\TransportInterface`, implemented by `CurlTransport`; the only I/O boundary, replaced by `Testing\FakeTransport` in tests.
+PHPUnit è configurato con `failOnWarning`, `failOnDeprecation`, `failOnNotice`,
+`failOnRisky`. La suite predefinita è `unit` (`tests/Unit`, 17 file); la suite
+`e2e` richiede `TELEGRAM_BOT_TOKEN`.
 
-## Main flows
+Verifica eseguita il 2026-11-11 con PHP 8.5.12 su Windows: `composer validate
+--strict` valido; `composer phpstan` riporta «No errors»; `composer test`
+riporta 528 test e 1767 asserzioni con 2 errori, 3 fallimenti e 2 test saltati.
+I 5 casi che falliscono riguardano permessi di cartelle e file in sola lettura
+(`CacheTest`, `LoggerTest`) e copie da file locali (`ApiClientTest`,
+`FullCoverageTest`): sembrano dipendere da permessi POSIX e percorsi di Linux
+(causa da confermare), dove gira la CI (esito verde su Linux da confermare). La
+coverage al 100% non è stata misurata in questa revisione.
 
-- **Outgoing call:** a method trait builds the parameters, `HttpClientTrait` encodes them (JSON or multipart when files are present), the transport sends the request, the response is decoded whatever the HTTP status, errors become typed exceptions, the result is checked against the declared type.
-- **Webhook:** `handle()` checks method, secret token (constant time) and body size, parses the update, runs the `Kernel`, answers 200 (or 500 if `acknowledgeHandlerErrors` is false).
-- **Long polling:** `poll()` calls `getUpdates` with an offset, runs each update through the `Kernel`, backs off on network errors and 429.
-- **Update handling:** events, then middleware, then the first matching route, then conversation state if one is active for the user and chat.
+Note sulla struttura: la guida utente è nella cartella `wiki/` (pubblicata dal
+workflow `wiki`); la documentazione tecnica è in `docs/`. I due insiemi vanno
+tenuti coerenti (requisito 12).
 
-## Data model
+## Architettura
 
-- Updates and API results are decoded as `stdClass` objects, as Telegram sends them; `Support\Value` and `Support\Payload` give typed reads.
-- `Core\Config` is immutable (readonly): token, secret token, API base URL, HTTPS enforcement, timeout, `RetryPolicy`, debug log, `allowUnauthenticatedWebhook`, `maxWebhookBodyBytes`, `acknowledgeHandlerErrors`, `localFileRoot`.
-- State (sessions, conversations, rate limits) lives behind `Cache\CacheInterface`: `ArrayCache` (process memory) or `FileCache` (files readable only by the owner, no object deserialization).
+Tre livelli (dettaglio in `docs/architecture.md`):
 
-## Interfaces
+1. `Framework\Bot` (facciata), `Kernel`, `Router`, `MiddlewarePipeline`,
+   `EventDispatcher`, runner `WebhookHandler` e `LongPolling`.
+2. `Core\ApiClient` con un trait per area della API in `Methods\` e
+   `Traits\HttpClientTrait` (codifica, mappatura errori, ripetizioni).
+3. `Http\TransportInterface`, implementata da `CurlTransport`: è l'unico confine
+   di I/O ed è sostituita da `Testing\FakeTransport` nei test.
 
-- Public PHP API: `Bot`, `ApiClient`, `Config`, `Keyboard`, `InlineKeyboard`, `Formatter`, `InputFile`, `RateLimiter`, `WebhookValidator`, `BotTester`. Reference in [docs/api-reference.md](docs/api-reference.md).
-- Extension points: `TransportInterface`, `CacheInterface`, `PluginInterface`, `BotPluginInterface`, middleware callables.
-- Environment variables used by examples and Docker: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_SECRET_TOKEN`, `TELEGRAM_BOT_USERNAME` (see [.env.example](.env.example)).
-- Network: outgoing HTTPS to the Bot API server (default `https://api.telegram.org`); incoming HTTPS webhook requests from Telegram.
+Altre cartelle di `src/`: `CLI` (`bin/tgbot`), `Cache`, `Exceptions`, `Plugin`,
+`Rate`, `Security`, `Session`, `Support`, `Testing`, `Types`, `Utilities`.
 
-## Stack and versions
+Flussi:
 
-| Component | Version |
-|---|---|
-| PHP | 8.5 or later (CI on 8.5, 8.6 experimental) |
-| Extensions | `curl`, `json`; `sodium` optional (Mini App validation without the token) |
-| PHPUnit | ^13.4 |
-| PHPStan | ^2.3 (+ phpstan-phpunit ^2.1, phpstan-strict-rules ^2.1), level 10 |
-| Code style | PER-CS 2.0 with php-cs-fixer |
-| Docker | `php:8.5-cli`, multi-stage, non-root user |
-| GitHub Actions | pinned by commit SHA with the tag in a comment; Dependabot updates them weekly |
+- Chiamata in uscita: un trait di metodo costruisce i parametri,
+  `HttpClientTrait` li codifica (JSON o multipart se ci sono file), il transport
+  invia la richiesta, la risposta è decodificata qualunque sia lo stato HTTP,
+  gli errori diventano eccezioni tipizzate, il risultato è confrontato con il
+  tipo dichiarato.
+- Webhook: `handle()` controlla metodo, secret token (confronto a tempo
+  costante) e dimensione del corpo, analizza l'aggiornamento, lo passa al
+  `Kernel`, risponde 200 (o 500 se `acknowledgeHandlerErrors` è falso).
+- Long polling: `poll()` chiama `getUpdates` con un offset, passa ogni
+  aggiornamento al `Kernel`, rallenta con backoff in caso di errori di rete e
+  429.
+- Gestione dell'aggiornamento: eventi, poi middleware, poi la prima route
+  corrispondente, poi lo stato della conversazione se ce n'è una attiva per
+  utente e chat.
 
-## Security
+Dati:
 
-See [SECURITY.md](SECURITY.md). Summary: webhooks without a secret are refused; token format validated; HTTPS and TLS verification enforced by default; no redirects; uploads only through explicit `InputFile`; secrets redacted from logs; log injection prevented; containers run read-only, without capabilities, as a non-root user. Secrets only through environment variables, never in files.
+- Aggiornamenti e risultati sono oggetti `stdClass`, come li invia Telegram;
+  `Support\Value` e `Support\Payload` danno letture tipizzate.
+- `Core\Config` è immutabile (readonly): token, secret token, URL base della
+  API, obbligo di HTTPS, timeout, `RetryPolicy`, log di debug,
+  `allowUnauthenticatedWebhook`, `maxWebhookBodyBytes`,
+  `acknowledgeHandlerErrors`, `localFileRoot`.
+- Lo stato (sessioni, conversazioni, limiti di frequenza) sta dietro
+  `Cache\CacheInterface`: `ArrayCache` (memoria del processo) o `FileCache`
+  (file leggibili solo dal proprietario, nessuna deserializzazione di oggetti).
 
-## Known limits
+Interfacce:
 
-- No built-in persistence beyond `FileCache`; running several instances needs a shared `CacheInterface` implementation.
-- `ArrayCache` loses state on restart and does not work across PHP-FPM requests.
-- Updates and results are `stdClass`, not generated typed classes.
-- Some file-permission tests assume POSIX and fail on Windows.
-- Telegram limits (rate, file size) apply and are not enforced locally except by `RateLimiter` per user.
-- SonarCloud: coverage comes from the PHPUnit Clover report (`coverage.xml`),
-  uploaded by the "SonarCloud Linux" workflow (Windows and macOS variants run on
-  demand) when the `SONAR_TOKEN` secret exists. `bin/`, `examples/` and `tools/`
-  are excluded from coverage (`sonar.coverage.exclusions`): entry points,
-  samples and maintenance scripts outside the unit suite.
+- API PHP pubblica: `Bot`, `ApiClient`, `Config`, `Keyboard`, `InlineKeyboard`,
+  `Formatter`, `InputFile`, `RateLimiter`, `WebhookValidator`, `BotTester`
+  (riferimento in `docs/api-reference.md`).
+- Punti di estensione: `TransportInterface`, `CacheInterface`,
+  `PluginInterface`, `BotPluginInterface`, middleware come callable.
+- Variabili d'ambiente di esempi e Docker: `TELEGRAM_BOT_TOKEN`,
+  `TELEGRAM_SECRET_TOKEN`, `TELEGRAM_BOT_USERNAME` (vedi `.env.example`).
+- Rete: HTTPS in uscita verso il server della Bot API (predefinito
+  `https://api.telegram.org`); richieste HTTPS in ingresso dal webhook di
+  Telegram.
+- CLI `bin/tgbot`: `webhook:info`, `webhook:set`, `webhook:delete`, `bot:info`,
+  `bot:test`, `commands:list`, `commands:delete`.
+
+## Requisiti funzionali
+
+1. Ogni metodo e tipo di aggiornamento della Bot API 10.3 è presente, con nomi e
+   tipi dei parametri uguali alla documentazione ufficiale; `call()` copre i
+   metodi futuri. Accettazione: `tests/Unit/BotApiCoverageTest.php` passa contro
+   `tools/bot-api.json`.
+2. Invio di file (`InputFile`, album, sticker) e `downloadFile()`. Accettazione:
+   `ApiClientTest` passa; i caricamenti passano solo da `InputFile` esplicito.
+3. Routing di comandi (anche `/cmd@bot` e payload deep-link), pattern di testo,
+   callback, inline query e qualsiasi tipo di aggiornamento. Accettazione:
+   `BotTest` passa.
+4. Pipeline di middleware, dispatcher di eventi, plugin, sessioni per utente,
+   conversazioni a più passi. Accettazione: `BotTest`, `PluginManagerTest`,
+   `CacheTest` passano.
+5. Runner webhook (`handle()`) e long polling (`poll()`) con backoff.
+   Accettazione: `LongPollingTest` e `BotTest` passano.
+6. Eccezioni tipizzate, gestione 429 con `retry_after`, politica di ripetizione
+   configurabile. Accettazione: `ApiClientTest` passa.
+7. Helper di sicurezza: secret token, intervalli IP di Telegram, validazione
+   `initData` delle Mini App, escaping, limite di frequenza, redazione dei log.
+   Accettazione: `SecurityTest`, `LoggerTest` passano.
+8. Strumenti di test senza rete: `BotTester`, `FakeUpdate`, `FakeTransport`.
+   Accettazione: `TestingKitTest` passa.
+9. CLI `bin/tgbot` con i comandi elencati. Accettazione: `ConsoleTest` passa.
+10. Un webhook senza secret token è rifiutato (403) salvo
+    `allowUnauthenticatedWebhook`. Accettazione: test in `BotTest` o
+    `SecurityTest`.
+11. Allineamento a nuove versioni della Bot API. Accettazione: il workflow
+    `bot-api` segnala le differenze rispetto a `tools/bot-api.json`; `php
+    tools/bot-api-spec.php > tools/bot-api.json` aggiorna lo schema e
+    `BotApiCoverageTest` torna verde.
+12. La documentazione cita solo funzioni, classi e comandi esistenti.
+    Accettazione: `tests/Unit/DocumentationTest.php` passa.
+
+## Requisiti non funzionali
+
+- Sicurezza (vedi `SECURITY.md`): webhook senza segreto rifiutati, formato del
+  token validato, HTTPS e verifica TLS di default, nessun redirect, upload solo
+  da `InputFile`, segreti rimossi dai log, nessuna iniezione nei log, container
+  in sola lettura senza capability e senza root, segreti solo da variabili
+  d'ambiente. Scansione segreti con gitleaks (`.gitleaks.toml`).
+- Prestazioni: nessuna dipendenza a runtime; uno stesso processo gestisce
+  aggiornamenti in sequenza; più istanze richiedono una `CacheInterface`
+  condivisa.
+- Privacy: la libreria non salva dati personali oltre a sessioni e conversazioni
+  nella cache scelta dall'utente.
+- Qualità: coverage di riga 100% su `src/` (CI: ogni riga deve essere coperta),
+  PHPStan livello 10, stile PER-CS 2.0, zero avvisi PHPUnit, SonarCloud A/A/A e
+  hotspot A, dipendenze e azioni all'ultima versione (Dependabot).
+- Compatibilità: i test con permessi di file assumono POSIX e falliscono su
+  Windows; la suite si esegue su Linux, WSL o Docker.
 
 ## Roadmap
 
-- Follow new Bot API releases (the coverage test flags differences).
-- Typed value objects for updates and results.
-- Cache backends for shared storage (Redis, database).
-- PHP 8.6 as a required CI target when it is stable.
+1. Misurare lo stato (test, PHPStan, coverage) e annotare l'esito.
+2. Seguire ogni nuova release della Bot API (il test di copertura segnala le
+   differenze).
+3. Valutare classi tipizzate per aggiornamenti e risultati al posto di
+   `stdClass`.
+4. Backend di cache condivisi (Redis, database).
+5. Rendere PHP 8.6 un target obbligatorio della CI quando sarà stabile.
+
+## Fuori ambito
+
+- Persistenza oltre `FileCache` (serve un'implementazione di `CacheInterface`
+  dell'utente).
+- Limiti di Telegram (frequenza, dimensione file): non sono imposti localmente,
+  tranne `RateLimiter` per utente.
+- Esecuzione dei test di permessi su Windows.
+
+## Decisioni aperte per il proprietario
+
+- Coverage Sonar: `bin/`, `examples/` e `tools/` sono esclusi da
+  `sonar.coverage.exclusions`; mantenere l'esclusione o scrivere test.
+- Passare agli oggetti tipizzati per gli aggiornamenti (rottura di
+  compatibilità).
+- Pubblicazione su Packagist e politica di versionamento (da confermare).
+
+## Come verificare
+
+```bash
+composer validate --strict
+composer install --no-interaction --no-progress
+composer test          # PHPUnit, suite unit
+composer phpstan       # livello 10 con regole strict
+vendor/bin/php-cs-fixer check --diff   # stile (richiede php-cs-fixer installato)
+vendor/bin/phpunit --coverage-clover coverage.xml   # richiede pcov o xdebug
+php tools/coverage-check.php coverage.xml 100       # come in CI: fallisce sotto il 100%
+```
+
+CI: `Tests`, `Code Analysis`, `Lint`, `Security`, `SonarCloud Linux`. I test
+end-to-end contro la API reale sono manuali (`docs/testing.md`).
