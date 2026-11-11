@@ -1,42 +1,42 @@
 version: 2
 updates:
-- package-ecosystem: github-actions
-  directory: /
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 20
-  groups:
-    minori-e-patch:
-      update-types:
-      - minor
-      - patch
-- package-ecosystem: composer
-  directory: /
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 20
-  groups:
-    minori-e-patch:
-      update-types:
-      - minor
-      - patch
-- package-ecosystem: docker
-  directory: /
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 20
-  groups:
-    minori-e-patch:
-      update-types:
-      - minor
-      - patch
-- package-ecosystem: docker-compose
-  directory: C:/Program Files/Git/
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 20
-  groups:
-    minori-e-patch:
-      update-types:
-      - minor
-      - patch
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 20
+    groups:
+      minori-e-patch:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 20
+    groups:
+      minori-e-patch:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 20
+    groups:
+      minori-e-patch:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 20
+    groups:
+      minori-e-patch:
+        update-types:
+          - minor
+          - patch
