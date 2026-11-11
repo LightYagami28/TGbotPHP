@@ -3,7 +3,9 @@ title: "TGbotPHP"
 description: "PHP framework for the Telegram Bot API with a typed API client, routing, middleware, conversations, webhooks and long polling."
 ---
 
-TGbotPHP is a PHP library for the [Telegram Bot API](https://core.telegram.org/bots/api). It gives you a typed client for every API method and a small framework on top: routing, conversations, middleware, webhooks and long polling.
+TGbotPHP is a PHP library for the [Telegram Bot API](https://core.telegram.org/bots/api).
+It gives you a typed client for every API method and a small framework on top:
+routing, conversations, middleware, webhooks and long polling.
 
 ```php
 use TGbotPHP\Framework\Bot;
@@ -39,7 +41,7 @@ composer require lightyagami28/tgbotphp
 ## What it covers
 
 | Area | What you get |
-|---|---|
+| --- | --- |
 | API client | Every method of Bot API 10.3, `call()` for methods Telegram adds later, and an `$options` array on sending methods for optional parameters |
 | Files | `InputFile` uploads local files or in-memory contents, including albums and sticker sets, and `downloadFile()` fetches them back |
 | Routing | Commands (including `/cmd@bot` and deep-link payloads), text patterns, callback and inline query patterns (exact, `prefix:*` or a regex), and handlers for any update type |
@@ -51,16 +53,19 @@ composer require lightyagami28/tgbotphp
 
 ## Configuration
 
-The examples, `docker-compose.yml` and the guides read these environment variables (names only, see `.env.example`):
+The examples, `docker-compose.yml` and the guides read these environment
+variables (names only, see `.env.example`):
 
 | Variable | Needed for | Meaning |
-|---|---|---|
+| --- | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | always | Bot token from @BotFather |
 | `TELEGRAM_SECRET_TOKEN` | webhook | Secret Telegram sends in `X-Telegram-Bot-Api-Secret-Token`; without it `handle()` answers 403 |
 | `TELEGRAM_BOT_USERNAME` | optional | Username used to match `/command@bot` in groups |
 | `OWNER_CHAT_ID` | wiki example only | Chat that receives the example's notifications |
 
-Everything else (API server URL, timeout, retries, debug log, webhook body limit) is set with the `TGbotPHP\Core\Config` constructor, see [Configuration](wiki/Configuration.md) and [Advanced usage](docs/advanced.md).
+Everything else (API server URL, timeout, retries, debug log, webhook body
+limit) is set with the `TGbotPHP\Core\Config` constructor, see
+[Configuration](wiki/Configuration.md) and [Advanced usage](docs/advanced.md).
 
 ## The command line tool
 
@@ -72,21 +77,21 @@ vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TE
 
 ## Where to go next
 
-- [Getting started](wiki/Getting-Started.md): install the library and run your first bot
-- [Handling updates](wiki/Handling-Updates.md): commands, patterns, buttons and the routing order
-- [Keyboards and callbacks](wiki/Keyboards-and-Callbacks.md): build the buttons and read the presses
-- [Conversations](wiki/Conversations.md): multi-step dialogs with state per user
-- [Middleware and events](wiki/Middleware-and-Events.md): run code around every update
-- [API reference](docs/api-reference.md): every method, the `Config` options, the exceptions and the utilities
+- [Getting started](wiki/Getting-Started.md): the first bot
+- [Handling updates](wiki/Handling-Updates.md): commands, patterns, buttons
+- [Keyboards and callbacks](wiki/Keyboards-and-Callbacks.md): the buttons
+- [Conversations](wiki/Conversations.md): multi-step dialogs
+- [Middleware and events](wiki/Middleware-and-Events.md): code around updates
+- [API reference](docs/api-reference.md): every method and option
 - [Deployment](docs/deployment.md): webhook, systemd, Docker
-- [Security guide](wiki/Security-Guide.md): the token, webhook secrets, user input and Mini Apps
-- [Testing](docs/testing.md): `BotTester`, `FakeUpdate` and the end-to-end suite
-- [Troubleshooting](wiki/Troubleshooting.md): what to check when the bot does not answer
+- [Security guide](wiki/Security-Guide.md): the token, secrets, user input
+- [Testing](docs/testing.md): `BotTester` and the end-to-end suite
+- [Troubleshooting](wiki/Troubleshooting.md): when the bot does not answer
 - [FAQ](wiki/FAQ.md): the questions that come up most often
 
 ## Project
 
-- [Security policy](SECURITY.md): how to report a vulnerability and the built-in protections
+- [Security policy](SECURITY.md): how to report a vulnerability
 - [Changelog](CHANGELOG.md): the full history with migration notes
 - [Contributing](CONTRIBUTING.md): how to propose a change
 - [Support](SUPPORT.md): where to ask questions
