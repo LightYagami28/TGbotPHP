@@ -3,65 +3,65 @@
 # versioning-strategy: increase alza anche i range nel manifest all'ultima versione.
 version: 2
 updates:
-- package-ecosystem: github-actions
-  directory: /
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 20
-  commit-message:
-    prefix: dipendenze(github-actions)
-  groups:
-    minori-e-patch:
-      update-types:
-      - minor
-      - patch
-    major:
-      update-types:
-      - major
-- package-ecosystem: composer
-  directory: /
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 20
-  versioning-strategy: increase
-  commit-message:
-    prefix: dipendenze(composer)
-    prefix-development: dipendenze-sviluppo(composer)
-  groups:
-    minori-e-patch:
-      update-types:
-      - minor
-      - patch
-    major:
-      update-types:
-      - major
-- package-ecosystem: docker
-  directory: /
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 20
-  commit-message:
-    prefix: dipendenze(docker)
-  groups:
-    minori-e-patch:
-      update-types:
-      - minor
-      - patch
-    major:
-      update-types:
-      - major
-- package-ecosystem: docker-compose
-  directory: /
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 20
-  commit-message:
-    prefix: dipendenze(docker-compose)
-  groups:
-    minori-e-patch:
-      update-types:
-      - minor
-      - patch
-    major:
-      update-types:
-      - major
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 20
+    commit-message:
+      prefix: dipendenze(github-actions)
+    groups:
+      minori-e-patch:
+        update-types:
+          - minor
+          - patch
+      major:
+        update-types:
+          - major
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 20
+    versioning-strategy: increase
+    commit-message:
+      prefix: dipendenze(composer)
+      prefix-development: dipendenze-sviluppo(composer)
+    groups:
+      minori-e-patch:
+        update-types:
+          - minor
+          - patch
+      major:
+        update-types:
+          - major
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 20
+    commit-message:
+      prefix: dipendenze(docker)
+    groups:
+      minori-e-patch:
+        update-types:
+          - minor
+          - patch
+      major:
+        update-types:
+          - major
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 20
+    commit-message:
+      prefix: dipendenze(docker-compose)
+    groups:
+      minori-e-patch:
+        update-types:
+          - minor
+          - patch
+      major:
+        update-types:
+          - major
