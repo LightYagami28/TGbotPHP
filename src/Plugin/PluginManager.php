@@ -109,7 +109,10 @@ class PluginManager
             $remaining = [];
 
             foreach ($priorities as $priority => $callbacks) {
-                $kept = array_values(array_filter($callbacks, static fn(array $entry): bool => $entry['owner'] !== $name));
+                $kept = array_values(array_filter(
+                    $callbacks,
+                    static fn(array $entry): bool => $entry['owner'] !== $name,
+                ));
 
                 if ($kept !== []) {
                     $remaining[$priority] = $kept;
@@ -118,9 +121,11 @@ class PluginManager
 
             if ($remaining === []) {
                 unset($this->hooks[$hook]);
-            } else {
-                $this->hooks[$hook] = $remaining;
+
+                continue;
             }
+
+            $this->hooks[$hook] = $remaining;
         }
     }
 }

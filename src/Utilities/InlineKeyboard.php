@@ -44,7 +44,10 @@ final class InlineKeyboard implements JsonSerializable
 
     public function switchInline(string $text, string $query = '', bool $currentChat = false): self
     {
-        $this->current[] = ['text' => $text, $currentChat ? 'switch_inline_query_current_chat' : 'switch_inline_query' => $query];
+        $this->current[] = [
+            'text' => $text,
+            $currentChat ? 'switch_inline_query_current_chat' : 'switch_inline_query' => $query,
+        ];
         return $this;
     }
 

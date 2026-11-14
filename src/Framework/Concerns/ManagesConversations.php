@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Framework\Concerns;
 
+use LogicException;
 use stdClass;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Framework\Kernel;
@@ -28,7 +29,7 @@ trait ManagesConversations
     public function conversations(): ConversationManager
     {
         return $this->kernel()->conversations()
-            ?? throw new \LogicException('Conversations are disabled: call useConversations() first');
+            ?? throw new LogicException('Conversations are disabled: call useConversations() first');
     }
 
     /**

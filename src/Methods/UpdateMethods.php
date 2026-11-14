@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
+use InvalidArgumentException;
 use TGbotPHP\Types\InputFile;
 
 /**
@@ -77,7 +78,7 @@ trait UpdateMethods
         ?InputFile $certificate = null,
     ): bool {
         if ($url !== '' && !str_starts_with($url, 'https://')) {
-            throw new \InvalidArgumentException('Webhook URL must use HTTPS');
+            throw new InvalidArgumentException('Webhook URL must use HTTPS');
         }
 
         return $this->apiCallBool('setWebhook', [

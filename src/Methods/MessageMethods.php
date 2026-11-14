@@ -512,7 +512,8 @@ trait MessageMethods
      *
      * @param array<string, mixed> $richMessage
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options business_connection_id, message_thread_id, direct_messages_topic_id, ephemeral_message_parameters, ...
+     * @param array<string, mixed> $options business_connection_id, message_thread_id,
+     *     direct_messages_topic_id, ephemeral_message_parameters, ...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendrichmessage

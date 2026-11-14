@@ -1,12 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Fails when line coverage falls below a minimum
  *
  *     php tools/coverage-check.php coverage.xml 100
  */
+
+declare(strict_types=1);
 
 $arguments = $_SERVER['argv'] ?? [];
 if (!is_array($arguments)) {

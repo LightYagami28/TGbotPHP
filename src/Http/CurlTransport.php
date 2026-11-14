@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Http;
 
 use CurlHandle;
+use InvalidArgumentException;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Security\LogRedactor;
@@ -28,7 +29,7 @@ final class CurlTransport implements TransportInterface
         private readonly int $maxResponseBytes = self::MAX_RESPONSE_BYTES,
     ) {
         if ($connectTimeout < 1 || $maxResponseBytes < 1) {
-            throw new \InvalidArgumentException('Transport timeout and response limit must be positive');
+            throw new InvalidArgumentException('Transport timeout and response limit must be positive');
         }
     }
 
@@ -43,11 +44,13 @@ final class CurlTransport implements TransportInterface
         if ($multipart) {
             // Passing an array makes cURL build a multipart/form-data body with the proper boundary
             $options[CURLOPT_POSTFIELDS] = $fields;
-        } else {
-            // The separator must not depend on arg_separator.output in php.ini
-            $options[CURLOPT_POSTFIELDS] = http_build_query($fields, '', '&');
-            $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
+
+            return $this->execute($url, $options);
         }
+
+        // The separator must not depend on arg_separator.output in php.ini
+        $options[CURLOPT_POSTFIELDS] = http_build_query($fields, '', '&');
+        $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
 
         return $this->execute($url, $options);
     }
@@ -126,12 +129,7 @@ final class CurlTransport implements TransportInterface
      */
     private function prepare(string $url, array $options): CurlHandle
     {
-        $parts = parse_url($url);
-
-        if ($parts === false || !isset($parts['host']) || $parts['host'] === ''
-            || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
-            || isset($parts['user']) || isset($parts['pass'])
-            || preg_match('/[\x00-\x20\x7f]/', $url) === 1) {
+        if (!self::isValidUrl($url)) {
             throw new NetworkException('Invalid HTTP transport URL');
         }
 
@@ -158,6 +156,19 @@ final class CurlTransport implements TransportInterface
         ]);
 
         return $this->handle;
+    }
+
+    /**
+     * Only plain http(s) URLs, without credentials or control characters
+     */
+    private static function isValidUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+
+        return $parts !== false && isset($parts['host']) && $parts['host'] !== ''
+            && in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+            && !isset($parts['user']) && !isset($parts['pass'])
+            && preg_match('/[\x00-\x20\x7f]/', $url) !== 1;
     }
 
     private static function curlFailure(CurlHandle $curl): string

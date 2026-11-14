@@ -55,7 +55,8 @@ trait BusinessMethods
     /**
      * Get the gifts received and owned by a managed business account
      *
-     * @param array<string, mixed> $options exclude_unsaved, exclude_saved, exclude_unlimited, exclude_limited_upgradable, ...
+     * @param array<string, mixed> $options exclude_unsaved, exclude_saved, exclude_unlimited,
+     *     exclude_limited_upgradable, ...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#getbusinessaccountgifts

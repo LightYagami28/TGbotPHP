@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Framework\Routing;
 
+use InvalidArgumentException;
+
 /**
  * A route pattern, compiled once
  *
@@ -58,7 +60,7 @@ final readonly class Pattern
         // A pattern that uses regex delimiters but does not compile is a caller error.
         // Silencing it would match the text literally and hide the mistake.
         if (@preg_match($pattern, '') === false) {
-            throw new \InvalidArgumentException('Invalid route pattern: ' . $pattern);
+            throw new InvalidArgumentException('Invalid route pattern: ' . $pattern);
         }
 
         return true;

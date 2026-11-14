@@ -78,9 +78,11 @@ class FileCache implements CacheInterface
 
             if ($value === null) {
                 $this->forget($key);
-            } else {
-                $this->put($key, $value, $ttl);
+
+                return null;
             }
+
+            $this->put($key, $value, $ttl);
 
             return $value;
         } finally {

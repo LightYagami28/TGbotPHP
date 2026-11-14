@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
+use InvalidArgumentException;
 use TGbotPHP\Core\Config;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\StorageException;
@@ -155,17 +156,28 @@ trait UserMethods
         $url = $this->getFileUrl($filePath);
         $timeout = max(60, $this->config->timeout);
 
-        if ($destination === null) {
-            $response = $this->getTransport()->get($url, $timeout);
-            self::checkDownloadStatus($response->statusCode);
+        return $destination === null
+            ? $this->downloadToMemory($url, $timeout)
+            : $this->downloadToDisk($url, $destination, $timeout);
+    }
 
-            if (strlen($response->body) > self::MAX_MEMORY_DOWNLOAD) {
-                throw new StorageException('File exceeds the in-memory download limit');
-            }
+    /**
+     * @return string The file contents
+     */
+    private function downloadToMemory(string $url, int $timeout): string
+    {
+        $response = $this->getTransport()->get($url, $timeout);
+        self::checkDownloadStatus($response->statusCode);
 
-            return $response->body;
+        if (strlen($response->body) > self::MAX_MEMORY_DOWNLOAD) {
+            throw new StorageException('File exceeds the in-memory download limit');
         }
 
+        return $response->body;
+    }
+
+    private function downloadToDisk(string $url, string $destination, int $timeout): string
+    {
         $tmp = $destination . '.' . bin2hex(random_bytes(4)) . '.part';
 
         try {
@@ -243,16 +255,18 @@ trait UserMethods
      */
     private static function filePathSegments(string $filePath): array
     {
-        if ($filePath === '' || str_starts_with($filePath, '/') || str_contains($filePath, '\\')
-            || preg_match('/[\x00-\x1f\x7f]/', $filePath) === 1) {
-            throw new \InvalidArgumentException('Expected a relative Telegram file path');
+        if (
+            $filePath === '' || str_starts_with($filePath, '/') || str_contains($filePath, '\\')
+            || preg_match('/[\x00-\x1f\x7f]/', $filePath) === 1
+        ) {
+            throw new InvalidArgumentException('Expected a relative Telegram file path');
         }
 
         $segments = explode('/', $filePath);
 
         foreach ($segments as $segment) {
             if ($segment === '' || $segment === '.' || $segment === '..') {
-                throw new \InvalidArgumentException('Invalid Telegram file path segment');
+                throw new InvalidArgumentException('Invalid Telegram file path segment');
             }
         }
 

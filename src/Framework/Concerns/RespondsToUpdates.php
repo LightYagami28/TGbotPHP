@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Framework\Concerns;
 
+use InvalidArgumentException;
 use stdClass;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Support\Payload;
@@ -27,7 +28,11 @@ trait RespondsToUpdates
      */
     public function reply(stdClass $payload, string $text, array $options = []): array
     {
-        return $this->sendMessage(Payload::requireChatId($payload), $text, options: $options + Payload::replyTarget($payload));
+        return $this->sendMessage(
+            Payload::requireChatId($payload),
+            $text,
+            options: $options + Payload::replyTarget($payload),
+        );
     }
 
     /**
@@ -42,12 +47,17 @@ trait RespondsToUpdates
         $messageId = Value::nullableInt(Value::path($callbackQuery, 'message', 'message_id'));
 
         if ($inlineMessageId === null && $messageId === null) {
-            throw new \InvalidArgumentException('The callback query has no message to edit');
+            throw new InvalidArgumentException('The callback query has no message to edit');
         }
 
         try {
             return $inlineMessageId !== null
-                ? $this->editMessageText(null, null, $text, options: ['inline_message_id' => $inlineMessageId] + $options)
+                ? $this->editMessageText(
+                    null,
+                    null,
+                    $text,
+                    options: ['inline_message_id' => $inlineMessageId] + $options,
+                )
                 : $this->editMessageText(Payload::requireChatId($callbackQuery), $messageId, $text, options: $options);
         } catch (ApiException $e) {
             // Pressing the button of the page already shown is not an error
@@ -58,7 +68,7 @@ trait RespondsToUpdates
     public function answer(stdClass $callbackQuery, ?string $text = null, bool $showAlert = false): bool
     {
         $id = Value::nullableString(Value::path($callbackQuery, 'id'))
-            ?? throw new \InvalidArgumentException('The payload is not a callback query');
+            ?? throw new InvalidArgumentException('The payload is not a callback query');
 
         return $this->answerCallbackQuery($id, $text, $showAlert);
     }

@@ -17,7 +17,8 @@ final class LogRedactor
      * Field names that hold a credential. Matched as a whole segment so
      * chat_id, user and text are not treated as secrets.
      */
-    private const string SECRET_KEY = '/(?:^|_)(?:token|secret|password|authorization|cookie|api_key|credential|session_id|init_data|initdata)(?:_|$)/i';
+    private const string SECRET_KEY = '/(?:^|_)(?:token|secret|password|authorization|cookie|api_key|'
+        . 'credential|session_id|init_data|initdata)(?:_|$)/i';
 
     private function __construct()
     {

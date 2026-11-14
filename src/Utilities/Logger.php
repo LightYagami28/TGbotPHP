@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Utilities;
 
+use Stringable;
 use TGbotPHP\Security\LogRedactor;
 use TGbotPHP\Support\PrivateFile;
 
@@ -19,7 +20,8 @@ class Logger
     private int $minLevel;
 
     /**
-     * @param string $logFile A file path or a stream such as php://stderr (the default, collected by Docker and systemd)
+     * @param string $logFile A file path or a stream such as php://stderr (the default,
+     *     collected by Docker and systemd)
      */
     public function __construct(string $logFile = 'php://stderr', bool $enabled = true, string $minLevel = 'DEBUG')
     {
@@ -75,7 +77,7 @@ class Logger
         $context = LogRedactor::context($context);
         $replacements = [];
         foreach ($context as $key => $value) {
-            if (is_scalar($value) || $value instanceof \Stringable) {
+            if (is_scalar($value) || $value instanceof Stringable) {
                 $replacements['{' . $key . '}'] = (string) $value;
             }
         }
@@ -85,7 +87,12 @@ class Logger
         $message = str_replace(["\r", "\n"], ['\r', '\n'], $message);
 
         $timestamp = date('Y-m-d H:i:s');
-        $contextStr = $context !== [] ? ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR) : '';
+        $contextStr = $context !== []
+            ? ' ' . json_encode(
+                $context,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR,
+            )
+            : '';
         $logLine = "[$timestamp] [$level] $message$contextStr\n";
 
         PrivateFile::create($this->logFile);

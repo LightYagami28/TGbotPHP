@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Core;
 
+use InvalidArgumentException;
+
 /**
  * How failed requests are retried
  *
@@ -25,7 +27,7 @@ final readonly class RetryPolicy
         public int $transientRetries = 1,
     ) {
         if ($maxRetries < 0 || $maxDelay < 0 || $transientRetries < 0) {
-            throw new \InvalidArgumentException('Retry settings cannot be negative');
+            throw new InvalidArgumentException('Retry settings cannot be negative');
         }
     }
 

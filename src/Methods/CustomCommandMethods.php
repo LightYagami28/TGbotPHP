@@ -35,7 +35,9 @@ trait CustomCommandMethods
         $list = [];
         foreach ($commands as $key => $value) {
             // A string value is a description: its key is the command, even when PHP made "2024" an integer key
-            $list[] = is_string($value) ? ['command' => self::commandName((string) $key), 'description' => $value] : $value;
+            $list[] = is_string($value)
+                ? ['command' => self::commandName((string) $key), 'description' => $value]
+                : $value;
         }
 
         return $this->apiCallBool('setMyCommands', [

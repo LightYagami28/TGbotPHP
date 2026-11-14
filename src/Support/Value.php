@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Support;
 
 use stdClass;
+use Stringable;
 
 /**
  * Type-safe readers for untyped data (decoded JSON, update payloads, cache entries)
@@ -42,7 +43,9 @@ final class Value
     private static function integralFloat(float $value): ?int
     {
         // 2^63 is the first float outside the int range
-        return is_finite($value) && floor($value) === $value && abs($value) < 9.2233720368547758E18 ? (int) $value : null;
+        return is_finite($value) && floor($value) === $value && abs($value) < 9.2233720368547758E18
+            ? (int) $value
+            : null;
     }
 
     private static function decimalString(string $value): ?int
@@ -72,7 +75,7 @@ final class Value
         return match (true) {
             is_string($value) => $value,
             is_int($value), is_float($value) => (string) $value,
-            $value instanceof \Stringable => (string) $value,
+            $value instanceof Stringable => (string) $value,
             default => null,
         };
     }
@@ -112,11 +115,15 @@ final class Value
         foreach ($keys as $key) {
             if ($value instanceof stdClass && property_exists($value, $key)) {
                 $value = $value->$key;
-            } elseif (is_array($value) && array_key_exists($key, $value)) {
-                $value = $value[$key];
-            } else {
-                return null;
+                continue;
             }
+
+            if (is_array($value) && array_key_exists($key, $value)) {
+                $value = $value[$key];
+                continue;
+            }
+
+            return null;
         }
 
         return $value;

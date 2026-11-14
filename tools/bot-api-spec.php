@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Extracts the methods of the Telegram Bot API from its documentation page
  *
@@ -13,10 +11,16 @@ declare(strict_types=1);
  * against it.
  */
 
+declare(strict_types=1);
+
 const API_URL = 'https://core.telegram.org/bots/api';
 
 /**
- * @return array{version: string, updates: array<string, string>, methods: array<string, array{returns: string, parameters: array<string, array{type: string, required: bool}>}>}
+ * @return array{
+ *     version: string,
+ *     updates: array<string, string>,
+ *     methods: array<string, array{returns: string, parameters: array<string, array{type: string, required: bool}>}>,
+ * }
  */
 function extractSpec(string $html): array
 {
@@ -44,7 +48,11 @@ function extractSpec(string $html): array
         $description = '';
         $parameters = [];
 
-        for ($node = $heading->nextElementSibling; $node !== null && !in_array($node->nodeName, ['h3', 'h4'], true); $node = $node->nextElementSibling) {
+        for (
+            $node = $heading->nextElementSibling;
+            $node !== null && !in_array($node->nodeName, ['h3', 'h4'], true);
+            $node = $node->nextElementSibling
+        ) {
             if ($node->nodeName === 'p') {
                 $description .= ' ' . $node->textContent;
             } elseif ($node->nodeName === 'table') {
@@ -67,7 +75,11 @@ function extractSpec(string $html): array
  */
 function extractFields(DOMElement $heading): array
 {
-    for ($node = $heading->nextElementSibling; $node !== null && $node->nodeName !== 'h4'; $node = $node->nextElementSibling) {
+    for (
+        $node = $heading->nextElementSibling;
+        $node !== null && $node->nodeName !== 'h4';
+        $node = $node->nextElementSibling
+    ) {
         if ($node->nodeName === 'table') {
             return array_map(static fn(array $field): string => $field['type'], extractParameters($node));
         }
@@ -137,4 +149,7 @@ if ($html === false || $html === '') {
 }
 
 // Every array is a map: keep empty ones as objects
-echo json_encode(extractSpec($html), JSON_FORCE_OBJECT | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), "\n";
+echo json_encode(
+    extractSpec($html),
+    JSON_FORCE_OBJECT | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
+), "\n";

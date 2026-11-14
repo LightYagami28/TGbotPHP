@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Support;
 
+use InvalidArgumentException;
 use stdClass;
 
 /**
@@ -95,6 +96,6 @@ final class Payload
 
     public static function requireChatId(stdClass $payload): int|string
     {
-        return self::chatId($payload) ?? throw new \InvalidArgumentException('The payload has no chat');
+        return self::chatId($payload) ?? throw new InvalidArgumentException('The payload has no chat');
     }
 }

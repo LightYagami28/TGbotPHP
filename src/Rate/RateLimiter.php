@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Rate;
 
+use InvalidArgumentException;
 use stdClass;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Core\UpdateParser;
@@ -137,7 +138,9 @@ class RateLimiter
     private static function assertWindow(int $maxRequests, int $windowSeconds): void
     {
         if ($maxRequests <= 0 || $windowSeconds <= 0) {
-            throw new \InvalidArgumentException('Rate limit requires a positive number of requests and a positive window');
+            throw new InvalidArgumentException(
+                'Rate limit requires a positive number of requests and a positive window',
+            );
         }
     }
 }

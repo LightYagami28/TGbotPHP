@@ -62,7 +62,10 @@ $bot->command('dice', fn(stdClass $message, Bot $bot) => $bot->sendDice($bot->ch
 
 $bot->hears('/^(hi|hello|ciao)\b/i', fn(stdClass $message, Bot $bot) => $bot->reply($message, '👋'));
 
-$bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, Formatter::escape(Value::string($message->text ?? null))));
+$bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply(
+    $message,
+    Formatter::escape(Value::string($message->text ?? null)),
+));
 
 $bot->onError(function (Throwable $e): void {
     fwrite(STDERR, '[error] ' . $e->getMessage() . PHP_EOL);

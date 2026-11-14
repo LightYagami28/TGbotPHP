@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Utilities;
 
+use InvalidArgumentException;
+
 /**
  * Reply markup helpers
  *
@@ -161,7 +163,7 @@ class Keyboard
     public static function button(string $text, string $callbackData): array
     {
         if ($callbackData === '' || strlen($callbackData) > 64) {
-            throw new \InvalidArgumentException('callback_data must be 1 to 64 bytes');
+            throw new InvalidArgumentException('callback_data must be 1 to 64 bytes');
         }
 
         return ['text' => $text, 'callback_data' => $callbackData];
