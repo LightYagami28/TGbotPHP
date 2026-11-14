@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<ruleset name="PHP_CodeSniffer">
+  <description>Codice conforme a PSR-12, lo standard su cui si basa PER-CS 2.0</description>
+
+  <file>src</file>
+  <file>tests</file>
+  <file>examples</file>
+  <file>tools</file>
+  <file>bin/tgbot</file>
+
+  <arg name="colors"/>
+  <arg name="extensions" value="php"/>
+  <arg value="sp"/>
+
+  <rule ref="PSR12"/>
+</ruleset>
