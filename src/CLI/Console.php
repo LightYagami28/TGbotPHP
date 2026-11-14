@@ -119,14 +119,24 @@ EOF);
             $this->write('  Max connections: ' . $maxConnections);
         }
 
-        $lastError = Value::nullableString($info['last_error_message'] ?? null);
-        if ($lastError !== null) {
-            $errorDate = Value::nullableInt($info['last_error_date'] ?? null);
-            $date = $errorDate !== null ? date('Y-m-d H:i:s', $errorDate) : 'unknown';
-            $this->write("  Last error ($date): " . $lastError);
-        }
+        $this->writeLastError($info);
 
         return 0;
+    }
+
+    /**
+     * @param array<string, mixed> $info
+     */
+    private function writeLastError(array $info): void
+    {
+        $lastError = Value::nullableString($info['last_error_message'] ?? null);
+        if ($lastError === null) {
+            return;
+        }
+
+        $errorDate = Value::nullableInt($info['last_error_date'] ?? null);
+        $date = $errorDate !== null ? date('Y-m-d H:i:s', $errorDate) : 'unknown';
+        $this->write("  Last error ($date): " . $lastError);
     }
 
     /**
@@ -149,7 +159,8 @@ EOF);
         }
 
         if ($secret === null) {
-            $this->error('webhook:set requires --secret or TELEGRAM_SECRET_TOKEN. handle() answers 403 without a secret');
+            $this->error('webhook:set requires --secret or TELEGRAM_SECRET_TOKEN. '
+                . 'handle() answers 403 without a secret');
             return 1;
         }
 
@@ -185,11 +196,25 @@ EOF);
         $this->write('  ID: ' . Value::string($me['id'] ?? null, '?'));
         $this->write('  Username: @' . Value::string($me['username'] ?? null, '?'));
         $this->write('  Name: ' . Value::string($me['first_name'] ?? null, '?'));
-        $this->write('  Can join groups: ' . (($me['can_join_groups'] ?? false) === true ? 'Yes' : 'No'));
-        $this->write('  Reads all group messages: ' . (($me['can_read_all_group_messages'] ?? false) === true ? 'Yes' : 'No'));
-        $this->write('  Supports inline queries: ' . (($me['supports_inline_queries'] ?? false) === true ? 'Yes' : 'No'));
+
+        foreach (self::privilegeFlags($me) as $label => $flag) {
+            $this->write('  ' . $label . ': ' . ($flag ? 'Yes' : 'No'));
+        }
 
         return 0;
+    }
+
+    /**
+     * @param array<string, mixed> $me
+     * @return array<string, bool>
+     */
+    private static function privilegeFlags(array $me): array
+    {
+        return [
+            'Can join groups' => ($me['can_join_groups'] ?? false) === true,
+            'Reads all group messages' => ($me['can_read_all_group_messages'] ?? false) === true,
+            'Supports inline queries' => ($me['supports_inline_queries'] ?? false) === true,
+        ];
     }
 
     /**
@@ -205,7 +230,11 @@ EOF);
         }
 
         foreach ($commands as $command) {
-            $this->write(sprintf('  /%s - %s', Value::string($command['command'] ?? null), Value::string($command['description'] ?? null)));
+            $this->write(sprintf(
+                '  /%s - %s',
+                Value::string($command['command'] ?? null),
+                Value::string($command['description'] ?? null),
+            ));
         }
 
         return 0;
@@ -271,6 +300,7 @@ EOF);
 
     private function error(string $message): void
     {
-        fwrite($this->errors, 'Error: ' . str_replace(["\r", "\n"], ['\\r', '\\n'], LogRedactor::text($message)) . PHP_EOL);
+        $redacted = 'Error: ' . str_replace(["\r", "\n"], ['\\r', '\\n'], LogRedactor::text($message)) . PHP_EOL;
+        fwrite($this->errors, $redacted);
     }
 }
