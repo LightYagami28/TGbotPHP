@@ -31,7 +31,8 @@ trait GiftMethods
     /**
      * Get the gifts owned by a chat
      *
-     * @param array<string, mixed> $options exclude_unsaved, exclude_saved, exclude_unlimited, exclude_limited_upgradable, ...
+     * @param array<string, mixed> $options exclude_unsaved, exclude_saved, exclude_unlimited,
+     *     exclude_limited_upgradable, ...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#getchatgifts
@@ -46,7 +47,8 @@ trait GiftMethods
     /**
      * Get the gifts owned and hosted by a user
      *
-     * @param array<string, mixed> $options exclude_unlimited, exclude_limited_upgradable, exclude_limited_non_upgradable, exclude_from_blockchain, ...
+     * @param array<string, mixed> $options exclude_unlimited, exclude_limited_upgradable,
+     *     exclude_limited_non_upgradable, exclude_from_blockchain, ...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#getusergifts

@@ -41,7 +41,9 @@ class MessageParser
 
         return array_map(
             // Inside quotes, only \" and \\ are escapes
-            static fn(array $match): string => ($match[2] ?? '') !== '' ? $match[2] : (string) preg_replace('/\\\\(["\\\\])/', '$1', $match[1] ?? ''),
+            static fn(array $match): string => ($match[2] ?? '') !== ''
+                ? $match[2]
+                : (string) preg_replace('/\\\\(["\\\\])/', '$1', $match[1] ?? ''),
             $matches,
         );
     }
