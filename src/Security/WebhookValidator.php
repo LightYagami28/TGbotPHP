@@ -166,20 +166,19 @@ class WebhookValidator
         }
 
         $signature = self::decodeSignature($fields['signature'] ?? '');
+        $key = hex2bin($publicKey);
         unset($fields['hash'], $fields['signature']);
 
-        if ($signature === null) {
+        if ($signature === null || !is_string($key) || $key === '') {
             return null;
         }
 
-        $key = hex2bin($publicKey);
         $message = "$botId:WebAppData\n" . self::dataCheckString($fields);
 
-        $valid = is_string($key) && $key !== ''
+        return self::isFresh($fields, $maxAge)
             && sodium_crypto_sign_verify_detached($signature, $message, $key)
-            && self::isFresh($fields, $maxAge);
-
-        return $valid ? $fields : null;
+            ? $fields
+            : null;
     }
 
     /**
@@ -188,32 +187,45 @@ class WebhookValidator
     private static function parseInitData(string $initData): ?array
     {
         // parse_str rewrites names, keeps the last duplicate and stops at max_input_vars.
+        if ($initData === '' || strlen($initData) > 65536) {
+            return null;
+        }
+
         $fields = [];
-        $valid = $initData !== '' && strlen($initData) <= 65536;
 
-        if ($valid) {
-            foreach (explode('&', $initData) as $pair) {
-                if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
-                    $valid = false;
-                    break;
-                }
-
-                [$name, $value] = explode('=', $pair, 2);
-                $name = urldecode($name);
-                $value = urldecode($value);
-
-                if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
-                    || array_key_exists($name, $fields)
-                    || preg_match('/[\x00\r\n]/', $value) === 1) {
-                    $valid = false;
-                    break;
-                }
-
-                $fields[$name] = $value;
+        foreach (explode('&', $initData) as $pair) {
+            if (!self::addInitDataField($pair, $fields)) {
+                return null;
             }
         }
 
-        return $valid ? $fields : null;
+        return $fields;
+    }
+
+    /**
+     * Parse one key=value pair, adding it to $fields; false when it is malformed
+     *
+     * @param array<string, string> $fields
+     */
+    private static function addInitDataField(string $pair, array &$fields): bool
+    {
+        if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
+            return false;
+        }
+
+        [$name, $value] = explode('=', $pair, 2);
+        $name = urldecode($name);
+        $value = urldecode($value);
+
+        if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
+            || array_key_exists($name, $fields)
+            || preg_match('/[\x00\r\n]/', $value) === 1) {
+            return false;
+        }
+
+        $fields[$name] = $value;
+
+        return true;
     }
 
     /**

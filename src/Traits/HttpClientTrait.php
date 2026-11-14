@@ -111,13 +111,25 @@ trait HttpClientTrait
 
                 $attempt++;
             } catch (ApiException $e) {
-                if ($e->getCode() < 500 || !$this->retryTransient($transientAttempt)) {
+                if (!$this->retryServerError($e->getCode(), $transientAttempt)) {
                     throw $e;
                 }
-
-                $transientAttempt++;
             }
         }
+    }
+
+    /**
+     * Retry an HTTP 5xx response unless this is a webhook request
+     */
+    private function retryServerError(int $statusCode, int &$attempt): bool
+    {
+        if ($statusCode < 500 || !$this->retryTransient($attempt)) {
+            return false;
+        }
+
+        $attempt++;
+
+        return true;
     }
 
     /**
@@ -464,32 +476,43 @@ trait HttpClientTrait
         $files = [];
 
         foreach ($data as $key => $value) {
-            $value = self::scalarValue($value);
-
-            if ($value === null) {
-                continue;
-            }
-
-            if ($value instanceof InputFile) {
-                $files[$key] = $value->toCurlFile();
-                continue;
-            }
-
-            if (is_bool($value)) {
-                $fields[$key] = $value ? 'true' : 'false';
-            } elseif (is_array($value) || $value instanceof JsonSerializable) {
-                $fields[$key] = json_encode(
-                    self::extractAttachments($value, $files),
-                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
-                );
-            } elseif (is_scalar($value) || $value instanceof \Stringable) {
-                $fields[$key] = (string) $value;
-            } else {
-                throw new \InvalidArgumentException("Unsupported value for parameter '$key'");
-            }
+            self::prepareFieldValue($key, $value, $fields, $files);
         }
 
         return [$fields + $files, $files !== []];
+    }
+
+    /**
+     * Convert one parameter value, appending it to $fields or $files
+     *
+     * @param array<string, mixed> $fields
+     * @param array<string, CURLFile|CURLStringFile> $files
+     */
+    private static function prepareFieldValue(string $key, mixed $value, array &$fields, array &$files): void
+    {
+        $value = self::scalarValue($value);
+
+        if ($value === null) {
+            return;
+        }
+
+        if ($value instanceof InputFile) {
+            $files[$key] = $value->toCurlFile();
+            return;
+        }
+
+        if (is_bool($value)) {
+            $fields[$key] = $value ? 'true' : 'false';
+        } elseif (is_array($value) || $value instanceof JsonSerializable) {
+            $fields[$key] = json_encode(
+                self::extractAttachments($value, $files),
+                JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+            );
+        } elseif (is_scalar($value) || $value instanceof \Stringable) {
+            $fields[$key] = (string) $value;
+        } else {
+            throw new \InvalidArgumentException("Unsupported value for parameter '$key'");
+        }
     }
 
     /**

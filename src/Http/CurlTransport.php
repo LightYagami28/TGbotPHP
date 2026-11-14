@@ -126,12 +126,7 @@ final class CurlTransport implements TransportInterface
      */
     private function prepare(string $url, array $options): CurlHandle
     {
-        $parts = parse_url($url);
-
-        if ($parts === false || !isset($parts['host']) || $parts['host'] === ''
-            || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
-            || isset($parts['user']) || isset($parts['pass'])
-            || preg_match('/[\x00-\x20\x7f]/', $url) === 1) {
+        if (!self::isValidUrl($url)) {
             throw new NetworkException('Invalid HTTP transport URL');
         }
 
@@ -158,6 +153,19 @@ final class CurlTransport implements TransportInterface
         ]);
 
         return $this->handle;
+    }
+
+    /**
+     * Only plain http(s) URLs, without credentials or control characters
+     */
+    private static function isValidUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+
+        return $parts !== false && isset($parts['host']) && $parts['host'] !== ''
+            && in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+            && !isset($parts['user']) && !isset($parts['pass'])
+            && preg_match('/[\x00-\x20\x7f]/', $url) !== 1;
     }
 
     private static function curlFailure(CurlHandle $curl): string
