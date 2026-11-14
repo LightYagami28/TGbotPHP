@@ -155,17 +155,28 @@ trait UserMethods
         $url = $this->getFileUrl($filePath);
         $timeout = max(60, $this->config->timeout);
 
-        if ($destination === null) {
-            $response = $this->getTransport()->get($url, $timeout);
-            self::checkDownloadStatus($response->statusCode);
+        return $destination === null
+            ? $this->downloadToMemory($url, $timeout)
+            : $this->downloadToDisk($url, $destination, $timeout);
+    }
 
-            if (strlen($response->body) > self::MAX_MEMORY_DOWNLOAD) {
-                throw new StorageException('File exceeds the in-memory download limit');
-            }
+    /**
+     * @return string The file contents
+     */
+    private function downloadToMemory(string $url, int $timeout): string
+    {
+        $response = $this->getTransport()->get($url, $timeout);
+        self::checkDownloadStatus($response->statusCode);
 
-            return $response->body;
+        if (strlen($response->body) > self::MAX_MEMORY_DOWNLOAD) {
+            throw new StorageException('File exceeds the in-memory download limit');
         }
 
+        return $response->body;
+    }
+
+    private function downloadToDisk(string $url, string $destination, int $timeout): string
+    {
         $tmp = $destination . '.' . bin2hex(random_bytes(4)) . '.part';
 
         try {
