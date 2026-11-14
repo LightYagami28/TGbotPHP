@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Session;
 
+use InvalidArgumentException;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Support\Value;
 
@@ -37,7 +38,7 @@ class SessionManager
     public function setSessionData(string $sessionId, string $key, mixed $value): void
     {
         if (in_array($key, ['user_id', 'created_at'], true)) {
-            throw new \InvalidArgumentException('Session identity and creation time are reserved');
+            throw new InvalidArgumentException('Session identity and creation time are reserved');
         }
         $this->cache->update(
             "session:$sessionId",

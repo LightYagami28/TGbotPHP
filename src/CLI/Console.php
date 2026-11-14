@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\CLI;
 
+use InvalidArgumentException;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Framework\Bot;
 use TGbotPHP\Security\LogRedactor;
@@ -190,14 +191,14 @@ EOF);
      */
     private function botInfo(array $argv): int
     {
-        $me = $this->bot($argv)->getMe();
+        $meInfo = $this->bot($argv)->getMe();
 
         $this->write('Bot:');
-        $this->write('  ID: ' . Value::string($me['id'] ?? null, '?'));
-        $this->write('  Username: @' . Value::string($me['username'] ?? null, '?'));
-        $this->write('  Name: ' . Value::string($me['first_name'] ?? null, '?'));
+        $this->write('  ID: ' . Value::string($meInfo['id'] ?? null, '?'));
+        $this->write('  Username: @' . Value::string($meInfo['username'] ?? null, '?'));
+        $this->write('  Name: ' . Value::string($meInfo['first_name'] ?? null, '?'));
 
-        foreach (self::privilegeFlags($me) as $label => $flag) {
+        foreach (self::privilegeFlags($meInfo) as $label => $flag) {
             $this->write('  ' . $label . ': ' . ($flag ? 'Yes' : 'No'));
         }
 
@@ -205,15 +206,15 @@ EOF);
     }
 
     /**
-     * @param array<string, mixed> $me
+     * @param array<string, mixed> $meInfo
      * @return array<string, bool>
      */
-    private static function privilegeFlags(array $me): array
+    private static function privilegeFlags(array $meInfo): array
     {
         return [
-            'Can join groups' => ($me['can_join_groups'] ?? false) === true,
-            'Reads all group messages' => ($me['can_read_all_group_messages'] ?? false) === true,
-            'Supports inline queries' => ($me['supports_inline_queries'] ?? false) === true,
+            'Can join groups' => ($meInfo['can_join_groups'] ?? false) === true,
+            'Reads all group messages' => ($meInfo['can_read_all_group_messages'] ?? false) === true,
+            'Supports inline queries' => ($meInfo['supports_inline_queries'] ?? false) === true,
         ];
     }
 
@@ -265,7 +266,7 @@ EOF);
         $token = $this->getOption($argv, 'token') ?? Value::env('TELEGRAM_BOT_TOKEN');
 
         if ($token === null || $token === '') {
-            throw new \InvalidArgumentException('--token or TELEGRAM_BOT_TOKEN is required');
+            throw new InvalidArgumentException('--token or TELEGRAM_BOT_TOKEN is required');
         }
 
         return ($this->botFactory)($token);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Framework;
 
+use InvalidArgumentException;
 use JsonException;
 use stdClass;
 use TGbotPHP\Cache\CacheInterface;
@@ -44,7 +45,7 @@ final class Bot extends ApiClient
     {
         try {
             $config = $token instanceof Config ? $token : new Config($token);
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             throw new InvalidTokenException($e->getMessage());
         }
 
@@ -114,8 +115,12 @@ final class Bot extends ApiClient
      * @param string[]|null $allowedUpdates
      * @param int $maxIterations Stop after this many getUpdates calls (0: run until stop())
      */
-    public function poll(int $timeout = 30, ?array $allowedUpdates = null, ?int $limit = null, int $maxIterations = 0): void
-    {
+    public function poll(
+        int $timeout = 30,
+        ?array $allowedUpdates = null,
+        ?int $limit = null,
+        int $maxIterations = 0,
+    ): void {
         if ($this->getUsername() === null) {
             $this->setUsername(Value::nullableString($this->getMe()['username'] ?? null));
         }

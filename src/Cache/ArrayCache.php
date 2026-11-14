@@ -33,11 +33,13 @@ class ArrayCache implements CacheInterface
     {
         $this->store[$key] = $value;
 
-        if ($ttl !== null) {
-            $this->expiration[$key] = time() + $ttl;
-        } else {
+        if ($ttl === null) {
             unset($this->expiration[$key]);
+
+            return;
         }
+
+        $this->expiration[$key] = time() + $ttl;
     }
 
     #[\Override]
@@ -47,9 +49,11 @@ class ArrayCache implements CacheInterface
 
         if ($value === null) {
             $this->forget($key);
-        } else {
-            $this->put($key, $value, $ttl);
+
+            return null;
         }
+
+        $this->put($key, $value, $ttl);
 
         return $value;
     }

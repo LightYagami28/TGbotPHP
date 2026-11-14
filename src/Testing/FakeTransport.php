@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Testing;
 
+use LogicException;
 use TGbotPHP\Http\HttpResponse;
 use TGbotPHP\Http\TransportInterface;
+use Throwable;
 
 /**
  * In-memory transport: records requests and answers with queued responses
@@ -24,7 +26,10 @@ use TGbotPHP\Http\TransportInterface;
  */
 final class FakeTransport implements TransportInterface
 {
-    /** @var list<array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}> Every request, oldest first */
+    /**
+     * @var list<array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}>
+     * Every request, oldest first
+     */
     private array $requests = [];
 
     /** @var list<HttpResponse|\Throwable> */
@@ -78,7 +83,7 @@ final class FakeTransport implements TransportInterface
     {
         $next = array_shift($this->queue);
 
-        if ($next instanceof \Throwable) {
+        if ($next instanceof Throwable) {
             throw $next;
         }
 
@@ -97,7 +102,10 @@ final class FakeTransport implements TransportInterface
         ];
 
         return $this->next()
-            ?? new HttpResponse(200, json_encode(['ok' => true, 'result' => $this->defaultResultFor($url)], JSON_THROW_ON_ERROR));
+            ?? new HttpResponse(
+                200,
+                json_encode(['ok' => true, 'result' => $this->defaultResultFor($url)], JSON_THROW_ON_ERROR),
+            );
     }
 
     /**
@@ -119,7 +127,13 @@ final class FakeTransport implements TransportInterface
     #[\Override]
     public function get(string $url, int $timeout): HttpResponse
     {
-        $this->requests[] = ['url' => $url, 'method' => 'GET', 'fields' => [], 'multipart' => false, 'timeout' => $timeout];
+        $this->requests[] = [
+            'url' => $url,
+            'method' => 'GET',
+            'fields' => [],
+            'multipart' => false,
+            'timeout' => $timeout,
+        ];
 
         return $this->next() ?? new HttpResponse(404, '');
     }
@@ -139,7 +153,7 @@ final class FakeTransport implements TransportInterface
     public function lastRequest(): array
     {
         if ($this->requests === []) {
-            throw new \LogicException('No request was sent');
+            throw new LogicException('No request was sent');
         }
 
         return $this->requests[array_key_last($this->requests)];

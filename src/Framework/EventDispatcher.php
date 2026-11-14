@@ -60,8 +60,10 @@ final class EventDispatcher
     {
         if ($event === null) {
             $this->listeners = [];
-        } else {
-            unset($this->listeners[$event]);
+
+            return;
         }
+
+        unset($this->listeners[$event]);
     }
 }
