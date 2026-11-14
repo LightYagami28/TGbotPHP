@@ -194,9 +194,7 @@ final class Router
             return false;
         }
 
-        $arguments = $this->bot !== null
-            ? [$payload, $this->bot, ...$route->arguments]
-            : [$payload, ...$route->arguments];
+        $arguments = $this->bot !== null ? [$payload, $this->bot, ...$route->arguments] : [$payload, ...$route->arguments];
         ($route->handler)(...$arguments);
 
         return true;
