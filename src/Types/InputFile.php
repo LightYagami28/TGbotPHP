@@ -25,8 +25,10 @@ final class InputFile
         private readonly string $filename,
         private readonly string $mimeType,
     ) {
-        if ($filename === '' || preg_match('/[\x00-\x1f\x7f\/\\\\]/', $filename) === 1
-            || preg_match('/[\x00-\x1f\x7f]/', $mimeType) === 1) {
+        if (
+            $filename === '' || preg_match('/[\x00-\x1f\x7f\/\\\\]/', $filename) === 1
+            || preg_match('/[\x00-\x1f\x7f]/', $mimeType) === 1
+        ) {
             throw new InvalidArgumentException('Invalid upload filename or MIME type');
         }
     }
@@ -46,8 +48,11 @@ final class InputFile
     /**
      * Upload in-memory contents
      */
-    public static function fromContents(string $contents, string $filename, string $mimeType = 'application/octet-stream'): self
-    {
+    public static function fromContents(
+        string $contents,
+        string $filename,
+        string $mimeType = 'application/octet-stream',
+    ): self {
         if ($filename === '') {
             throw new InvalidArgumentException('Filename cannot be empty');
         }
