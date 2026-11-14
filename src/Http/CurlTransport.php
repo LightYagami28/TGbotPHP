@@ -162,10 +162,38 @@ final class CurlTransport implements TransportInterface
     {
         $parts = parse_url($url);
 
-        return $parts !== false && isset($parts['host']) && $parts['host'] !== ''
-            && in_array($parts['scheme'] ?? '', ['http', 'https'], true)
-            && !isset($parts['user']) && !isset($parts['pass'])
-            && preg_match('/[\x00-\x20\x7f]/', $url) !== 1;
+        if (!is_array($parts)) {
+            return false;
+        }
+
+        if (preg_match('/[\x00-\x20\x7f]/', $url) === 1) {
+            return false;
+        }
+
+        return self::hasPlainHost($parts) && self::hasNoCredentials($parts);
+    }
+
+    /**
+     * The URL points to a host reachable over http or https
+     *
+     * @param array<string, mixed> $parts
+     */
+    private static function hasPlainHost(array $parts): bool
+    {
+        $host = $parts['host'] ?? '';
+        $scheme = $parts['scheme'] ?? '';
+
+        return $host !== '' && in_array($scheme, ['http', 'https'], true);
+    }
+
+    /**
+     * The URL carries no user name or password
+     *
+     * @param array<string, mixed> $parts
+     */
+    private static function hasNoCredentials(array $parts): bool
+    {
+        return !isset($parts['user']) && !isset($parts['pass']);
     }
 
     private static function curlFailure(CurlHandle $curl): string

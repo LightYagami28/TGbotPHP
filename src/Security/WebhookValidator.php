@@ -209,7 +209,11 @@ class WebhookValidator
      */
     private static function addInitDataField(string $pair, array &$fields): bool
     {
-        if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
+        if (!str_contains($pair, '=')) {
+            return false;
+        }
+
+        if (preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
             return false;
         }
 
@@ -217,15 +221,29 @@ class WebhookValidator
         $name = urldecode($name);
         $value = urldecode($value);
 
-        if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
-            || array_key_exists($name, $fields)
-            || preg_match('/[\x00\r\n]/', $value) === 1) {
+        if (array_key_exists($name, $fields)) {
+            return false;
+        }
+
+        if (!self::isValidField($name, $value)) {
             return false;
         }
 
         $fields[$name] = $value;
 
         return true;
+    }
+
+    /**
+     * The name is a plain identifier and the value has no control character
+     */
+    private static function isValidField(string $name, string $value): bool
+    {
+        if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1) {
+            return false;
+        }
+
+        return preg_match('/[\x00\r\n]/', $value) !== 1;
     }
 
     /**
