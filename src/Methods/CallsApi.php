@@ -37,7 +37,11 @@ trait CallsApi
      * @param array<string, mixed> $options
      * @return array<string, mixed>|bool
      */
-    abstract protected function apiCallObjectOrTrue(string $method, array $params = [], array $options = []): array|bool;
+    abstract protected function apiCallObjectOrTrue(
+        string $method,
+        array $params = [],
+        array $options = [],
+    ): array|bool;
 
     /**
      * @param array<string, mixed> $params

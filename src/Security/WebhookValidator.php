@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Security;
 
+use LogicException;
+use SodiumException;
+
 /**
  * Webhook request validation helpers
  */
@@ -131,7 +134,8 @@ class WebhookValidator
             return null;
         }
 
-        $valid = hash_equals(self::initDataHash($fields, $botToken), strtolower($hash)) && self::isFresh($fields, $maxAge);
+        $valid = hash_equals(self::initDataHash($fields, $botToken), strtolower($hash))
+            && self::isFresh($fields, $maxAge);
         unset($fields['signature']);
 
         return $valid ? $fields : null;
@@ -144,7 +148,8 @@ class WebhookValidator
      * need the bot id. Requires the sodium extension.
      *
      * @param int $maxAge Maximum accepted age of auth_date in seconds (0 disables the check)
-     * @param string $publicKey Telegram's key, hex encoded: WEB_APP_PUBLIC_KEY, or WEB_APP_TEST_PUBLIC_KEY for the test environment
+     * @param string $publicKey Telegram's key, hex encoded: WEB_APP_PUBLIC_KEY, or
+     *     WEB_APP_TEST_PUBLIC_KEY for the test environment
      * @return array<string, string>|null The parsed data (without hash and signature) when valid
      *
      * @see https://core.telegram.org/bots/webapps#validating-data-for-third-party-use
@@ -156,7 +161,7 @@ class WebhookValidator
         string $publicKey = self::WEB_APP_PUBLIC_KEY,
     ): ?array {
         if (!function_exists('sodium_crypto_sign_verify_detached')) {
-            throw new \LogicException('validateWebAppSignature() requires the sodium extension');
+            throw new LogicException('validateWebAppSignature() requires the sodium extension');
         }
 
         $fields = self::parseInitData($initData);
@@ -166,20 +171,19 @@ class WebhookValidator
         }
 
         $signature = self::decodeSignature($fields['signature'] ?? '');
+        $key = hex2bin($publicKey);
         unset($fields['hash'], $fields['signature']);
 
-        if ($signature === null) {
+        if ($signature === null || !is_string($key) || $key === '') {
             return null;
         }
 
-        $key = hex2bin($publicKey);
         $message = "$botId:WebAppData\n" . self::dataCheckString($fields);
 
-        $valid = is_string($key) && $key !== ''
+        return self::isFresh($fields, $maxAge)
             && sodium_crypto_sign_verify_detached($signature, $message, $key)
-            && self::isFresh($fields, $maxAge);
-
-        return $valid ? $fields : null;
+            ? $fields
+            : null;
     }
 
     /**
@@ -188,32 +192,47 @@ class WebhookValidator
     private static function parseInitData(string $initData): ?array
     {
         // parse_str rewrites names, keeps the last duplicate and stops at max_input_vars.
+        if ($initData === '' || strlen($initData) > 65536) {
+            return null;
+        }
+
         $fields = [];
-        $valid = $initData !== '' && strlen($initData) <= 65536;
 
-        if ($valid) {
-            foreach (explode('&', $initData) as $pair) {
-                if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
-                    $valid = false;
-                    break;
-                }
-
-                [$name, $value] = explode('=', $pair, 2);
-                $name = urldecode($name);
-                $value = urldecode($value);
-
-                if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
-                    || array_key_exists($name, $fields)
-                    || preg_match('/[\x00\r\n]/', $value) === 1) {
-                    $valid = false;
-                    break;
-                }
-
-                $fields[$name] = $value;
+        foreach (explode('&', $initData) as $pair) {
+            if (!self::addInitDataField($pair, $fields)) {
+                return null;
             }
         }
 
-        return $valid ? $fields : null;
+        return $fields;
+    }
+
+    /**
+     * Parse one key=value pair, adding it to $fields; false when it is malformed
+     *
+     * @param array<string, string> $fields
+     */
+    private static function addInitDataField(string $pair, array &$fields): bool
+    {
+        if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
+            return false;
+        }
+
+        [$name, $value] = explode('=', $pair, 2);
+        $name = urldecode($name);
+        $value = urldecode($value);
+
+        if (
+            preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
+            || array_key_exists($name, $fields)
+            || preg_match('/[\x00\r\n]/', $value) === 1
+        ) {
+            return false;
+        }
+
+        $fields[$name] = $value;
+
+        return true;
     }
 
     /**
@@ -246,7 +265,7 @@ class WebhookValidator
 
         try {
             $binary = sodium_base642bin($signature, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
-        } catch (\SodiumException) {
+        } catch (SodiumException) {
             return null;
         }
 

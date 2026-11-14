@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Traits;
 
+use BackedEnum;
 use CURLFile;
 use CURLStringFile;
+use DateTimeInterface;
+use InvalidArgumentException;
 use JsonSerializable;
+use stdClass;
+use Stringable;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
@@ -88,7 +93,7 @@ trait HttpClientTrait
         bool $objects = false,
     ): mixed {
         if (preg_match('/^[A-Za-z]\w*\z/', $method) !== 1) {
-            throw new \InvalidArgumentException('Invalid Bot API method name');
+            throw new InvalidArgumentException('Invalid Bot API method name');
         }
 
         [$fields, $multipart] = self::prepareFields($data);
@@ -111,13 +116,25 @@ trait HttpClientTrait
 
                 $attempt++;
             } catch (ApiException $e) {
-                if ($e->getCode() < 500 || !$this->retryTransient($transientAttempt)) {
+                if (!$this->retryServerError($e->getCode(), $transientAttempt)) {
                     throw $e;
                 }
-
-                $transientAttempt++;
             }
         }
+    }
+
+    /**
+     * Retry an HTTP 5xx response unless this is a webhook request
+     */
+    private function retryServerError(int $statusCode, int &$attempt): bool
+    {
+        if ($statusCode < 500 || !$this->retryTransient($attempt)) {
+            return false;
+        }
+
+        $attempt++;
+
+        return true;
     }
 
     /**
@@ -354,7 +371,7 @@ trait HttpClientTrait
 
         $objects = [];
         foreach ($result as $item) {
-            if (!$item instanceof \stdClass) {
+            if (!$item instanceof stdClass) {
                 throw self::unexpectedResult($method, self::ARRAY_OF_OBJECTS, $result);
             }
             $objects[] = $item;
@@ -378,8 +395,13 @@ trait HttpClientTrait
      *
      * @throws ApiException
      */
-    private function parseResponse(string $method, int $statusCode, string $body, bool $returnResponse, bool $objects = false): mixed
-    {
+    private function parseResponse(
+        string $method,
+        int $statusCode,
+        string $body,
+        bool $returnResponse,
+        bool $objects = false,
+    ): mixed {
         $result = $objects && $statusCode >= 200 && $statusCode < 300 ? self::successfulResultAsObjects($body) : null;
 
         if ($result === null) {
@@ -399,7 +421,7 @@ trait HttpClientTrait
     {
         $response = $body !== '' ? json_decode($body) : null;
 
-        return $response instanceof \stdClass && ($response->ok ?? false) === true
+        return $response instanceof stdClass && ($response->ok ?? false) === true
             ? ['value' => $response->result ?? null]
             : null;
     }
@@ -464,32 +486,50 @@ trait HttpClientTrait
         $files = [];
 
         foreach ($data as $key => $value) {
-            $value = self::scalarValue($value);
-
-            if ($value === null) {
-                continue;
-            }
-
-            if ($value instanceof InputFile) {
-                $files[$key] = $value->toCurlFile();
-                continue;
-            }
-
-            if (is_bool($value)) {
-                $fields[$key] = $value ? 'true' : 'false';
-            } elseif (is_array($value) || $value instanceof JsonSerializable) {
-                $fields[$key] = json_encode(
-                    self::extractAttachments($value, $files),
-                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
-                );
-            } elseif (is_scalar($value) || $value instanceof \Stringable) {
-                $fields[$key] = (string) $value;
-            } else {
-                throw new \InvalidArgumentException("Unsupported value for parameter '$key'");
-            }
+            self::prepareFieldValue($key, $value, $fields, $files);
         }
 
         return [$fields + $files, $files !== []];
+    }
+
+    /**
+     * Convert one parameter value, appending it to $fields or $files
+     *
+     * @param array<string, mixed> $fields
+     * @param array<string, CURLFile|CURLStringFile> $files
+     */
+    private static function prepareFieldValue(string $key, mixed $value, array &$fields, array &$files): void
+    {
+        $value = self::scalarValue($value);
+
+        if ($value === null) {
+            return;
+        }
+
+        if ($value instanceof InputFile) {
+            $files[$key] = $value->toCurlFile();
+            return;
+        }
+
+        if (is_bool($value)) {
+            $fields[$key] = $value ? 'true' : 'false';
+            return;
+        }
+
+        if (is_array($value) || $value instanceof JsonSerializable) {
+            $fields[$key] = json_encode(
+                self::extractAttachments($value, $files),
+                JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+            );
+            return;
+        }
+
+        if (is_scalar($value) || $value instanceof Stringable) {
+            $fields[$key] = (string) $value;
+            return;
+        }
+
+        throw new InvalidArgumentException("Unsupported value for parameter '$key'");
     }
 
     /**
@@ -530,8 +570,8 @@ trait HttpClientTrait
     private static function scalarValue(mixed $value): mixed
     {
         return match (true) {
-            $value instanceof \DateTimeInterface => $value->getTimestamp(),
-            $value instanceof \BackedEnum => $value->value,
+            $value instanceof DateTimeInterface => $value->getTimestamp(),
+            $value instanceof BackedEnum => $value->value,
             default => $value,
         };
     }
@@ -584,13 +624,16 @@ trait HttpClientTrait
         }
 
         // One entry per line, with tokens removed, whatever the caller interpolated
-        $line = '[' . date('Y-m-d H:i:s') . '] ' . str_replace(["\r", "\n"], ['\\r', '\\n'], LogRedactor::text($line)) . PHP_EOL;
+        $line = '[' . date('Y-m-d H:i:s') . '] '
+            . str_replace(["\r", "\n"], ['\\r', '\\n'], LogRedactor::text($line)) . PHP_EOL;
 
         if ($this->config->debugFile !== false) {
             self::createPrivateFile($this->config->debugFile);
             error_log($line, 3, $this->config->debugFile);
-        } else {
-            error_log(rtrim($line));
+
+            return;
         }
+
+        error_log(rtrim($line));
     }
 }

@@ -125,7 +125,8 @@ trait MediaMethods
     /**
      * Send a live photo
      *
-     * @param array<string, mixed> $options business_connection_id, message_thread_id, direct_messages_topic_id, ephemeral_message_parameters, ...
+     * @param array<string, mixed> $options business_connection_id, message_thread_id,
+     *     direct_messages_topic_id, ephemeral_message_parameters, ...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendlivephoto
@@ -149,7 +150,8 @@ trait MediaMethods
      * Send paid media
      *
      * @param list<array<string, mixed>> $media
-     * @param array<string, mixed> $options business_connection_id, message_thread_id, direct_messages_topic_id, payload, ...
+     * @param array<string, mixed> $options business_connection_id, message_thread_id,
+     *     direct_messages_topic_id, payload, ...
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#sendpaidmedia

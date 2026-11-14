@@ -85,7 +85,11 @@ trait AdminMethods
      */
     public function promoteChatMember(int|string $chatId, int $userId, array $rights = [], array $options = []): bool
     {
-        return $this->apiCallBool('promoteChatMember', ['chat_id' => $chatId, 'user_id' => $userId] + $rights, $options);
+        return $this->apiCallBool(
+            'promoteChatMember',
+            ['chat_id' => $chatId, 'user_id' => $userId] + $rights,
+            $options,
+        );
     }
 
     /**
