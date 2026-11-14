@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Security;
 
+use LogicException;
+use SodiumException;
+
 /**
  * Webhook request validation helpers
  */
@@ -131,7 +134,8 @@ class WebhookValidator
             return null;
         }
 
-        $valid = hash_equals(self::initDataHash($fields, $botToken), strtolower($hash)) && self::isFresh($fields, $maxAge);
+        $valid = hash_equals(self::initDataHash($fields, $botToken), strtolower($hash))
+            && self::isFresh($fields, $maxAge);
         unset($fields['signature']);
 
         return $valid ? $fields : null;
@@ -144,7 +148,8 @@ class WebhookValidator
      * need the bot id. Requires the sodium extension.
      *
      * @param int $maxAge Maximum accepted age of auth_date in seconds (0 disables the check)
-     * @param string $publicKey Telegram's key, hex encoded: WEB_APP_PUBLIC_KEY, or WEB_APP_TEST_PUBLIC_KEY for the test environment
+     * @param string $publicKey Telegram's key, hex encoded: WEB_APP_PUBLIC_KEY, or
+     *     WEB_APP_TEST_PUBLIC_KEY for the test environment
      * @return array<string, string>|null The parsed data (without hash and signature) when valid
      *
      * @see https://core.telegram.org/bots/webapps#validating-data-for-third-party-use
@@ -156,7 +161,7 @@ class WebhookValidator
         string $publicKey = self::WEB_APP_PUBLIC_KEY,
     ): ?array {
         if (!function_exists('sodium_crypto_sign_verify_detached')) {
-            throw new \LogicException('validateWebAppSignature() requires the sodium extension');
+            throw new LogicException('validateWebAppSignature() requires the sodium extension');
         }
 
         $fields = self::parseInitData($initData);
@@ -217,9 +222,11 @@ class WebhookValidator
         $name = urldecode($name);
         $value = urldecode($value);
 
-        if (preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
+        if (
+            preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
             || array_key_exists($name, $fields)
-            || preg_match('/[\x00\r\n]/', $value) === 1) {
+            || preg_match('/[\x00\r\n]/', $value) === 1
+        ) {
             return false;
         }
 
@@ -258,7 +265,7 @@ class WebhookValidator
 
         try {
             $binary = sodium_base642bin($signature, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
-        } catch (\SodiumException) {
+        } catch (SodiumException) {
             return null;
         }
 

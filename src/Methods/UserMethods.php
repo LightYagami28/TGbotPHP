@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Methods;
 
+use InvalidArgumentException;
 use TGbotPHP\Core\Config;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\StorageException;
@@ -254,16 +255,18 @@ trait UserMethods
      */
     private static function filePathSegments(string $filePath): array
     {
-        if ($filePath === '' || str_starts_with($filePath, '/') || str_contains($filePath, '\\')
-            || preg_match('/[\x00-\x1f\x7f]/', $filePath) === 1) {
-            throw new \InvalidArgumentException('Expected a relative Telegram file path');
+        if (
+            $filePath === '' || str_starts_with($filePath, '/') || str_contains($filePath, '\\')
+            || preg_match('/[\x00-\x1f\x7f]/', $filePath) === 1
+        ) {
+            throw new InvalidArgumentException('Expected a relative Telegram file path');
         }
 
         $segments = explode('/', $filePath);
 
         foreach ($segments as $segment) {
             if ($segment === '' || $segment === '.' || $segment === '..') {
-                throw new \InvalidArgumentException('Invalid Telegram file path segment');
+                throw new InvalidArgumentException('Invalid Telegram file path segment');
             }
         }
 
