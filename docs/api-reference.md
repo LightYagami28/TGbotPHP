@@ -1,9 +1,7 @@
 ---
-
-title: "API reference" description: "Every method of the Telegram Bot API 10.3,
-the Bot routing API, the Config options, the exceptions, the utilities and the
-tgbot command line tool." icon: code
-
+title: "API reference"
+description: "Every method of the Telegram Bot API 10.3, the Bot routing API, the Config options, the exceptions, the utilities and the tgbot command line tool."
+icon: code
 ---
 
 ## Bot

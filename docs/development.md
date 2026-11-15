@@ -1,7 +1,6 @@
 ---
 title: "Development"
-description: "Set up the project, add a new Bot API method, follow the code
-standards, run the continuous integration and release a new version."
+description: "Set up the project, add a new Bot API method, follow the code standards, run the continuous integration and release a new version."
 icon: code-branch
 ---
 

@@ -1,9 +1,7 @@
 ---
-
-title: "Conversations" description: "Multi-step dialogs with a state per user,
-where the state is stored, concurrent updates, sessions and rate limiting."
+title: "Conversations"
+description: "Multi-step dialogs with a state per user, where the state is stored, concurrent updates, sessions and rate limiting."
 icon: comments
-
 ---
 
 A conversation asks the user several questions in a row: a sign-up form, an

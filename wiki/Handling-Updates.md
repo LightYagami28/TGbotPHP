@@ -1,9 +1,7 @@
 ---
-
-title: "Handling updates" description: "Command, text pattern, callback query
-and inline query handlers, handlers for any update type, the routing order and
-how to read payloads." icon: inbox
-
+title: "Handling updates"
+description: "Command, text pattern, callback query and inline query handlers, handlers for any update type, the routing order and how to read payloads."
+icon: inbox
 ---
 
 Telegram delivers everything that happens to your bot as an

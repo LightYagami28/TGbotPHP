@@ -1,9 +1,7 @@
 ---
-
-title: "FAQ" description: "The questions that come up most often: PHP version,
-dependencies, webhook or polling, Bot API support, update types, return values
-and sending messages on your own." icon: circle-question
-
+title: "FAQ"
+description: "The questions that come up most often: PHP version, dependencies, webhook or polling, Bot API support, update types, return values and sending messages on your own."
+icon: circle-question
 ---
 
 **Which PHP version do I need?** PHP 8.5 or later, with the `curl` and `json`

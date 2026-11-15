@@ -1,9 +1,7 @@
 ---
-
-title: "Examples" description: "Complete bots: a menu with pages, a feedback
-form, group moderation, inline search, selling with Telegram Stars and streaming
-an answer." icon: list
-
+title: "Examples"
+description: "Complete bots: a menu with pages, a feedback form, group moderation, inline search, selling with Telegram Stars and streaming an answer."
+icon: list
 ---
 
 Complete bots you can copy. Each one runs with long polling (`$bot->poll()`);
