@@ -75,6 +75,18 @@ class Logger
         }
 
         $context = LogRedactor::context($context);
+        $timestamp = date('Y-m-d H:i:s');
+        $logLine = "[$timestamp] [$level] " . self::message($message, $context) . self::contextSuffix($context) . "\n";
+
+        PrivateFile::create($this->logFile);
+        error_log($logLine, 3, $this->logFile);
+    }
+
+    /**
+     * @param array<mixed> $context Already redacted context
+     */
+    private static function message(string $message, array $context): string
+    {
         $replacements = [];
         foreach ($context as $key => $value) {
             if (is_scalar($value) || $value instanceof Stringable) {
@@ -84,19 +96,21 @@ class Logger
         $message = LogRedactor::text(strtr($message, $replacements));
 
         // Prevent log injection through user supplied values
-        $message = str_replace(["\r", "\n"], ['\r', '\n'], $message);
+        return str_replace(["\r", "\n"], ['\r', '\n'], $message);
+    }
 
-        $timestamp = date('Y-m-d H:i:s');
-        $contextStr = $context !== []
-            ? ' ' . json_encode(
-                $context,
-                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR,
-            )
-            : '';
-        $logLine = "[$timestamp] [$level] $message$contextStr\n";
+    /**
+     * @param array<mixed> $context Already redacted context
+     */
+    private static function contextSuffix(array $context): string
+    {
+        if ($context === []) {
+            return '';
+        }
 
-        PrivateFile::create($this->logFile);
-        error_log($logLine, 3, $this->logFile);
+        $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR;
+
+        return ' ' . json_encode($context, $flags);
     }
 
     public function enable(): void
