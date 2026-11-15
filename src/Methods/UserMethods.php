@@ -137,17 +137,8 @@ trait UserMethods
     {
         $file = $this->getFile($fileId);
 
-        $filePath = Value::nullableString($file['file_path'] ?? null);
-
-        if ($filePath === null || $filePath === '') {
-            throw new ApiException('File is not available for download', 0, $file, 'getFile');
-        }
-
-        $size = Value::nullableInt($file['file_size'] ?? null);
-
-        if ($destination === null && $size !== null && $size > self::MAX_MEMORY_DOWNLOAD) {
-            throw new StorageException("File is too large to load in memory ($size bytes): pass a destination");
-        }
+        $filePath = self::availableFilePath($file);
+        self::assertFitsInMemory($destination, Value::nullableInt($file['file_size'] ?? null));
 
         if ($this->isLocalServerFile($filePath)) {
             return $this->copyLocalFile($filePath, $destination);
@@ -159,6 +150,31 @@ trait UserMethods
         return $destination === null
             ? $this->downloadToMemory($url, $timeout)
             : $this->downloadToDisk($url, $destination, $timeout);
+    }
+
+    /**
+     * @param array<string, mixed> $file
+     */
+    private static function availableFilePath(array $file): string
+    {
+        $filePath = Value::nullableString($file['file_path'] ?? null);
+
+        if ($filePath === null || $filePath === '') {
+            throw new ApiException('File is not available for download', 0, $file, 'getFile');
+        }
+
+        return $filePath;
+    }
+
+    private static function assertFitsInMemory(?string $destination, ?int $size): void
+    {
+        if ($destination !== null) {
+            return;
+        }
+
+        if (($size ?? 0) > self::MAX_MEMORY_DOWNLOAD) {
+            throw new StorageException("File is too large to load in memory ($size bytes): pass a destination");
+        }
     }
 
     /**
@@ -210,13 +226,12 @@ trait UserMethods
 
         $real = realpath($filePath);
 
-        if ($real === false || !is_file($real)) {
-            return false;
-        }
+        return $real !== false && is_file($real) && self::isInsideRoot($real, $root);
+    }
 
-        $prefix = rtrim($root, '/') . '/';
-
-        return $real === $root || str_starts_with($real, $prefix);
+    private static function isInsideRoot(string $real, string $root): bool
+    {
+        return $real === $root || str_starts_with($real, rtrim($root, '/') . '/');
     }
 
     private function copyLocalFile(string $filePath, ?string $destination): string
@@ -228,19 +243,7 @@ trait UserMethods
         }
 
         if ($destination === null) {
-            $size = filesize($real);
-
-            if ($size === false || $size > self::MAX_MEMORY_DOWNLOAD) {
-                throw new StorageException('File exceeds the in-memory download limit');
-            }
-
-            $contents = @file_get_contents($real);
-
-            if ($contents === false) {
-                throw new StorageException("Unable to read file: $real");
-            }
-
-            return $contents;
+            return self::readLocalFile($real);
         }
 
         if (!@copy($real, $destination)) {
@@ -250,27 +253,45 @@ trait UserMethods
         return $destination;
     }
 
+    private static function readLocalFile(string $real): string
+    {
+        $size = filesize($real);
+
+        if ($size === false || $size > self::MAX_MEMORY_DOWNLOAD) {
+            throw new StorageException('File exceeds the in-memory download limit');
+        }
+
+        $contents = @file_get_contents($real);
+
+        if ($contents === false) {
+            throw new StorageException("Unable to read file: $real");
+        }
+
+        return $contents;
+    }
+
     /**
      * @return list<string>
      */
     private static function filePathSegments(string $filePath): array
     {
-        if (
-            $filePath === '' || str_starts_with($filePath, '/') || str_contains($filePath, '\\')
-            || preg_match('/[\x00-\x1f\x7f]/', $filePath) === 1
-        ) {
+        if (!self::isRelativePath($filePath)) {
             throw new InvalidArgumentException('Expected a relative Telegram file path');
         }
 
         $segments = explode('/', $filePath);
 
-        foreach ($segments as $segment) {
-            if ($segment === '' || $segment === '.' || $segment === '..') {
-                throw new InvalidArgumentException('Invalid Telegram file path segment');
-            }
+        if (array_intersect($segments, ['', '.', '..']) !== []) {
+            throw new InvalidArgumentException('Invalid Telegram file path segment');
         }
 
         return $segments;
+    }
+
+    private static function isRelativePath(string $filePath): bool
+    {
+        return $filePath !== '' && !str_starts_with($filePath, '/') && !str_contains($filePath, '\\')
+            && preg_match('/[\x00-\x1f\x7f]/', $filePath) !== 1;
     }
 
     private static function checkDownloadStatus(int $statusCode): void

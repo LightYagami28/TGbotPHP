@@ -130,15 +130,28 @@ class WebhookValidator
         $hash = $fields['hash'] ?? '';
         unset($fields['hash']);
 
-        if (preg_match(self::HEX_64, $hash) !== 1) {
-            return null;
-        }
+        return self::hashMatches($fields, $hash, $botToken, $maxAge) ? self::withoutSignature($fields) : null;
+    }
 
-        $valid = hash_equals(self::initDataHash($fields, $botToken), strtolower($hash))
+    /**
+     * @param array<string, string> $fields
+     */
+    private static function hashMatches(array $fields, string $hash, string $botToken, int $maxAge): bool
+    {
+        return preg_match(self::HEX_64, $hash) === 1
+            && hash_equals(self::initDataHash($fields, $botToken), strtolower($hash))
             && self::isFresh($fields, $maxAge);
+    }
+
+    /**
+     * @param array<string, string> $fields
+     * @return array<string, string>
+     */
+    private static function withoutSignature(array $fields): array
+    {
         unset($fields['signature']);
 
-        return $valid ? $fields : null;
+        return $fields;
     }
 
     /**
@@ -164,26 +177,39 @@ class WebhookValidator
             throw new LogicException('validateWebAppSignature() requires the sodium extension');
         }
 
-        $fields = self::parseInitData($initData);
+        $fields = $botId > 0 ? self::parseInitData($initData) : null;
+        $key = self::decodePublicKey($publicKey);
+        $signature = $fields === null ? null : self::decodeSignature($fields['signature'] ?? '');
 
-        if ($fields === null || $botId <= 0 || preg_match(self::HEX_64, $publicKey) !== 1) {
+        if ($fields === null || $key === null || $signature === null) {
             return null;
         }
 
-        $signature = self::decodeSignature($fields['signature'] ?? '');
-        $key = hex2bin($publicKey);
         unset($fields['hash'], $fields['signature']);
 
-        if ($signature === null || !is_string($key) || $key === '') {
-            return null;
-        }
+        return self::signatureMatches($fields, "$botId:WebAppData\n", [$signature, $key], $maxAge) ? $fields : null;
+    }
 
-        $message = "$botId:WebAppData\n" . self::dataCheckString($fields);
+    /**
+     * @param array<string, string> $fields
+     * @param array{non-empty-string, non-empty-string} $signatureAndKey
+     */
+    private static function signatureMatches(array $fields, string $prefix, array $signatureAndKey, int $maxAge): bool
+    {
+        [$signature, $key] = $signatureAndKey;
 
         return self::isFresh($fields, $maxAge)
-            && sodium_crypto_sign_verify_detached($signature, $message, $key)
-            ? $fields
-            : null;
+            && sodium_crypto_sign_verify_detached($signature, $prefix . self::dataCheckString($fields), $key);
+    }
+
+    /**
+     * @return non-empty-string|null
+     */
+    private static function decodePublicKey(string $publicKey): ?string
+    {
+        $key = preg_match(self::HEX_64, $publicKey) === 1 ? hex2bin($publicKey) : false;
+
+        return is_string($key) && $key !== '' ? $key : null;
     }
 
     /**
@@ -214,25 +240,36 @@ class WebhookValidator
      */
     private static function addInitDataField(string $pair, array &$fields): bool
     {
-        if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
+        $parts = self::splitPair($pair);
+
+        if ($parts === null || array_key_exists($parts[0], $fields)) {
             return false;
+        }
+
+        $fields[$parts[0]] = $parts[1];
+
+        return true;
+    }
+
+    /**
+     * @return array{string, string}|null Decoded name and value, or null when the pair is malformed
+     */
+    private static function splitPair(string $pair): ?array
+    {
+        if (!str_contains($pair, '=') || preg_match('/%(?![a-fA-F0-9]{2})/', $pair) === 1) {
+            return null;
         }
 
         [$name, $value] = explode('=', $pair, 2);
         $name = urldecode($name);
         $value = urldecode($value);
 
-        if (
-            preg_match('/^[A-Za-z_]\w*\z/', $name) !== 1
-            || array_key_exists($name, $fields)
-            || preg_match('/[\x00\r\n]/', $value) === 1
-        ) {
-            return false;
-        }
+        return self::isValidField($name, $value) ? [$name, $value] : null;
+    }
 
-        $fields[$name] = $value;
-
-        return true;
+    private static function isValidField(string $name, string $value): bool
+    {
+        return preg_match('/^[A-Za-z_]\w*\z/', $name) === 1 && preg_match('/[\x00\r\n]/', $value) !== 1;
     }
 
     /**
@@ -248,10 +285,14 @@ class WebhookValidator
             return false;
         }
 
-        $timestamp = filter_var($date, FILTER_VALIDATE_INT);
+        return self::withinAge((int) filter_var($date, FILTER_VALIDATE_INT), $maxAge);
+    }
+
+    private static function withinAge(int $timestamp, int $maxAge): bool
+    {
         $now = time();
 
-        return is_int($timestamp) && $timestamp <= $now && ($maxAge === 0 || $now - $timestamp <= $maxAge);
+        return $timestamp > 0 && $timestamp <= $now && ($maxAge === 0 || $now - $timestamp <= $maxAge);
     }
 
     /**
@@ -259,17 +300,18 @@ class WebhookValidator
      */
     private static function decodeSignature(string $signature): ?string
     {
-        if (preg_match('/^[A-Za-z0-9_-]+\z/', $signature) !== 1) {
-            return null;
-        }
+        $binary = preg_match('/^[A-Za-z0-9_-]+\z/', $signature) === 1 ? self::base64Url($signature) : null;
 
+        return $binary !== null && strlen($binary) === SODIUM_CRYPTO_SIGN_BYTES ? $binary : null;
+    }
+
+    private static function base64Url(string $signature): ?string
+    {
         try {
-            $binary = sodium_base642bin($signature, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+            return sodium_base642bin($signature, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
         } catch (SodiumException) {
             return null;
         }
-
-        return $binary !== '' && strlen($binary) === SODIUM_CRYPTO_SIGN_BYTES ? $binary : null;
     }
 
     /**

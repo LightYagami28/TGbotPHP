@@ -35,7 +35,7 @@ trait UpdateMethods
             'offset' => $offset,
             'limit' => $limit,
             'timeout' => $timeout,
-            'allowed_updates' => $allowedUpdates !== null ? array_values($allowedUpdates) : null,
+            'allowed_updates' => self::updateTypes($allowedUpdates),
         ]);
     }
 
@@ -57,7 +57,7 @@ trait UpdateMethods
             'offset' => $offset,
             'limit' => $limit,
             'timeout' => $timeout,
-            'allowed_updates' => $allowedUpdates !== null ? array_values($allowedUpdates) : null,
+            'allowed_updates' => self::updateTypes($allowedUpdates),
         ]);
     }
 
@@ -86,8 +86,8 @@ trait UpdateMethods
             'certificate' => $certificate,
             'ip_address' => $ipAddress,
             'max_connections' => $maxConnections,
-            'allowed_updates' => $allowedUpdates !== null ? array_values($allowedUpdates) : null,
-            'drop_pending_updates' => $dropPendingUpdates ? true : null,
+            'allowed_updates' => self::updateTypes($allowedUpdates),
+            'drop_pending_updates' => self::flag($dropPendingUpdates),
             'secret_token' => $secretToken,
         ]);
     }
@@ -100,7 +100,7 @@ trait UpdateMethods
     public function deleteWebhook(bool $dropPendingUpdates = false): bool
     {
         return $this->apiCallBool('deleteWebhook', [
-            'drop_pending_updates' => $dropPendingUpdates ? true : null,
+            'drop_pending_updates' => self::flag($dropPendingUpdates),
         ]);
     }
 
@@ -114,5 +114,19 @@ trait UpdateMethods
     public function getWebhookInfo(): array
     {
         return $this->apiCallObject('getWebhookInfo');
+    }
+
+    /**
+     * @param string[]|null $updateTypes
+     * @return list<string>|null
+     */
+    private static function updateTypes(?array $updateTypes): ?array
+    {
+        return $updateTypes === null ? null : array_values($updateTypes);
+    }
+
+    private static function flag(bool $enabled): ?bool
+    {
+        return $enabled ? true : null;
     }
 }
