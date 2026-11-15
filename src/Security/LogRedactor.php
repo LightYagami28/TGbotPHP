@@ -53,18 +53,32 @@ final class LogRedactor
 
     private static function value(mixed $value, string $key, int $depth): mixed
     {
-        if ($depth >= 8 || ($key !== '' && preg_match(self::SECRET_KEY, $key) === 1)) {
+        if ($depth >= 8 || self::isSecretKey($key)) {
             return '<redacted>';
         }
 
         if (is_array($value)) {
-            foreach ($value as $childKey => $child) {
-                $value[$childKey] = self::value($child, is_string($childKey) ? $childKey : '', $depth + 1);
-            }
-
-            return $value;
+            return self::children($value, $depth + 1);
         }
 
         return is_string($value) ? self::text($value) : $value;
+    }
+
+    private static function isSecretKey(string $key): bool
+    {
+        return $key !== '' && preg_match(self::SECRET_KEY, $key) === 1;
+    }
+
+    /**
+     * @param array<array-key, mixed> $children
+     * @return array<array-key, mixed>
+     */
+    private static function children(array $children, int $depth): array
+    {
+        foreach ($children as $childKey => $child) {
+            $children[$childKey] = self::value($child, is_string($childKey) ? $childKey : '', $depth);
+        }
+
+        return $children;
     }
 }

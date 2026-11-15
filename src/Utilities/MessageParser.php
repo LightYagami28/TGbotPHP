@@ -59,28 +59,55 @@ class MessageParser
      */
     public static function entities(stdClass $message, string $type): array
     {
-        $text = Value::nullableString(Value::path($message, 'text'));
-        $entities = Value::path($message, 'entities');
-
-        if ($text === null) {
-            $text = Value::string(Value::path($message, 'caption'));
-            $entities = Value::path($message, 'caption_entities');
-        }
-
-        $characters = preg_split('//u', $text, -1, PREG_SPLIT_NO_EMPTY);
-        $characters = $characters === false ? [] : $characters;
+        [$text, $entities] = self::textAndEntities($message);
+        $characters = self::characters($text);
         $found = [];
 
-        foreach (is_array($entities) ? $entities : [] as $entity) {
-            $offset = Value::nullableInt(Value::path($entity, 'offset'));
-            $length = Value::nullableInt(Value::path($entity, 'length'));
+        foreach ($entities as $entity) {
+            $range = self::entityRange($entity, $type);
 
-            if (Value::path($entity, 'type') === $type && $offset !== null && $length !== null) {
-                $found[] = self::utf16Slice($characters, $offset, $length);
+            if ($range !== null) {
+                $found[] = self::utf16Slice($characters, $range[0], $range[1]);
             }
         }
 
         return $found;
+    }
+
+    /**
+     * @return array{string, list<mixed>} The text (or caption) and its entities
+     */
+    private static function textAndEntities(stdClass $message): array
+    {
+        $text = Value::nullableString(Value::path($message, 'text'));
+        $entities = $text === null ? Value::path($message, 'caption_entities') : Value::path($message, 'entities');
+
+        $text ??= Value::string(Value::path($message, 'caption'));
+
+        return [$text, is_array($entities) ? array_values($entities) : []];
+    }
+
+    /**
+     * @return list<string> UTF-8 characters of the text
+     */
+    private static function characters(string $text): array
+    {
+        $characters = preg_split('//u', $text, -1, PREG_SPLIT_NO_EMPTY);
+
+        return $characters === false ? [] : $characters;
+    }
+
+    /**
+     * @return array{int, int}|null Offset and length when the entity has the type
+     */
+    private static function entityRange(mixed $entity, string $type): ?array
+    {
+        $offset = Value::nullableInt(Value::path($entity, 'offset'));
+        $length = Value::nullableInt(Value::path($entity, 'length'));
+
+        return Value::path($entity, 'type') === $type && $offset !== null && $length !== null
+            ? [$offset, $length]
+            : null;
     }
 
     /**
