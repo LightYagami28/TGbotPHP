@@ -168,7 +168,11 @@ trait UserMethods
 
     private static function assertFitsInMemory(?string $destination, ?int $size): void
     {
-        if ($destination === null && $size !== null && $size > self::MAX_MEMORY_DOWNLOAD) {
+        if ($destination !== null) {
+            return;
+        }
+
+        if (($size ?? 0) > self::MAX_MEMORY_DOWNLOAD) {
             throw new StorageException("File is too large to load in memory ($size bytes): pass a destination");
         }
     }

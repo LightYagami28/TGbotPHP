@@ -264,9 +264,12 @@ class WebhookValidator
         $name = urldecode($name);
         $value = urldecode($value);
 
-        $valid = preg_match('/^[A-Za-z_]\w*\z/', $name) === 1 && preg_match('/[\x00\r\n]/', $value) !== 1;
+        return self::isValidField($name, $value) ? [$name, $value] : null;
+    }
 
-        return $valid ? [$name, $value] : null;
+    private static function isValidField(string $name, string $value): bool
+    {
+        return preg_match('/^[A-Za-z_]\w*\z/', $name) === 1 && preg_match('/[\x00\r\n]/', $value) !== 1;
     }
 
     /**
