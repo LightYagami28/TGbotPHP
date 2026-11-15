@@ -1,13 +1,15 @@
 ---
-title: "API reference"
-description: "Every method of the Telegram Bot API 10.3, the Bot routing API, the Config options, the exceptions, the utilities and the tgbot command line tool."
-icon: code
----
 
+title: "API reference" description: "Every method of the Telegram Bot API 10.3,
+the Bot routing API, the Config options, the exceptions, the utilities and the
+tgbot command line tool." icon: code
+
+---
 
 ## Bot
 
-`TGbotPHP\Framework\Bot` extends `ApiClient` and adds routing, middleware, events and conversations.
+`TGbotPHP\Framework\Bot` extends `ApiClient` and adds routing, middleware,
+events and conversations.
 
 ```php
 use TGbotPHP\Core\Config;
@@ -20,7 +22,8 @@ $bot = new Bot('123456:ABC...', new MyTransport());         // custom HTTP trans
 
 ### Handlers
 
-Every handler receives the update payload (`stdClass`) first, then the `Bot`, then data specific to the route.
+Every handler receives the update payload (`stdClass`) first, then the `Bot`,
+then data specific to the route.
 
 | Method | Handler signature | Notes |
 |---|---|---|
@@ -40,7 +43,8 @@ A pattern can be:
 - wildcard: `'page:*'`, where `$matches[1]` is the part `*` matched
 - regex: `'/^item:(\d+)$/'` (delimiters `/`, `#` or `~`)
 
-For a message, the router tries commands first, then the conversation state, then `hears` patterns, then `fallback`.
+For a message, the router tries commands first, then the conversation state,
+then `hears` patterns, then `fallback`.
 
 ### Running
 
@@ -65,9 +69,14 @@ error goes to `onError` or the PHP error log. Call
 `withUnauthenticatedWebhook()` only to accept requests that have no secret. The
 default is false.
 
-During `handle()`, API calls are not retried and `retry_after` is not slept on: a PHP-FPM worker must stay free to answer Telegram. Polling and other calls still follow `RetryPolicy`, including network errors and HTTP 5xx (`transientRetries`).
+During `handle()`, API calls are not retried and `retry_after` is not slept on:
+a PHP-FPM worker must stay free to answer Telegram. Polling and other calls
+still follow `RetryPolicy`, including network errors and HTTP 5xx
+(`transientRetries`).
 
-`poll()` calls `getMe()` to learn the bot username, retries network and 5xx errors with exponential backoff, and waits out 429 errors. It stops on 401, 404 and 409 errors, for example when a webhook is still set.
+`poll()` calls `getMe()` to learn the bot username, retries network and 5xx
+errors with exponential backoff, and waits out 429 errors. It stops on 401, 404
+and 409 errors, for example when a webhook is still set.
 
 ### Helpers
 
@@ -100,7 +109,8 @@ $bot->middleware(function (stdClass $update, Bot $bot, callable $next) {
 
 ### Events
 
-`update.received`, `update.processed`, `error`, `error.api`, `polling.started`, `polling.stopped`
+`update.received`, `update.processed`, `error`, `error.api`, `polling.started`,
+`polling.stopped`
 
 ```php
 $bot->on('update.received', fn(stdClass $update) => error_log('update ' . $update->update_id));
@@ -133,13 +143,15 @@ new Config(
 
 `Config` is immutable: its properties are read-only, and each `with*()` method
 returns a modified copy.
-```
 
 ## ApiClient methods
 
-Methods return the decoded `result`: an array for objects, `bool` for actions. A response of the wrong type, or an error, throws an exception.
+Methods return the decoded `result`: an array for objects, `bool` for actions. A
+response of the wrong type, or an error, throws an exception.
 
-Methods take the required parameters and the common optional ones as arguments. Every other optional parameter goes in the trailing `array $options`, using the names from the Telegram documentation:
+Methods take the required parameters and the common optional ones as arguments.
+Every other optional parameter goes in the trailing `array $options`, using the
+names from the Telegram documentation:
 
 ```php
 $bot->sendMessage($chatId, 'Hi', options: [
@@ -156,11 +168,14 @@ $bot->sendInvoice($chatId, 'Pro plan', 'One month', 'order-42', 'XTR', [['label'
 
 A parameter Telegram adds in the future works right away through `$options`.
 
-Parameter conversion is automatic. `null` values are dropped, booleans become `true`/`false`, and arrays or `JsonSerializable` objects (such as `InlineKeyboard`) are JSON encoded.
+Parameter conversion is automatic. `null` values are dropped, booleans become
+`true`/`false`, and arrays or `JsonSerializable` objects (such as
+`InlineKeyboard`) are JSON encoded.
 
 ### Files
 
-Strings are sent as they are, so a `file_id` or an HTTP URL works. Use `InputFile` to upload:
+Strings are sent as they are, so a `file_id` or an HTTP URL works. Use
+`InputFile` to upload:
 
 ```php
 use TGbotPHP\Types\InputFile;
@@ -181,7 +196,9 @@ $bot->downloadFile($fileId, '/tmp/download.jpg');
 
 ### Method groups
 
-Every method of Bot API 10.3 is implemented. `tests/Unit/BotApiCoverageTest.php` checks each one against the official documentation: method name, required parameters, parameter names and result type.
+Every method of Bot API 10.3 is implemented. `tests/Unit/BotApiCoverageTest.php`
+checks each one against the official documentation: method name, required
+parameters, parameter names and result type.
 
 | Group | Methods |
 |---|---|
@@ -207,9 +224,12 @@ Every method of Bot API 10.3 is implemented. `tests/Unit/BotApiCoverageTest.php`
 | Games | `sendGame`, `setGameScore`, `getGameHighScores` |
 | Anything else | `call('methodName', [...])` |
 
-Deprecated aliases still work: `kickChatMember` calls `banChatMember`, `pinMessage` calls `pinChatMessage`, `unpinMessage` calls `unpinChatMessage`, and `getChatMembersCount` calls `getChatMemberCount`.
+Deprecated aliases still work: `kickChatMember` calls `banChatMember`,
+`pinMessage` calls `pinChatMessage`, `unpinMessage` calls `unpinChatMessage`,
+and `getChatMembersCount` calls `getChatMemberCount`.
 
-`setMyCommands` accepts `['start' => 'Start the bot']`, and a scope can be given by its type (`'all_private_chats'`).
+`setMyCommands` accepts `['start' => 'Start the bot']`, and a scope can be given
+by its type (`'all_private_chats'`).
 
 ## Exceptions
 
@@ -274,11 +294,14 @@ MessageParser::extractMentions($text); MessageParser::extractHashtags($text);
 MessageParser::extractUrls($text); MessageParser::extractEmails($text);
 ```
 
-`entities()` reads `entities` (or `caption_entities`) and handles their UTF-16 offsets, so emoji before an entity do not shift it. Prefer it to the `extract*()` regexes, which only approximate Telegram's rules.
+`entities()` reads `entities` (or `caption_entities`) and handles their UTF-16
+offsets, so emoji before an entity do not shift it. Prefer it to the
+`extract*()` regexes, which only approximate Telegram's rules.
 
 ### Reading payloads
 
-Update payloads are `stdClass` objects decoded from JSON, so every field is `mixed`. `Support\Value` reads them safely:
+Update payloads are `stdClass` objects decoded from JSON, so every field is
+`mixed`. `Support\Value` reads them safely:
 
 ```php
 use TGbotPHP\Support\Value;
@@ -289,7 +312,10 @@ $page   = Value::int($matches[1] ?? null, default: 1);
 $token  = Value::env('TELEGRAM_BOT_TOKEN');                 // null if unset or empty
 ```
 
-`Support\Payload` reads the fields shared by messages and callback queries: `chatId()`, `userId()`, `topicId()`, `businessConnectionId()`, `directMessagesTopicId()`, and `replyTarget()`, the parameters `reply()` uses to answer in the same place.
+`Support\Payload` reads the fields shared by messages and callback queries:
+`chatId()`, `userId()`, `topicId()`, `businessConnectionId()`,
+`directMessagesTopicId()`, and `replyTarget()`, the parameters `reply()` uses to
+answer in the same place.
 
 ### Security
 

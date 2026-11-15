@@ -1,11 +1,14 @@
 ---
-title: "Conversations"
-description: "Multi-step dialogs with a state per user, where the state is stored, concurrent updates, sessions and rate limiting."
+
+title: "Conversations" description: "Multi-step dialogs with a state per user,
+where the state is stored, concurrent updates, sessions and rate limiting."
 icon: comments
+
 ---
 
-
-A conversation asks the user several questions in a row: a sign-up form, an order, a quiz. The bot keeps a **state** for each user in each chat, and routes their next message to the handler of that state.
+A conversation asks the user several questions in a row: a sign-up form, an
+order, a quiz. The bot keeps a **state** for each user in each chat, and routes
+their next message to the handler of that state.
 
 ## Example: an order form
 
@@ -54,7 +57,8 @@ $bot->command('cancel', function (stdClass $message, Bot $bot): void {
 | `clearState($payload)` | Ends the conversation |
 | `conversations()` | The `ConversationManager`, to read or change the state of any chat and user |
 
-`$payload` is the message or callback query of the user; the state belongs to that user in that chat. In a group, each member has their own state.
+`$payload` is the message or callback query of the user; the state belongs to
+that user in that chat. In a group, each member has their own state.
 
 ## Where states are stored
 
@@ -66,7 +70,8 @@ States live in a cache that implements `CacheInterface`:
 | `FileCache` | Webhooks on one server. Persists between requests |
 | Your own `CacheInterface` | Several servers: Redis, Memcached, a database |
 
-**With webhooks, use a persistent cache.** Each update is a new PHP process, so an `ArrayCache` would forget the state after every message.
+**With webhooks, use a persistent cache.** Each update is a new PHP process, so
+an `ArrayCache` would forget the state after every message.
 
 ```php
 use TGbotPHP\Cache\FileCache;
@@ -74,21 +79,30 @@ use TGbotPHP\Cache\FileCache;
 $bot->useConversations(new FileCache('/var/lib/mybot/cache'));
 ```
 
-Keep the directory outside the web root. `FileCache` never unserializes objects, so only scalars and arrays are stored. Call `$cache->prune()` from a cron job to delete expired entries.
+Keep the directory outside the web root. `FileCache` never unserializes objects,
+so only scalars and arrays are stored. Call `$cache->prune()` from a cron job to
+delete expired entries.
 
 ### Concurrent updates
 
-Two webhook requests from the same user can run at the same time, for example when they send an album or tap two buttons quickly. Reading a state, changing it and writing it back would then lose one of the changes. `CacheInterface::update()` does the three steps at once, and `FileCache` holds a file lock meanwhile:
+Two webhook requests from the same user can run at the same time, for example
+when they send an album or tap two buttons quickly. Reading a state, changing it
+and writing it back would then lose one of the changes.
+`CacheInterface::update()` does the three steps at once, and `FileCache` holds a
+file lock meanwhile:
 
 ```php
 $cache->update('visits', fn(mixed $count) => (int) $count + 1);
 ```
 
-Conversations, sessions and the rate limiter use `update()`. If you write your own cache, make `update()` atomic too: `WATCH`/`MULTI` or a Lua script with Redis, a transaction or `SELECT ... FOR UPDATE` with a database.
+Conversations, sessions and the rate limiter use `update()`. If you write your
+own cache, make `update()` atomic too: `WATCH`/`MULTI` or a Lua script with
+Redis, a transaction or `SELECT ... FOR UPDATE` with a database.
 
 ## Sessions
 
-`SessionManager` stores data under a random session id, for flows that are not tied to one chat, such as a login link opened in a browser:
+`SessionManager` stores data under a random session id, for flows that are not
+tied to one chat, such as a login link opened in a browser:
 
 ```php
 use TGbotPHP\Session\SessionManager;
@@ -128,6 +142,9 @@ $bot->command('search', function (stdClass $message, Bot $bot, string $query) us
 });
 ```
 
-`remaining($key, $maxRequests)` returns how many requests are left in the current window, and `reset($key)` clears it.
+`remaining($key, $maxRequests)` returns how many requests are left in the
+current window, and `reset($key)` clears it.
 
-Telegram also limits your bot: about 30 messages per second overall and 1 per second in the same chat. When a request exceeds them, the library waits and retries as the [retry policy](Configuration#retries) allows.
+Telegram also limits your bot: about 30 messages per second overall and 1 per
+second in the same chat. When a request exceeds them, the library waits and
+retries as the [retry policy](Configuration#retries) allows.

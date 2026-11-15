@@ -1,9 +1,10 @@
 ---
-title: "Advanced usage"
-description: "Middleware, conversations, caching, rate limiting, plugins, error handling, a local Bot API server, custom HTTP transports and Mini Apps."
-icon: gears
----
 
+title: "Advanced usage" description: "Middleware, conversations, caching, rate
+limiting, plugins, error handling, a local Bot API server, custom HTTP
+transports and Mini Apps." icon: gears
+
+---
 
 ## Middleware
 
@@ -27,7 +28,8 @@ $bot->middleware(function (stdClass $update, Bot $bot, callable $next): void {
 
 ## Conversations
 
-Multi-step dialogs keep a state per chat and user. In webhook mode, use a persistent cache.
+Multi-step dialogs keep a state per chat and user. In webhook mode, use a
+persistent cache.
 
 ```php
 use TGbotPHP\Cache\FileCache;
@@ -75,13 +77,16 @@ $cache->prune(); // delete expired entries (e.g. from a cron job)
 
 `FileCache` never unserializes objects. Store scalars and arrays.
 
-`update()` reads, changes and writes an entry as one step. `FileCache` holds a file lock meanwhile, so two webhook requests from the same user cannot overwrite each other's changes. Conversations, sessions and the rate limiter use it.
+`update()` reads, changes and writes an entry as one step. `FileCache` holds a
+file lock meanwhile, so two webhook requests from the same user cannot overwrite
+each other's changes. Conversations, sessions and the rate limiter use it.
 
 ```php
 $cache->update('visits', fn(mixed $count) => (int) $count + 1);
 ```
 
-With your own `CacheInterface` on Redis or a database, make `update()` atomic too, for example with a transaction or a lock.
+With your own `CacheInterface` on Redis or a database, make `update()` atomic
+too, for example with a transaction or a lock.
 
 ## Rate Limiting
 
@@ -129,7 +134,8 @@ final class AdminPlugin implements BotPluginInterface
 $bot->plugin(new AdminPlugin([123456]));
 ```
 
-`PluginManager` also provides priority-ordered hooks (`addHook()` and `executeHook()`) for plugins that need to talk to each other.
+`PluginManager` also provides priority-ordered hooks (`addHook()` and
+`executeHook()`) for plugins that need to talk to each other.
 
 ## Error Handling
 
@@ -154,7 +160,13 @@ try {
 }
 ```
 
-429 errors are retried automatically. Network errors and HTTP 5xx responses are retried with exponential backoff (`transientRetries`, 1 by default). Change the policy with `new Config($token, retry: new RetryPolicy(maxRetries: 3, maxDelay: 60, transientRetries: 2))`, or disable it with `RetryPolicy::none()`. Webhook handlers do not wait: `handle()` answers Telegram instead of sleeping on `retry_after`.
+429 errors are retried automatically. Network errors and HTTP 5xx responses are
+retried with exponential backoff (`transientRetries`, 1 by default). Change the
+policy with
+`new Config($token, retry: new RetryPolicy(maxRetries: 3, maxDelay: 60,
+  transientRetries: 2))`,
+or disable it with `RetryPolicy::none()`. Webhook handlers do not wait:
+`handle()` answers Telegram instead of sleeping on `retry_after`.
 
 ## Local Bot API server
 
@@ -169,7 +181,10 @@ $bot = new Bot(new Config(
 
 ## Custom HTTP transport
 
-Implement `TGbotPHP\Http\TransportInterface` (`post()`, `get()` and `download()`, which writes a response to a file) to use another HTTP client, or to fake Telegram in tests. `CurlTransport` reuses its connection between requests.
+Implement `TGbotPHP\Http\TransportInterface` (`post()`, `get()` and
+`download()`, which writes a response to a file) to use another HTTP client, or
+to fake Telegram in tests. `CurlTransport` reuses its connection between
+requests.
 
 ```php
 $bot = new Bot($token, new MyTransport());
@@ -188,13 +203,15 @@ if ($data === null) {
 $user = json_decode($data['user'], true);
 ```
 
-A service that receives the data of a bot it does not own can check Telegram's Ed25519 signature instead, with only the bot id (requires the sodium extension):
+A service that receives the data of a bot it does not own can check Telegram's
+Ed25519 signature instead, with only the bot id (requires the sodium extension):
 
 ```php
 $data = WebhookValidator::validateWebAppSignature($initData, botId: 123456789, maxAge: 3600);
 ```
 
-Pass `publicKey: WebhookValidator::WEB_APP_TEST_PUBLIC_KEY` for the test environment.
+Pass `publicKey: WebhookValidator::WEB_APP_TEST_PUBLIC_KEY` for the test
+environment.
 
 ## Logging
 
@@ -205,4 +222,6 @@ $logger = new Logger('/var/log/mybot.log', minLevel: 'INFO');
 $logger->info('User {id} started the bot', ['id' => $userId]);
 ```
 
-The logger escapes line breaks in messages, so user input cannot forge log entries. The file is created mode 0600. Bot tokens and secret fields are redacted; `chat_id` and message text are kept.
+The logger escapes line breaks in messages, so user input cannot forge log
+entries. The file is created mode 0600. Bot tokens and secret fields are
+redacted; `chat_id` and message text are kept.

@@ -1,9 +1,10 @@
 ---
-title: "Testing"
-description: "Run the PHPUnit suite, test your own bot with BotTester and FakeUpdate, and run the end-to-end tests against the real Telegram API."
-icon: vial
----
 
+title: "Testing" description: "Run the PHPUnit suite, test your own bot with
+BotTester and FakeUpdate, and run the end-to-end tests against the real Telegram
+API." icon: vial
+
+---
 
 ## Running the tests
 
@@ -14,7 +15,9 @@ composer phpstan       # static analysis (level 10 + strict rules)
 composer check         # both
 ```
 
-CI runs the test suite on PHP 8.5 (with coverage in the job summary; every line must be covered) and on PHP 8.6 (still in development, as a non-blocking job). PHPStan runs on every push and pull request.
+CI runs the test suite on PHP 8.5 (with coverage in the job summary; every line
+must be covered) and on PHP 8.6 (still in development, as a non-blocking job).
+PHPStan runs on every push and pull request.
 
 ## Test layout
 
@@ -35,7 +38,9 @@ CI requires every line to be covered.
 
 ## Testing your own bot
 
-`TGbotPHP\Testing` ships with the library. `BotTester` gives you a bot whose requests never leave the process, and `FakeUpdate` builds the updates Telegram would send:
+`TGbotPHP\Testing` ships with the library. `BotTester` gives you a bot whose
+requests never leave the process, and `FakeUpdate` builds the updates Telegram
+would send:
 
 ```php
 use PHPUnit\Framework\TestCase;
@@ -68,9 +73,15 @@ final class StartCommandTest extends TestCase
 }
 ```
 
-- `FakeUpdate::message()`, `callbackQuery()`, `inlineQuery()`, and `of($type, $payload)` for any other update type
-- `$tester->sent('sendMessage')`, `lastSent()`, `methods()` and `reset()` show what the bot sent. Parameters are encoded as Telegram receives them: numbers are strings, arrays are JSON.
-- `$tester->transport` is a `FakeTransport`: `queueResult($result)`, `queueError($code, $description, $parameters)` and `queueException($e)` choose the next answers. Without them, `send*`, `get*`, `edit*`... receive a message and other methods receive `true`.
+- `FakeUpdate::message()`, `callbackQuery()`, `inlineQuery()`, and
+  `of($type, $payload)` for any other update type
+- `$tester->sent('sendMessage')`, `lastSent()`, `methods()` and `reset()` show
+  what the bot sent. Parameters are encoded as Telegram receives them: numbers
+  are strings, arrays are JSON.
+- `$tester->transport` is a `FakeTransport`: `queueResult($result)`,
+  `queueError($code, $description, $parameters)` and `queueException($e)` choose
+  the next answers. Without them, `send*`, `get*`, `edit*`... receive a message
+  and other methods receive `true`.
 
 `BotTester` does not depend on PHPUnit: use it with any test framework.
 
@@ -85,7 +96,8 @@ php examples/polling.php
 
 ## End-to-end tests against Telegram
 
-`tests/E2E` calls the real Bot API. The suite is skipped unless a token is set, and it does not run by default:
+`tests/E2E` calls the real Bot API. The suite is skipped unless a token is set,
+and it does not run by default:
 
 ```bash
 # Bot-level methods: commands, description, webhook, errors
@@ -96,6 +108,10 @@ TELEGRAM_BOT_TOKEN=... vendor/bin/phpunit --testsuite e2e
 TELEGRAM_BOT_TOKEN=... TELEGRAM_TEST_CHAT_ID=... vendor/bin/phpunit --testsuite e2e
 ```
 
-From GitHub, run the **End-to-end** workflow (Actions tab), after setting `TELEGRAM_BOT_TOKEN` and `TELEGRAM_TEST_CHAT_ID` as secrets of the `telegram-e2e` environment.
+From GitHub, run the **End-to-end** workflow (Actions tab), after setting
+`TELEGRAM_BOT_TOKEN` and `TELEGRAM_TEST_CHAT_ID` as secrets of the
+`telegram-e2e` environment.
 
-Use a dedicated test bot. The tests change its commands and description and restore them afterwards. They delete the messages they send, except dice, which Telegram does not allow deleting in private chats for 24 hours.
+Use a dedicated test bot. The tests change its commands and description and
+restore them afterwards. They delete the messages they send, except dice, which
+Telegram does not allow deleting in private chats for 24 hours.

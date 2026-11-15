@@ -1,13 +1,14 @@
 ---
-title: "Architecture"
-description: "The layers of TGbotPHP, the directory structure, the outgoing request and incoming update lifecycles, and the design choices behind them."
-icon: diagram-project
----
 
+title: "Architecture" description: "The layers of TGbotPHP, the directory
+structure, the outgoing request and incoming update lifecycles, and the design
+choices behind them." icon: diagram-project
+
+---
 
 ## Layers
 
-```
+```text
 ┌────────────────────────────────────────────────────────────┐
 │ Framework\Bot (facade)                                     │
 │  Runner\WebhookHandler / Runner\LongPolling                │
@@ -21,13 +22,18 @@ icon: diagram-project
 └────────────────────────────────────────────────────────────┘
 ```
 
-- **`Core\ApiClient`** is a plain API client. Use it without the framework when you only need to send messages.
-- **`Framework\Bot`** extends it with update handling. It is a thin facade: the work is done by `Kernel` (processing one update), `Router`, the runners and three traits in `Framework\Concerns` (handler registration, replies, conversations).
-- **`Http\TransportInterface`** is the only I/O boundary. Tests swap it for `Testing\FakeTransport`.
+- **`Core\ApiClient`** is a plain API client. Use it without the framework when
+  you only need to send messages.
+- **`Framework\Bot`** extends it with update handling. It is a thin facade: the
+  work is done by `Kernel` (processing one update), `Router`, the runners and
+  three traits in `Framework\Concerns` (handler registration, replies,
+  conversations).
+- **`Http\TransportInterface`** is the only I/O boundary. Tests swap it for
+  `Testing\FakeTransport`.
 
 ## Directory Structure
 
-```
+```text
 src/
 ├── Cache/        CacheInterface, ArrayCache (in memory), FileCache (persistent)
 ├── CLI/          Console (bin/tgbot)
@@ -54,31 +60,45 @@ src/
 
 ## Request lifecycle (outgoing)
 
-1. A method trait builds the parameter array and merges the caller's `$options` into it.
+1. A method trait builds the parameter array and merges the caller's `$options`
+   into it.
 2. `HttpClientTrait::prepareFields()` encodes the parameters:
    - `null` values are dropped
    - booleans become `"true"` / `"false"`
    - dates become Unix timestamps, backed enums their value
    - arrays with only integer keys are sent as JSON arrays, even with gaps
    - arrays and `JsonSerializable` objects are JSON encoded
-   - `InputFile` objects become `CURLFile` uploads. Nested ones become `attach://fileN` references, and the request switches to `multipart/form-data`.
-3. The transport sends the request. The response is decoded whatever the HTTP status, so Telegram's error `description` is never lost.
-4. `ok: false` throws `ApiException`, or `TooManyRequestsException` for 429. A 429 is retried after `retry_after` seconds, as allowed by `Config::$retry` (a `RetryPolicy`).
+   - `InputFile` objects become `CURLFile` uploads. Nested ones become
+     `attach://fileN` references, and the request switches to
+     `multipart/form-data`.
+3. The transport sends the request. The response is decoded whatever the HTTP
+   status, so Telegram's error `description` is never lost.
+4. `ok: false` throws `ApiException`, or `TooManyRequestsException` for 429. A
+   429 is retried after `retry_after` seconds, as allowed by `Config::$retry` (a
+   `RetryPolicy`).
 5. The `result` field is returned.
 
 ## Update lifecycle (incoming)
 
-1. `handle()` validates the secret token and parses the JSON. `poll()` calls `getUpdates` and tracks the offset.
-2. `processUpdate()` dispatches `update.received`, then runs the middleware pipeline.
+1. `handle()` validates the secret token and parses the JSON. `poll()` calls
+   `getUpdates` and tracks the offset.
+2. `processUpdate()` dispatches `update.received`, then runs the middleware
+   pipeline.
 3. The router picks a handler:
-   - **message** (`Routing\MessageRoutes`): command, then conversation state, then `hears` pattern, then `fallback`
-   - **callback_query** and **inline_query**: exact data, then wildcard and regex patterns
+   - **message** (`Routing\MessageRoutes`): command, then conversation state,
+     then `hears` pattern, then `fallback`
+   - **callback_query** and **inline_query**: exact data, then wildcard and
+     regex patterns
    - **anything else**, or nothing matched: `onUpdate($type)` handlers
-4. `update.processed` is dispatched. If anything throws, the exception goes to `error` listeners, or is re-thrown when there are none.
+4. `update.processed` is dispatched. If anything throws, the exception goes to
+   `error` listeners, or is re-thrown when there are none.
 
 ## Design choices
 
 - **No runtime dependencies**: only ext-curl and ext-json.
-- **Payloads stay `stdClass`**: updates are not mapped to classes, so new API fields work immediately.
-- **Forward compatible**: `$options` on methods, `call()` for new methods, `onUpdate()` for new update types.
-- **Backwards compatible**: deprecated method names are thin aliases, and handlers written as `function ($message)` keep working.
+- **Payloads stay `stdClass`**: updates are not mapped to classes, so new API
+  fields work immediately.
+- **Forward compatible**: `$options` on methods, `call()` for new methods,
+  `onUpdate()` for new update types.
+- **Backwards compatible**: deprecated method names are thin aliases, and
+  handlers written as `function ($message)` keep working.

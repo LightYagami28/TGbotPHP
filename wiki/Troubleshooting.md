@@ -1,9 +1,10 @@
 ---
-title: "Troubleshooting"
-description: "The bot does not answer, webhook problems, conversations that forget the state, Telegram errors, uploads and downloads, and how to debug them."
-icon: triangle-exclamation
----
 
+title: "Troubleshooting" description: "The bot does not answer, webhook
+problems, conversations that forget the state, Telegram errors, uploads and
+downloads, and how to debug them." icon: triangle-exclamation
+
+---
 
 Start with the CLI: it checks the token and the webhook in seconds.
 
@@ -34,11 +35,15 @@ vendor/bin/tgbot webhook:info   # is a webhook set? what was the last delivery e
 | `SSL error` | The certificate is invalid, self-signed without being uploaded, or does not match the domain |
 | `Connection timed out` | A firewall blocks Telegram, or the port is not 443, 80, 88 or 8443 |
 
-`pending_update_count` grows while the webhook fails. After fixing it, `webhook:set --drop-pending` discards the backlog if you do not want to process it.
+`pending_update_count` grows while the webhook fails. After fixing it,
+`webhook:set --drop-pending` discards the backlog if you do not want to process
+it.
 
 ## Conversations forget the state
 
-With webhooks, every update is a new PHP process: an `ArrayCache` starts empty each time. Use a `FileCache` or a Redis-backed cache (see [Conversations](Conversations#where-states-are-stored)).
+With webhooks, every update is a new PHP process: an `ArrayCache` starts empty
+each time. Use a `FileCache` or a Redis-backed cache (see
+[Conversations](Conversations#where-states-are-stored)).
 
 ## Telegram errors
 

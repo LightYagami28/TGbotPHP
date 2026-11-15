@@ -1,9 +1,10 @@
 ---
-title: "Deployment"
-description: "Install and configure a webhook with Nginx, PHP-FPM or Apache, run long polling with systemd or Docker, and the production checklist."
-icon: server
----
 
+title: "Deployment" description: "Install and configure a webhook with Nginx,
+PHP-FPM or Apache, run long polling with systemd or Docker, and the production
+checklist." icon: server
+
+---
 
 | | Webhook | Long polling |
 |---|---|---|
@@ -12,7 +13,8 @@ icon: server
 | Runs on | Any PHP web hosting, PHP-FPM, serverless | A server or container that keeps a process running |
 | State | Persistent cache (`FileCache`, Redis...) | `ArrayCache` is enough |
 
-Only one of them can be active: Telegram refuses `getUpdates` (409 Conflict) while a webhook is set.
+Only one of them can be active: Telegram refuses `getUpdates` (409 Conflict)
+while a webhook is set.
 
 ## Webhook
 
@@ -22,7 +24,8 @@ Only one of them can be active: Telegram refuses `getUpdates` (409 Conflict) whi
 composer install --no-dev --optimize-autoloader
 ```
 
-Only the entry point directory (`public/`) should be reachable over HTTP, never `vendor/`, `src/` or the cache directory.
+Only the entry point directory (`public/`) should be reachable over HTTP, never
+`vendor/`, `src/` or the cache directory.
 
 ### 2. Entry point
 
@@ -55,17 +58,24 @@ $bot->handle();
 
 `handle()`:
 
-- answers **403** when no secret is configured, or the `X-Telegram-Bot-Api-Secret-Token` header does not match it;
+- answers **403** when no secret is configured, or the
+  `X-Telegram-Bot-Api-Secret-Token` header does not match it;
 - answers **400** to a body that is not valid JSON;
-- otherwise processes the update and answers **200**, even when a handler fails: an error status would make Telegram send the same update again and again.
+- otherwise processes the update and answers **200**, even when a handler fails:
+  an error status would make Telegram send the same update again and again.
 
-**Slow handlers.** Telegram waits for the response before sending the next update of the same chat. On PHP-FPM or LiteSpeed, `$bot->handle(respondFirst: true)` answers Telegram at once, then runs the handlers. Handlers must then not rely on the HTTP output, which is no longer sent.
+**Slow handlers.** Telegram waits for the response before sending the next
+update of the same chat. On PHP-FPM or LiteSpeed,
+`$bot->handle(respondFirst: true)` answers Telegram at once, then runs the
+handlers. Handlers must then not rely on the HTTP output, which is no longer
+sent.
 
 ### 3. Environment
 
-Set the secrets in the web server or the hosting panel, never in a file under the web root:
+Set the secrets in the web server or the hosting panel, never in a file under
+the web root:
 
-```
+```text
 TELEGRAM_BOT_TOKEN=123456789:AA...
 TELEGRAM_SECRET_TOKEN=a long random string    # openssl rand -hex 32
 ```
@@ -77,7 +87,8 @@ vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TE
 vendor/bin/tgbot webhook:info
 ```
 
-`webhook:info` shows the pending updates and the last delivery error. Add `--drop-pending` to discard the updates that arrived while the bot was down.
+`webhook:info` shows the pending updates and the last delivery error. Add
+`--drop-pending` to discard the updates that arrived while the bot was down.
 
 From code, with more options:
 
@@ -136,7 +147,8 @@ Certificates from Let's Encrypt work: `certbot certonly --nginx -d example.com`.
 </VirtualHost>
 ```
 
-With `SetEnv`, read the values with `$_SERVER['TELEGRAM_BOT_TOKEN']` if `getenv()` returns `false` on your setup.
+With `SetEnv`, read the values with `$_SERVER['TELEGRAM_BOT_TOKEN']` if
+`getenv()` returns `false` on your setup.
 
 ## Long polling
 
@@ -147,13 +159,16 @@ php bot.php
 
 `poll()`:
 
-- keeps a connection open for up to 30 seconds waiting for updates (`timeout:`), so updates arrive at once without hammering Telegram;
+- keeps a connection open for up to 30 seconds waiting for updates (`timeout:`),
+  so updates arrive at once without hammering Telegram;
 - retries network and server errors, waiting 1, 2, 4... up to 30 seconds;
 - waits as long as Telegram asks after a 429;
-- stops on errors that retrying cannot fix: an invalid token (401) or a webhook still set (409);
+- stops on errors that retrying cannot fix: an invalid token (401) or a webhook
+  still set (409);
 - confirms the processed updates when it stops, so they are not delivered again.
 
-Stop it cleanly with `$bot->stop()`, for example on `SIGTERM` with the `pcntl` extension:
+Stop it cleanly with `$bot->stop()`, for example on `SIGTERM` with the `pcntl`
+extension:
 
 ```php
 pcntl_async_signals(true);
@@ -163,7 +178,8 @@ pcntl_signal(SIGINT, fn() => $bot->stop());
 $bot->poll();
 ```
 
-Run only one polling process per bot: Telegram does not split updates between processes.
+Run only one polling process per bot: Telegram does not split updates between
+processes.
 
 ### systemd
 
@@ -194,7 +210,9 @@ journalctl -u mybot -f
 
 ### Docker
 
-The repository's `Dockerfile` builds an image with only the runtime files, running as an unprivileged user. It starts the long polling example; mount your bot and override the command:
+The repository's `Dockerfile` builds an image with only the runtime files,
+running as an unprivileged user. It starts the long polling example; mount your
+bot and override the command:
 
 ```bash
 docker build -t mybot .
@@ -204,11 +222,13 @@ docker run -d --restart unless-stopped \
     mybot php bot.php
 ```
 
-`docker-compose.yml` has a `bot` service for long polling and a `webhook` profile behind your HTTPS reverse proxy.
+`docker-compose.yml` has a `bot` service for long polling and a `webhook`
+profile behind your HTTPS reverse proxy.
 
 ## Checklist
 
-- [ ] The token and the webhook secret come from the environment, not from files in the repository
+- [ ] The token and the webhook secret come from the environment, not from files
+  in the repository
 - [ ] `webhook:info` shows no delivery error
 - [ ] Conversations and rate limits use a persistent cache with webhooks
 - [ ] `onError()` logs errors somewhere you read

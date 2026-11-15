@@ -1,14 +1,17 @@
 ---
-title: "Deployment"
-description: "Run TGbotPHP behind a webhook with Nginx and PHP-FPM, with systemd long polling or with Docker, and scale the state."
-icon: server
----
 
+title: "Deployment" description: "Run TGbotPHP behind a webhook with Nginx and
+PHP-FPM, with systemd long polling or with Docker, and scale the state." icon:
+server
+
+---
 
 A bot receives updates in one of two ways:
 
-- **Webhook:** Telegram sends each update to your HTTPS URL. It needs a public HTTPS endpoint and runs on any PHP hosting.
-- **Long polling:** a long-running process asks Telegram for updates. It needs no public endpoint, but it needs a process manager (systemd, Docker).
+- **Webhook:** Telegram sends each update to your HTTPS URL. It needs a public
+  HTTPS endpoint and runs on any PHP hosting.
+- **Long polling:** a long-running process asks Telegram for updates. It needs
+  no public endpoint, but it needs a process manager (systemd, Docker).
 
 ## Webhook
 
@@ -18,11 +21,14 @@ A bot receives updates in one of two ways:
 composer install --no-dev --optimize-autoloader
 ```
 
-Only `public/` (or wherever your entry point is) should be reachable over HTTP, never `vendor/`, `src/` or the cache directory.
+Only `public/` (or wherever your entry point is) should be reachable over HTTP,
+never `vendor/`, `src/` or the cache directory.
 
 ### 2. Entry point
 
-`public/webhook.php` (see [`examples/webhook.php`](https://github.com/LightYagami28/TGbotPHP/blob/main/examples/webhook.php) for a complete bot):
+`public/webhook.php` (see
+[`examples/webhook.php`](https://github.com/LightYagami28/TGbotPHP/blob/main/examples/webhook.php)
+for a complete bot):
 
 ```php
 <?php
@@ -45,13 +51,17 @@ $bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 
 $bot->handle();
 ```
 
-Telegram waits for the response before it sends the next update of the same chat. On PHP-FPM or LiteSpeed, `$bot->handle(respondFirst: true)` answers Telegram at once and then runs the handlers, so slow handlers (large uploads, external APIs) do not hold updates back. Handlers must not rely on the HTTP output, which is no longer sent.
+Telegram waits for the response before it sends the next update of the same
+chat. On PHP-FPM or LiteSpeed, `$bot->handle(respondFirst: true)` answers
+Telegram at once and then runs the handlers, so slow handlers (large uploads,
+external APIs) do not hold updates back. Handlers must not rely on the HTTP
+output, which is no longer sent.
 
 ### 3. Environment
 
 Set these in the web server or hosting panel, not in a file under the web root:
 
-```
+```text
 TELEGRAM_BOT_TOKEN=...
 TELEGRAM_SECRET_TOKEN=a long random string   # openssl rand -hex 32
 TELEGRAM_BOT_USERNAME=your_bot
@@ -104,7 +114,8 @@ if (!WebhookValidator::isTelegramIp($_SERVER['REMOTE_ADDR'] ?? '')) {
 }
 ```
 
-Behind a reverse proxy, `REMOTE_ADDR` is the proxy: rely on the secret token instead.
+Behind a reverse proxy, `REMOTE_ADDR` is the proxy: rely on the secret token
+instead.
 
 ## Long polling
 
@@ -141,7 +152,9 @@ sudo systemctl enable --now telegram-bot
 journalctl -u telegram-bot -f
 ```
 
-With the `pcntl` extension, handle `SIGTERM` to stop cleanly between updates (see [`examples/polling.php`](https://github.com/LightYagami28/TGbotPHP/blob/main/examples/polling.php)).
+With the `pcntl` extension, handle `SIGTERM` to stop cleanly between updates
+(see
+[`examples/polling.php`](https://github.com/LightYagami28/TGbotPHP/blob/main/examples/polling.php)).
 
 ### Docker
 
@@ -157,8 +170,11 @@ Mount your own bot script and override the command to run it.
 ## State and scaling
 
 - `ArrayCache` only lives as long as the process: use it with long polling.
-- With webhooks, each request is a new process: use `FileCache` (one server) or your own `CacheInterface` on Redis or a database (several servers) for conversations and rate limiting.
-- Run only one long polling process per bot: Telegram does not split updates between pollers.
+- With webhooks, each request is a new process: use `FileCache` (one server) or
+  your own `CacheInterface` on Redis or a database (several servers) for
+  conversations and rate limiting.
+- Run only one long polling process per bot: Telegram does not split updates
+  between pollers.
 
 ## Troubleshooting
 

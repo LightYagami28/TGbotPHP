@@ -1,9 +1,10 @@
 ---
-title: "Installation"
-description: "Install TGbotPHP with Composer, get a bot token from BotFather, and run your first bot with long polling or a webhook."
-icon: download
----
 
+title: "Installation" description: "Install TGbotPHP with Composer, get a bot
+token from BotFather, and run your first bot with long polling or a webhook."
+icon: download
+
+---
 
 ## Requirements
 
@@ -99,7 +100,8 @@ vendor/bin/tgbot webhook:info
 ## Security
 
 - Keep the token in environment variables, never in the repository
-- Configure a webhook secret token. `handle()` answers 403 without one (`openssl rand -hex 32`, then `TELEGRAM_SECRET_TOKEN`)
+- Configure a webhook secret token. `handle()` answers 403 without one (`openssl
+  rand -hex 32`, then `TELEGRAM_SECRET_TOKEN`)
 - Escape user input in HTML messages with `Formatter::escape()`
 - Use HTTPS for webhooks
 
@@ -109,8 +111,10 @@ vendor/bin/tgbot webhook:info
 
 1. `vendor/bin/tgbot bot:info` checks the token
 2. `vendor/bin/tgbot webhook:info` shows the last webhook delivery error
-3. Long polling fails with `409 Conflict` while a webhook is set. Run `vendor/bin/tgbot webhook:delete` first.
-4. Check the PHP error log. Handler exceptions are logged there when no `onError` handler is set.
+3. Long polling fails with `409 Conflict` while a webhook is set. Run
+   `vendor/bin/tgbot webhook:delete` first.
+4. Check the PHP error log. Handler exceptions are logged there when no
+   `onError` handler is set.
 
 ### Debug mode
 
@@ -129,4 +133,5 @@ $bot = new Bot(new Config(
 - [API Reference](api-reference.md)
 - [Advanced Features](advanced.md)
 - [Examples](https://github.com/LightYagami28/TGbotPHP/tree/main/examples)
-- [Security Guide](https://github.com/LightYagami28/TGbotPHP/blob/main/SECURITY.md)
+- [Security
+  Guide](https://github.com/LightYagami28/TGbotPHP/blob/main/SECURITY.md)

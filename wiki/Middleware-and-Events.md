@@ -1,13 +1,15 @@
 ---
-title: "Middleware and events"
-description: "Run code around every update, handle errors and listen to the lifecycle events of the bot."
-icon: filter
----
 
+title: "Middleware and events" description: "Run code around every update,
+handle errors and listen to the lifecycle events of the bot." icon: filter
+
+---
 
 ## Middleware
 
-Middleware runs for every update, before routing, in the order it was registered. It receives the whole [Update](https://core.telegram.org/bots/api#update), not only the message.
+Middleware runs for every update, before routing, in the order it was
+registered. It receives the whole
+[Update](https://core.telegram.org/bots/api#update), not only the message.
 
 **Filter**: return `false` to drop the update.
 
@@ -23,7 +25,8 @@ $bot->middleware(function (stdClass $update, Bot $bot) use ($banned): bool {
 });
 ```
 
-**Wrapper**: declare a third parameter to receive `$next`, and run code before and after the rest of the pipeline.
+**Wrapper**: declare a third parameter to receive `$next`, and run code before
+and after the rest of the pipeline.
 
 ```php
 $bot->middleware(function (stdClass $update, Bot $bot, callable $next): void {
@@ -35,13 +38,16 @@ $bot->middleware(function (stdClass $update, Bot $bot, callable $next): void {
 
 A wrapper that does not call `$next()` stops the update.
 
-`UpdateParser` helps with updates of any type: `getType($update)` (`"message"`, `"callback_query"`...), `getPayload($update)`, `getChat($update)` and `getUser($update)`.
+`UpdateParser` helps with updates of any type: `getType($update)` (`"message"`,
+`"callback_query"`...), `getPayload($update)`, `getChat($update)` and
+`getUser($update)`.
 
 The [rate limiter](Conversations#rate-limiting) is available as a middleware.
 
 ## Errors
 
-An exception thrown by a handler or a middleware goes to the `onError()` listeners:
+An exception thrown by a handler or a middleware goes to the `onError()`
+listeners:
 
 ```php
 use TGbotPHP\Exceptions\ApiException;
@@ -57,7 +63,8 @@ $bot->onError(function (Throwable $e, ?stdClass $update, Bot $bot): void {
 
 Without listeners:
 
-- `handle()` (webhooks) logs the error and still answers 200, because an error status would make Telegram send the same update again and again;
+- `handle()` (webhooks) logs the error and still answers 200, because an error
+  status would make Telegram send the same update again and again;
 - `poll()` logs the error and continues with the next update;
 - `handleUpdate()` throws the exception to the caller.
 
@@ -76,7 +83,8 @@ $bot->on('update.processed', fn(stdClass $update) => $metrics->increment('update
 | `polling.started` | `Bot $bot` | `poll()` starts |
 | `polling.stopped` | `Bot $bot` | `poll()` returns |
 
-Your code and plugins can dispatch their own events: `$bot->getEvents()->dispatch('order.paid', $order)`.
+Your code and plugins can dispatch their own events:
+`$bot->getEvents()->dispatch('order.paid', $order)`.
 
 ## Plugins
 
@@ -117,7 +125,9 @@ final class PingPlugin implements BotPluginInterface
 $bot->plugin(new PingPlugin());
 ```
 
-`$bot->getPlugins()` returns the `PluginManager`: `get('ping')`, `isActive('ping')`, `unregister('ping')`. Its hooks pass a value through callbacks sorted by priority:
+`$bot->getPlugins()` returns the `PluginManager`: `get('ping')`,
+`isActive('ping')`, `unregister('ping')`. Its hooks pass a value through
+callbacks sorted by priority:
 
 ```php
 $bot->getPlugins()->addHook('greeting', fn(string $text) => $text . ' 👋', priority: 20);
