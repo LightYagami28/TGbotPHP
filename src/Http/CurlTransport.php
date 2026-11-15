@@ -165,10 +165,17 @@ final class CurlTransport implements TransportInterface
     {
         $parts = parse_url($url);
 
-        return $parts !== false && isset($parts['host']) && $parts['host'] !== ''
+        return $parts !== false && self::isPlainHttpHost($parts) && preg_match('/[\x00-\x20\x7f]/', $url) !== 1;
+    }
+
+    /**
+     * @param array<string, mixed> $parts
+     */
+    private static function isPlainHttpHost(array $parts): bool
+    {
+        return ($parts['host'] ?? '') !== ''
             && in_array($parts['scheme'] ?? '', ['http', 'https'], true)
-            && !isset($parts['user']) && !isset($parts['pass'])
-            && preg_match('/[\x00-\x20\x7f]/', $url) !== 1;
+            && !isset($parts['user']) && !isset($parts['pass']);
     }
 
     private static function curlFailure(CurlHandle $curl): string

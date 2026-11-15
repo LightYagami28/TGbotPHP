@@ -126,11 +126,16 @@ class Keyboard
 
         return array_filter([
             'keyboard' => $keyboard,
-            'resize_keyboard' => $resize ? true : null,
-            'one_time_keyboard' => $oneTime ? true : null,
+            'resize_keyboard' => self::flag($resize),
+            'one_time_keyboard' => self::flag($oneTime),
             'input_field_placeholder' => $placeholder,
-            'selective' => $selective ? true : null,
+            'selective' => self::flag($selective),
         ], static fn(mixed $value): bool => $value !== null);
+    }
+
+    private static function flag(bool $enabled): ?bool
+    {
+        return $enabled ? true : null;
     }
 
     /**
