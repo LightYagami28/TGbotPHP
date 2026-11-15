@@ -78,7 +78,8 @@ final class LongPollingTest extends TestCase
 
         // The successful call resets the backoff
         self::assertSame([1, 2, 4, 1], $this->waits);
-        self::assertSame([NetworkException::class, ApiException::class, NetworkException::class, NetworkException::class], $errors);
+        self::assertSame([NetworkException::class, ApiException::class, NetworkException::class,
+            NetworkException::class], $errors);
     }
 
     public function testBackoffIsCapped(): void
@@ -165,7 +166,10 @@ final class LongPollingTest extends TestCase
 
         self::assertSame(['getUpdates', 'getUpdates'], $this->transport->methods());
         // Stopping must not hold the process for another long poll
-        self::assertSame(['offset' => '901', 'limit' => '1', 'timeout' => '0'], $this->transport->lastRequest()['fields']);
+        self::assertSame(
+            ['offset' => '901', 'limit' => '1', 'timeout' => '0'],
+            $this->transport->lastRequest()['fields'],
+        );
     }
 
     public function testNothingToConfirmWithoutUpdates(): void

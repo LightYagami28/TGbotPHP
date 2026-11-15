@@ -89,7 +89,10 @@ final class LoggerTest extends TestCase
         $logger->log('warning', 'lowercase level');
         $logger->debug('debug is the minimum for unknown levels');
 
-        self::assertSame(['[WARNING] lowercase level', '[DEBUG] debug is the minimum for unknown levels'], $this->entries());
+        self::assertSame(
+            ['[WARNING] lowercase level', '[DEBUG] debug is the minimum for unknown levels'],
+            $this->entries(),
+        );
     }
 
     public function testCarriageReturnsAndStringableContext(): void

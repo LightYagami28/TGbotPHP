@@ -242,7 +242,13 @@ final class FullCoverageTest extends TestCase
         }, E_USER_DEPRECATED);
 
         try {
-            $config = new Config(Updates::TOKEN, maxWebhookBodyBytes: 10, allowUnauthenticatedWebhook: true, acknowledgeHandlerErrors: false, localFileRoot: sys_get_temp_dir());
+            $config = new Config(
+                Updates::TOKEN,
+                maxWebhookBodyBytes: 10,
+                allowUnauthenticatedWebhook: true,
+                acknowledgeHandlerErrors: false,
+                localFileRoot: sys_get_temp_dir(),
+            );
         } finally {
             restore_error_handler();
         }
@@ -259,7 +265,19 @@ final class FullCoverageTest extends TestCase
         set_error_handler(static fn(): bool => true, E_USER_DEPRECATED);
 
         try {
-            $config = new Config(Updates::TOKEN, false, Config::DEFAULT_API_URL, true, 10, new RetryPolicy(), false, true, 20, false, null);
+            $config = new Config(
+                Updates::TOKEN,
+                false,
+                Config::DEFAULT_API_URL,
+                true,
+                10,
+                new RetryPolicy(),
+                false,
+                true,
+                20,
+                false,
+                null,
+            );
         } finally {
             restore_error_handler();
         }
@@ -276,9 +294,25 @@ final class FullCoverageTest extends TestCase
     {
         return [
             'unknown name' => [static fn(): Config => new Config(Updates::TOKEN, bogus: true)],
-            'unknown position' => [static fn(): Config => new Config(Updates::TOKEN, false, Config::DEFAULT_API_URL, true, 10, new RetryPolicy(), false, true, 1, true, null, 'extra')],
+            'unknown position' => [static fn(): Config => new Config(
+                Updates::TOKEN,
+                false,
+                Config::DEFAULT_API_URL,
+                true,
+                10,
+                new RetryPolicy(),
+                false,
+                true,
+                1,
+                true,
+                null,
+                'extra',
+            )],
             'zero limit' => [static fn(): Config => new Config(Updates::TOKEN, maxWebhookBodyBytes: 0)],
-            'missing root' => [static fn(): Config => new Config(Updates::TOKEN, localFileRoot: '/no/such/directory/here')],
+            'missing root' => [static fn(): Config => new Config(
+                Updates::TOKEN,
+                localFileRoot: '/no/such/directory/here',
+            )],
         ];
     }
 
@@ -353,7 +387,11 @@ final class FullCoverageTest extends TestCase
         $secret = hash_hmac('sha256', Updates::TOKEN, 'WebAppData', true);
         $hash = hash_hmac('sha256', 'auth_date=' . $authDate, $secret);
 
-        self::assertNull(WebhookValidator::validateWebAppData("auth_date=$authDate&hash=$hash", Updates::TOKEN, maxAge: -1));
+        self::assertNull(WebhookValidator::validateWebAppData(
+            "auth_date=$authDate&hash=$hash",
+            Updates::TOKEN,
+            maxAge: -1,
+        ));
 
         $publicKey = str_repeat('ab', 32);
         self::assertNull(WebhookValidator::validateWebAppSignature(

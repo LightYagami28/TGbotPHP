@@ -42,7 +42,8 @@ final class UtilitiesTest extends TestCase
     public function testReplyKeyboards(): void
     {
         self::assertSame(
-            ['keyboard' => [[['text' => 'Yes'], ['text' => 'No']], [['text' => 'Location', 'request_location' => true]]], 'resize_keyboard' => true],
+            ['keyboard' => [[['text' => 'Yes'], ['text' => 'No']], [['text' => 'Location',
+                'request_location' => true]]], 'resize_keyboard' => true],
             Keyboard::reply([['Yes', 'No'], [['text' => 'Location', 'request_location' => true]]]),
         );
         self::assertSame(['remove_keyboard' => true], Keyboard::remove());
@@ -50,7 +51,8 @@ final class UtilitiesTest extends TestCase
         self::assertSame(['force_reply' => true, 'input_field_placeholder' => 'Name'], Keyboard::forceReply('Name'));
         self::assertSame(['force_reply' => true, 'selective' => true], Keyboard::forceReply(selective: true));
         self::assertSame(
-            ['keyboard' => [[['text' => 'A']]], 'one_time_keyboard' => true, 'input_field_placeholder' => 'Pick', 'selective' => true],
+            ['keyboard' => [[['text' => 'A']]], 'one_time_keyboard' => true, 'input_field_placeholder' => 'Pick',
+                'selective' => true],
             Keyboard::reply([5 => [3 => 'A']], resize: false, oneTime: true, placeholder: 'Pick', selective: true),
         );
     }
@@ -60,9 +62,16 @@ final class UtilitiesTest extends TestCase
         $buttons = ['A' => 'a', 'B' => 'b', 'C' => 'c'];
 
         self::assertSame([2, 1], array_map(count(...), Keyboard::grid($buttons)['inline_keyboard']));
-        self::assertSame([1, 1, 1], array_map(count(...), Keyboard::grid($buttons, 0)['inline_keyboard']), 'At least one per row');
+        self::assertSame(
+            [1, 1, 1],
+            array_map(count(...), Keyboard::grid($buttons, 0)['inline_keyboard']),
+            'At least one per row',
+        );
         self::assertSame([1, 1, 1], array_map(count(...), Keyboard::menu($buttons)['inline_keyboard']));
-        self::assertSame(['text' => 'Docs', 'url' => 'https://x.y'], Keyboard::links(['Docs' => 'https://x.y'])['inline_keyboard'][0][0]);
+        self::assertSame(
+            ['text' => 'Docs', 'url' => 'https://x.y'],
+            Keyboard::links(['Docs' => 'https://x.y'])['inline_keyboard'][0][0],
+        );
     }
 
     public function testPaginationKeyboard(): void
@@ -106,7 +115,8 @@ final class UtilitiesTest extends TestCase
 
         self::assertSame(
             '{"inline_keyboard":[[{"text":"Yes","callback_data":"yes"},{"text":"No","callback_data":"no"}],'
-            . '[{"text":"Docs","url":"https://core.telegram.org"},{"text":"App","web_app":{"url":"https://example.com/app"}}]]}',
+            . '[{"text":"Docs","url":"https://core.telegram.org"},'
+            . '{"text":"App","web_app":{"url":"https://example.com/app"}}]]}',
             json_encode($keyboard, JSON_UNESCAPED_SLASHES),
         );
     }
@@ -119,17 +129,29 @@ final class UtilitiesTest extends TestCase
         self::assertSame('<a href="https://x.y/?a=1&amp;b=2">x</a>', Formatter::link('x', 'https://x.y/?a=1&b=2'));
         self::assertSame('<a href="tg://user?id=5">Ada</a>', Formatter::mention(5, 'Ada'));
         self::assertSame('<pre><code class="language-php">echo 1;</code></pre>', Formatter::pre('echo 1;', 'php'));
-        self::assertSame('Hello, world\\! \\(x\\) \\_a\\_ \\\\', Formatter::escapeMarkdownV2('Hello, world! (x) _a_ \\'));
+        self::assertSame(
+            'Hello, world\\! \\(x\\) \\_a\\_ \\\\',
+            Formatter::escapeMarkdownV2('Hello, world! (x) _a_ \\'),
+        );
         self::assertSame('a\\.b\\-c\\!', Formatter::escapeMarkdownV2('a.b-c!'));
     }
 
     public function testMessageParser(): void
     {
-        self::assertSame(['command' => 'start', 'args' => 'payload', 'username' => 'my_bot'], MessageParser::parseCommand('/start@my_bot payload'));
+        self::assertSame(
+            ['command' => 'start', 'args' => 'payload', 'username' => 'my_bot'],
+            MessageParser::parseCommand('/start@my_bot payload'),
+        );
         self::assertNull(MessageParser::parseCommand('hello'));
         self::assertSame(['add', 'buy milk', 'x'], MessageParser::parseArguments('add "buy milk" x'));
-        self::assertSame(['say "hi"', 'C:\\dir', '\\x41'], MessageParser::parseArguments('"say \\"hi\\"" "C:\\\\dir" "\\x41"'));
-        self::assertSame(['alice', 'bob_1'], MessageParser::extractMentions('hi @alice and @bob_1, mail me at a@b.com'));
+        self::assertSame(
+            ['say "hi"', 'C:\\dir', '\\x41'],
+            MessageParser::parseArguments('"say \\"hi\\"" "C:\\\\dir" "\\x41"'),
+        );
+        self::assertSame(
+            ['alice', 'bob_1'],
+            MessageParser::extractMentions('hi @alice and @bob_1, mail me at a@b.com'),
+        );
         self::assertSame([], MessageParser::extractMentions('too short: @abc @abcd'));
         self::assertSame('my_var_name', MessageParser::stripMarkdown('my_var_name'));
         self::assertSame(['php', 'bots'], MessageParser::extractHashtags('#php and #bots'));
@@ -190,7 +212,8 @@ final class UtilitiesTest extends TestCase
     {
         $message = UpdateParser::fromArray(Updates::message('hi', chatId: 5, userId: 6));
         $callback = UpdateParser::fromArray(Updates::callback('x', chatId: 8, userId: 9));
-        $reaction = UpdateParser::fromArray(['update_id' => 1, 'message_reaction' => ['chat' => ['id' => 3], 'user' => ['id' => 4]]]);
+        $reaction = UpdateParser::fromArray(['update_id' => 1, 'message_reaction' => ['chat' => ['id' => 3],
+            'user' => ['id' => 4]]]);
 
         self::assertSame('message', UpdateParser::getType($message));
         self::assertSame(5, UpdateParser::getChat($message)?->id);
@@ -199,7 +222,8 @@ final class UtilitiesTest extends TestCase
         self::assertSame(8, UpdateParser::getChat($callback)?->id);
         self::assertSame(9, UpdateParser::getUser($callback)?->id);
         self::assertSame(4, UpdateParser::getUser($reaction)?->id);
-        self::assertSame('future_update', UpdateParser::getType(UpdateParser::fromArray(['update_id' => 1, 'future_update' => ['a' => 1]])));
+        self::assertSame('future_update', UpdateParser::getType(UpdateParser::fromArray(['update_id' => 1,
+            'future_update' => ['a' => 1]])));
     }
 
     public function testUpdateParserRejectsInvalidPayloads(): void
@@ -232,8 +256,10 @@ final class UtilitiesTest extends TestCase
             ->raw(['text' => 'Game', 'callback_game' => new \stdClass()]);
 
         self::assertSame(
-            '{"inline_keyboard":[[{"text":"Share","switch_inline_query":"cats"},{"text":"Here","switch_inline_query_current_chat":""}],'
-            . '[{"text":"Copy","copy_text":{"text":"PROMO-42"}},{"text":"Pay","pay":true},{"text":"Game","callback_game":{}}]]}',
+            '{"inline_keyboard":[[{"text":"Share","switch_inline_query":"cats"},'
+            . '{"text":"Here","switch_inline_query_current_chat":""}],'
+            . '[{"text":"Copy","copy_text":{"text":"PROMO-42"}},{"text":"Pay","pay":true},'
+            . '{"text":"Game","callback_game":{}}]]}',
             json_encode($keyboard, JSON_UNESCAPED_SLASHES),
         );
     }

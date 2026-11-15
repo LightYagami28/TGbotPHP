@@ -60,7 +60,10 @@ final class SecurityTest extends TestCase
         self::assertSame($data['user'], $validated['user']);
 
         self::assertNull(WebhookValidator::validateWebAppData($initData, '1:other'));
-        self::assertNull(WebhookValidator::validateWebAppData(str_replace('Vladislav', 'Mallory', $initData), Updates::TOKEN));
+        self::assertNull(WebhookValidator::validateWebAppData(
+            str_replace('Vladislav', 'Mallory', $initData),
+            Updates::TOKEN,
+        ));
         self::assertNull(WebhookValidator::validateWebAppData('auth_date=1', Updates::TOKEN));
     }
 
@@ -69,10 +72,22 @@ final class SecurityTest extends TestCase
         $secret = hash_hmac('sha256', Updates::TOKEN, 'WebAppData', true);
         $hash = hash_hmac('sha256', 'auth_date=' . time(), $secret);
 
-        self::assertNotNull(WebhookValidator::validateWebAppData('auth_date=' . time() . "&hash=$hash", Updates::TOKEN));
-        self::assertNull(WebhookValidator::validateWebAppData('auth_date=' . time() . "&user[]=x&hash=$hash", Updates::TOKEN), 'Nested values');
-        self::assertNull(WebhookValidator::validateWebAppData('auth_date=' . time() . "&0=x&hash=$hash", Updates::TOKEN), 'Numeric keys');
-        self::assertNull(WebhookValidator::validateWebAppData('auth_date=' . time() . '&hash=', Updates::TOKEN), 'Empty hash');
+        self::assertNotNull(WebhookValidator::validateWebAppData(
+            'auth_date=' . time() . "&hash=$hash",
+            Updates::TOKEN,
+        ));
+        self::assertNull(WebhookValidator::validateWebAppData(
+            'auth_date=' . time() . "&user[]=x&hash=$hash",
+            Updates::TOKEN,
+        ), 'Nested values');
+        self::assertNull(WebhookValidator::validateWebAppData(
+            'auth_date=' . time() . "&0=x&hash=$hash",
+            Updates::TOKEN,
+        ), 'Numeric keys');
+        self::assertNull(
+            WebhookValidator::validateWebAppData('auth_date=' . time() . '&hash=', Updates::TOKEN),
+            'Empty hash',
+        );
     }
 
     public function testExpiredWebAppDataIsRejected(): void
@@ -95,19 +110,44 @@ final class SecurityTest extends TestCase
         $fields = ['auth_date' => (string) time(), 'query_id' => 'AAH', 'user' => '{"id":7,"first_name":"Ada"}'];
 
         $signature = sodium_bin2base64(
-            sodium_crypto_sign_detached("12345678:WebAppData\nauth_date={$fields['auth_date']}\nquery_id=AAH\nuser={$fields['user']}", sodium_crypto_sign_secretkey($keyPair)),
+            sodium_crypto_sign_detached(
+                "12345678:WebAppData\nauth_date={$fields['auth_date']}\nquery_id=AAH\nuser={$fields['user']}",
+                sodium_crypto_sign_secretkey($keyPair),
+            ),
             SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING,
         );
         $initData = http_build_query($fields + ['signature' => $signature, 'hash' => 'ignored']);
 
-        self::assertSame($fields, WebhookValidator::validateWebAppSignature($initData, 12345678, publicKey: $publicKey));
+        self::assertSame($fields, WebhookValidator::validateWebAppSignature(
+            $initData,
+            12345678,
+            publicKey: $publicKey,
+        ));
 
-        self::assertNull(WebhookValidator::validateWebAppSignature($initData, 87654321, publicKey: $publicKey), 'Other bot');
+        self::assertNull(
+            WebhookValidator::validateWebAppSignature($initData, 87654321, publicKey: $publicKey),
+            'Other bot',
+        );
         self::assertNull(WebhookValidator::validateWebAppSignature($initData, 12345678), 'Not signed by Telegram');
-        self::assertNull(WebhookValidator::validateWebAppSignature(str_replace('Ada', 'Eve', $initData), 12345678, publicKey: $publicKey), 'Tampered');
-        self::assertNull(WebhookValidator::validateWebAppSignature(http_build_query($fields), 12345678, publicKey: $publicKey), 'No signature');
-        self::assertNull(WebhookValidator::validateWebAppSignature(http_build_query($fields + ['signature' => '!!']), 12345678, publicKey: $publicKey), 'Invalid base64');
-        self::assertNull(WebhookValidator::validateWebAppSignature($initData, 12345678, publicKey: 'abcd'), 'Invalid key');
+        self::assertNull(WebhookValidator::validateWebAppSignature(
+            str_replace('Ada', 'Eve', $initData),
+            12345678,
+            publicKey: $publicKey,
+        ), 'Tampered');
+        self::assertNull(WebhookValidator::validateWebAppSignature(
+            http_build_query($fields),
+            12345678,
+            publicKey: $publicKey,
+        ), 'No signature');
+        self::assertNull(WebhookValidator::validateWebAppSignature(
+            http_build_query($fields + ['signature' => '!!']),
+            12345678,
+            publicKey: $publicKey,
+        ), 'Invalid base64');
+        self::assertNull(
+            WebhookValidator::validateWebAppSignature($initData, 12345678, publicKey: 'abcd'),
+            'Invalid key',
+        );
     }
 
     #[RequiresPhpExtension('sodium')]
@@ -123,7 +163,12 @@ final class SecurityTest extends TestCase
         $publicKey = bin2hex(sodium_crypto_sign_publickey($keyPair));
 
         self::assertNull(WebhookValidator::validateWebAppSignature($initData, 1, 3600, $publicKey));
-        self::assertSame(['auth_date' => $authDate], WebhookValidator::validateWebAppSignature($initData, 1, 0, $publicKey));
+        self::assertSame(['auth_date' => $authDate], WebhookValidator::validateWebAppSignature(
+            $initData,
+            1,
+            0,
+            $publicKey,
+        ));
     }
 
     #[RequiresPhpExtension('sodium')]
@@ -141,14 +186,25 @@ final class SecurityTest extends TestCase
         $secret = hash_hmac('sha256', Updates::TOKEN, 'WebAppData', true);
         $hash = hash_hmac('sha256', "auth_date={$fields['auth_date']}\nquery_id=Q\nuser={\"id\":1}", $secret);
 
-        self::assertNotNull(WebhookValidator::validateWebAppData(http_build_query($fields + ['hash' => $hash]), Updates::TOKEN));
-        self::assertNotNull(WebhookValidator::validateWebAppData(http_build_query($fields + ['hash' => strtoupper($hash)]), Updates::TOKEN));
-        self::assertNull(WebhookValidator::validateWebAppData(http_build_query($fields + ['hash' => '']), Updates::TOKEN));
+        self::assertNotNull(WebhookValidator::validateWebAppData(
+            http_build_query($fields + ['hash' => $hash]),
+            Updates::TOKEN,
+        ));
+        $query = http_build_query($fields + ['hash' => strtoupper($hash)]);
+        self::assertNotNull(WebhookValidator::validateWebAppData($query, Updates::TOKEN));
+        self::assertNull(WebhookValidator::validateWebAppData(
+            http_build_query($fields + ['hash' => '']),
+            Updates::TOKEN,
+        ));
     }
 
     public function testSignatureValidationIgnoresHexCase(): void
     {
-        self::assertTrue(WebhookValidator::validateSignature('body', strtoupper(hash_hmac('sha256', 'body', 'key')), 'key'));
+        self::assertTrue(WebhookValidator::validateSignature(
+            'body',
+            strtoupper(hash_hmac('sha256', 'body', 'key')),
+            'key',
+        ));
     }
 
     public function testIpRangesWithoutPrefixMatchOneAddress(): void
@@ -189,8 +245,15 @@ final class SecurityTest extends TestCase
 
         self::assertNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, 0));
         self::assertNull(WebhookValidator::validateWebAppData($initData, Updates::TOKEN, 86400));
-        self::assertNull(WebhookValidator::validateWebAppData('auth_date=0&hash=' . str_repeat('ab', 32), Updates::TOKEN, 0));
-        self::assertNull(WebhookValidator::validateWebAppData('auth_date=1&auth_date=2&hash=' . str_repeat('ab', 32), Updates::TOKEN));
+        self::assertNull(WebhookValidator::validateWebAppData(
+            'auth_date=0&hash=' . str_repeat('ab', 32),
+            Updates::TOKEN,
+            0,
+        ));
+        self::assertNull(WebhookValidator::validateWebAppData(
+            'auth_date=1&auth_date=2&hash=' . str_repeat('ab', 32),
+            Updates::TOKEN,
+        ));
         self::assertNull(WebhookValidator::validateWebAppData('auth_date=%zz', Updates::TOKEN));
         self::assertNull(WebhookValidator::validateWebAppData(str_repeat('a', 65537), Updates::TOKEN));
         self::assertFalse(WebhookValidator::validateSignature('body', hash_hmac('sha256', 'body', 'key'), ''));

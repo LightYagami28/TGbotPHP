@@ -57,7 +57,11 @@ final class BotProfileTest extends TelegramTestCase
         $secret = bin2hex(random_bytes(16));
 
         try {
-            self::assertTrue($this->bot->setWebhook('https://example.com/tgbotphp-e2e', secretToken: $secret, dropPendingUpdates: false));
+            self::assertTrue($this->bot->setWebhook(
+                'https://example.com/tgbotphp-e2e',
+                secretToken: $secret,
+                dropPendingUpdates: false,
+            ));
             $info = $this->bot->getWebhookInfo();
             self::assertSame('https://example.com/tgbotphp-e2e', $info['url'] ?? null);
         } finally {
