@@ -98,8 +98,8 @@ trait HttpClientTrait
 
         [$fields, $multipart] = self::prepareFields($data);
 
-        $url = $this->config->apiBaseUrl . '/bot' . $this->config->token . '/' . rawurlencode($method);
-        $timeout = $this->config->timeout + max(0, Value::int($data['timeout'] ?? null));
+        $url = $this->endpoint($method);
+        $timeout = $this->requestTimeout($data);
 
         $attempt = 0;
         $transientAttempt = 0;
@@ -121,6 +121,19 @@ trait HttpClientTrait
                 }
             }
         }
+    }
+
+    private function endpoint(string $method): string
+    {
+        return $this->config->apiBaseUrl . '/bot' . $this->config->token . '/' . rawurlencode($method);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function requestTimeout(array $data): int
+    {
+        return $this->config->timeout + max(0, Value::int($data['timeout'] ?? null));
     }
 
     /**
@@ -402,7 +415,7 @@ trait HttpClientTrait
         bool $returnResponse,
         bool $objects = false,
     ): mixed {
-        $result = $objects && $statusCode >= 200 && $statusCode < 300 ? self::successfulResultAsObjects($body) : null;
+        $result = $objects && self::isSuccess($statusCode) ? self::successfulResultAsObjects($body) : null;
 
         if ($result === null) {
             $response = self::decodeResponse($method, $statusCode, $body);
@@ -435,23 +448,36 @@ trait HttpClientTrait
      */
     private static function decodeResponse(string $method, int $statusCode, string $body): array
     {
-        $decoded = $body !== '' ? json_decode($body, true) : null;
+        $decoded = Value::map(self::decodedBody($method, $statusCode, $body));
 
-        if (!is_array($decoded)) {
-            $message = $body === ''
-                ? "Empty response from Telegram API (HTTP $statusCode)"
-                : "Invalid JSON response from Telegram API (HTTP $statusCode)";
-
-            throw new ApiException($message, $statusCode, [], $method);
-        }
-
-        $decoded = Value::map($decoded);
-
-        if (($decoded['ok'] ?? false) !== true || $statusCode < 200 || $statusCode >= 300) {
+        if (($decoded['ok'] ?? false) !== true || !self::isSuccess($statusCode)) {
             throw self::errorFromResponse($method, $statusCode, $decoded);
         }
 
         return $decoded;
+    }
+
+    private static function isSuccess(int $statusCode): bool
+    {
+        return $statusCode >= 200 && $statusCode < 300;
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private static function decodedBody(string $method, int $statusCode, string $body): array
+    {
+        $decoded = $body !== '' ? json_decode($body, true) : null;
+
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        $message = $body === ''
+            ? "Empty response from Telegram API (HTTP $statusCode)"
+            : "Invalid JSON response from Telegram API (HTTP $statusCode)";
+
+        throw new ApiException($message, $statusCode, [], $method);
     }
 
     /**
