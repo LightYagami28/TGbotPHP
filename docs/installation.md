@@ -1,9 +1,7 @@
 ---
-
-title: "Installation" description: "Install TGbotPHP with Composer, get a bot
-token from BotFather, and run your first bot with long polling or a webhook."
+title: "Installation"
+description: "Install TGbotPHP with Composer, get a bot token from BotFather, and run your first bot with long polling or a webhook."
 icon: download
-
 ---
 
 ## Requirements

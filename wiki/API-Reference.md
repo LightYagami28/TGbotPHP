@@ -1,8 +1,7 @@
 ---
-
-title: "API reference" description: "How to call the Telegram Bot API methods:
-parameters, results, formatting, file downloads and errors." icon: code
-
+title: "API reference"
+description: "How to call the Telegram Bot API methods: parameters, results, formatting, file downloads and errors."
+icon: code
 ---
 
 `Bot` extends `ApiClient`, which has a method for every method of the [Bot

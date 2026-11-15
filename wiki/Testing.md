@@ -1,9 +1,7 @@
 ---
-
-title: "Testing" description: "BotTester, FakeUpdate, Telegram's answers,
-conversations and time, and the end-to-end tests against the real API." icon:
-vial
-
+title: "Testing"
+description: "BotTester, FakeUpdate, Telegram's answers, conversations and time, and the end-to-end tests against the real API."
+icon: vial
 ---
 
 `TGbotPHP\Testing` ships with the library. With it you test your handlers the

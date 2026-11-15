@@ -1,9 +1,7 @@
 ---
-
-title: "Testing" description: "Run the PHPUnit suite, test your own bot with
-BotTester and FakeUpdate, and run the end-to-end tests against the real Telegram
-API." icon: vial
-
+title: "Testing"
+description: "Run the PHPUnit suite, test your own bot with BotTester and FakeUpdate, and run the end-to-end tests against the real Telegram API."
+icon: vial
 ---
 
 ## Running the tests

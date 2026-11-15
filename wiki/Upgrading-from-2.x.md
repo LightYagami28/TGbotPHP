@@ -1,9 +1,7 @@
 ---
-
-title: "Upgrading from 2.x" description: "What changes in the constructor, the
-handlers, the files, the methods and the errors when you move from 2.x to 3.x."
+title: "Upgrading from 2.x"
+description: "What changes in the constructor, the handlers, the files, the methods and the errors when you move from 2.x to 3.x."
 icon: arrow-up-right-dots
-
 ---
 
 3.0 fixes bugs that made 2.x unusable in several places (most methods threw a

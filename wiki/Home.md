@@ -1,8 +1,7 @@
 ---
-
-title: "TGbotPHP" description: "What TGbotPHP is, why it exists, the
-requirements and the map of the guide." icon: house
-
+title: "TGbotPHP"
+description: "What TGbotPHP is, why it exists, the requirements and the map of the guide."
+icon: house
 ---
 
 TGbotPHP is a PHP library for the [Telegram Bot

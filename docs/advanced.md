@@ -1,9 +1,7 @@
 ---
-
-title: "Advanced usage" description: "Middleware, conversations, caching, rate
-limiting, plugins, error handling, a local Bot API server, custom HTTP
-transports and Mini Apps." icon: gears
-
+title: "Advanced usage"
+description: "Middleware, conversations, caching, rate limiting, plugins, error handling, a local Bot API server, custom HTTP transports and Mini Apps."
+icon: gears
 ---
 
 ## Middleware

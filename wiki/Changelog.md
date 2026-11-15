@@ -1,8 +1,7 @@
 ---
-
-title: "Changelog" description: "The changes of every release, with the
-migration notes." icon: clock-rotate-left
-
+title: "Changelog"
+description: "The changes of every release, with the migration notes."
+icon: clock-rotate-left
 ---
 
 The complete history, with migration notes, is in
