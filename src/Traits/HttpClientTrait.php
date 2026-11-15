@@ -502,34 +502,20 @@ trait HttpClientTrait
     {
         $value = self::scalarValue($value);
 
-        if ($value === null) {
-            return;
-        }
-
         if ($value instanceof InputFile) {
             $files[$key] = $value->toCurlFile();
-            return;
-        }
-
-        if (is_bool($value)) {
+        } elseif (is_bool($value)) {
             $fields[$key] = $value ? 'true' : 'false';
-            return;
-        }
-
-        if (is_array($value) || $value instanceof JsonSerializable) {
+        } elseif (is_array($value) || $value instanceof JsonSerializable) {
             $fields[$key] = json_encode(
                 self::extractAttachments($value, $files),
                 JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
             );
-            return;
-        }
-
-        if (is_scalar($value) || $value instanceof Stringable) {
+        } elseif (is_scalar($value) || $value instanceof Stringable) {
             $fields[$key] = (string) $value;
-            return;
+        } elseif ($value !== null) {
+            throw new InvalidArgumentException("Unsupported value for parameter '$key'");
         }
-
-        throw new InvalidArgumentException("Unsupported value for parameter '$key'");
     }
 
     /**
