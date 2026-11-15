@@ -1,11 +1,15 @@
 ---
-title: "Examples"
-description: "Complete bots: a menu with pages, a feedback form, group moderation, inline search, selling with Telegram Stars and streaming an answer."
-icon: list
+
+title: "Examples" description: "Complete bots: a menu with pages, a feedback
+form, group moderation, inline search, selling with Telegram Stars and streaming
+an answer." icon: list
+
 ---
 
-
-Complete bots you can copy. Each one runs with long polling (`$bot->poll()`); replace it with `$bot->handle()` behind a webhook. The repository's [`examples/`](https://github.com/LightYagami28/TGbotPHP/tree/main/examples) directory has two more.
+Complete bots you can copy. Each one runs with long polling (`$bot->poll()`);
+replace it with `$bot->handle()` behind a webhook. The repository's
+[`examples/`](https://github.com/LightYagami28/TGbotPHP/tree/main/examples)
+directory has two more.
 
 All examples start the same way:
 
@@ -54,7 +58,8 @@ $bot->poll();
 
 ## Feedback form
 
-A conversation that asks two questions, then forwards the answers to the owner. With a webhook, replace `ArrayCache` with a `FileCache`.
+A conversation that asks two questions, then forwards the answers to the owner.
+With a webhook, replace `ArrayCache` with a `FileCache`.
 
 ```php
 use TGbotPHP\Cache\ArrayCache;
@@ -101,7 +106,9 @@ $bot->poll();
 
 ## Group moderation
 
-Welcomes new members and lets administrators ban a user by replying `/ban` to one of their messages. Add the bot to a group as an administrator with the *Ban users* right.
+Welcomes new members and lets administrators ban a user by replying `/ban` to
+one of their messages. Add the bot to a group as an administrator with the *Ban
+users* right.
 
 ```php
 use TGbotPHP\Exceptions\ApiException;
@@ -145,7 +152,8 @@ $bot->poll(allowedUpdates: ['message', 'chat_member']);
 
 ## Inline search
 
-Users type `@your_bot php` in any chat and pick a result. Enable inline mode with `/setinline` in @BotFather.
+Users type `@your_bot php` in any chat and pick a result. Enable inline mode
+with `/setinline` in @BotFather.
 
 ```php
 $docs = [
@@ -179,7 +187,8 @@ $bot->poll();
 
 ## Selling with Telegram Stars
 
-Digital goods are paid in Telegram Stars (currency `XTR`), without a payment provider.
+Digital goods are paid in Telegram Stars (currency `XTR`), without a payment
+provider.
 
 ```php
 $bot->command('buy', function (stdClass $message, Bot $bot): void {
@@ -209,11 +218,13 @@ $bot->onUpdate('message', function (stdClass $message, Bot $bot): void {
 $bot->poll();
 ```
 
-Refund with `$bot->refundStarPayment($userId, $chargeId)`, and read your balance with `$bot->getMyStarBalance()`.
+Refund with `$bot->refundStarPayment($userId, $chargeId)`, and read your balance
+with `$bot->getMyStarBalance()`.
 
 ## Streaming an answer
 
-For long answers (an AI assistant, a report), show the text while it is being written, then send the final message. Drafts only work in private chats.
+For long answers (an AI assistant, a report), show the text while it is being
+written, then send the final message. Drafts only work in private chats.
 
 ```php
 use TGbotPHP\Utilities\Formatter;

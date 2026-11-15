@@ -1,11 +1,15 @@
 ---
-title: "TGbotPHP"
-description: "PHP framework for the Telegram Bot API with a typed API client, routing, middleware, conversations, webhooks and long polling."
+
+title: "TGbotPHP" description: "PHP framework for the Telegram Bot API with a
+typed API client, routing, middleware, conversations, webhooks and long
+polling."
+
 ---
 
-TGbotPHP is a PHP library for the [Telegram Bot API](https://core.telegram.org/bots/api).
-It gives you a typed client for every API method and a small framework on top:
-routing, conversations, middleware, webhooks and long polling.
+TGbotPHP is a PHP library for the [Telegram Bot
+API](https://core.telegram.org/bots/api). It gives you a typed client for every
+API method and a small framework on top: routing, conversations, middleware,
+webhooks and long polling.
 
 ```php
 use TGbotPHP\Framework\Bot;
@@ -91,7 +95,8 @@ vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TE
 
 ## Project
 
-- [Security policy](https://github.com/LightYagami28/TGbotPHP/blob/main/SECURITY.md):
+- [Security
+  policy](https://github.com/LightYagami28/TGbotPHP/blob/main/SECURITY.md):
   how to report a vulnerability
 - [Changelog](wiki/Changelog.md): the releases and the migration notes
 - [Contributing](https://github.com/LightYagami28/TGbotPHP/blob/main/CONTRIBUTING.md):

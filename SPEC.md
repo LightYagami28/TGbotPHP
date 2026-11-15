@@ -37,14 +37,14 @@ PHPUnit è configurato con `failOnWarning`, `failOnDeprecation`, `failOnNotice`,
 `failOnRisky`. La suite predefinita è `unit` (`tests/Unit`, 17 file); la suite
 `e2e` richiede `TELEGRAM_BOT_TOKEN`.
 
-Verifica eseguita il 2026-11-11 con PHP 8.5.12 su Windows: `composer validate
---strict` valido; `composer phpstan` riporta «No errors»; `composer test`
-riporta 528 test e 1767 asserzioni con 2 errori, 3 fallimenti e 2 test saltati.
-I 5 casi che falliscono riguardano permessi di cartelle e file in sola lettura
-(`CacheTest`, `LoggerTest`) e copie da file locali (`ApiClientTest`,
-`FullCoverageTest`): sembrano dipendere da permessi POSIX e percorsi di Linux
-(causa da confermare), dove gira la CI (esito verde su Linux da confermare). La
-coverage al 100% non è stata misurata in questa revisione.
+Verifica eseguita il 2026-11-11 con PHP 8.5.12 su Windows:
+`composer validate --strict` valido; `composer phpstan` riporta «No errors»;
+`composer test` riporta 528 test e 1767 asserzioni con 2 errori, 3 fallimenti e
+2 test saltati. I 5 casi che falliscono riguardano permessi di cartelle e file
+in sola lettura (`CacheTest`, `LoggerTest`) e copie da file locali
+(`ApiClientTest`, `FullCoverageTest`): sembrano dipendere da permessi POSIX e
+percorsi di Linux (causa da confermare), dove gira la CI (esito verde su Linux
+da confermare). La coverage al 100% non è stata misurata in questa revisione.
 
 Note sulla struttura: la guida utente è nella cartella `wiki/` (pubblicata dal
 workflow `wiki`); la documentazione tecnica è in `docs/`. I due insiemi vanno

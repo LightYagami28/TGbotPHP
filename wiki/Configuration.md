@@ -1,9 +1,10 @@
 ---
-title: "Configuration"
-description: "The Config object, the retry policy, the debug log, a local Bot API server, a custom HTTP transport, the BotBuilder and the command line tool."
-icon: sliders
----
 
+title: "Configuration" description: "The Config object, the retry policy, the
+debug log, a local Bot API server, a custom HTTP transport, the BotBuilder and
+the command line tool." icon: sliders
+
+---
 
 ## Config
 
@@ -38,18 +39,24 @@ $bot = new Bot(new Config(
 | `retry` | 1 retry, up to 30 s | How requests answered with 429 Too Many Requests are retried |
 | `debug` | `false` | Log every request and response |
 
-`Config` is immutable: it is validated once, and nothing can change it afterwards. `$bot->getConfig()` returns it.
+`Config` is immutable: it is validated once, and nothing can change it
+afterwards. `$bot->getConfig()` returns it.
 
 ## Retries
 
-When Telegram answers 429 Too Many Requests, it says how long to wait (`retry_after`). The `RetryPolicy` decides whether the library waits and sends the request again:
+When Telegram answers 429 Too Many Requests, it says how long to wait
+(`retry_after`). The `RetryPolicy` decides whether the library waits and sends
+the request again:
 
 ```php
 new RetryPolicy(maxRetries: 3, maxDelay: 60); // up to 3 retries, if the wait is at most 60 seconds
 RetryPolicy::none();                           // never retry: throw TooManyRequestsException at once
 ```
 
-In a webhook, a long wait holds the request open: keep `maxDelay` short, or use `RetryPolicy::none()` and handle `TooManyRequestsException` yourself. Network errors are not retried by single requests; `poll()` retries them with an increasing delay.
+In a webhook, a long wait holds the request open: keep `maxDelay` short, or use
+`RetryPolicy::none()` and handle `TooManyRequestsException` yourself. Network
+errors are not retried by single requests; `poll()` retries them with an
+increasing delay.
 
 ## Debug log
 
@@ -57,11 +64,14 @@ In a webhook, a long wait holds the request open: keep `maxDelay` short, or use 
 new Config(token: $token, debug: '/var/log/mybot/telegram.log'); // or true for the PHP error log
 ```
 
-Every request and response is logged on one line. `secret_token` and `provider_token` are replaced by `<redacted>`, and the bot token never appears, but messages do: keep the log private, and turn it off in production.
+Every request and response is logged on one line. `secret_token` and
+`provider_token` are replaced by `<redacted>`, and the bot token never appears,
+but messages do: keep the log private, and turn it off in production.
 
 ## Local Bot API server
 
-A [local Bot API server](https://github.com/tdlib/telegram-bot-api) lifts the file size limits (uploads up to 2 GB) and lets you use your own infrastructure:
+A [local Bot API server](https://github.com/tdlib/telegram-bot-api) lifts the
+file size limits (uploads up to 2 GB) and lets you use your own infrastructure:
 
 ```php
 $bot = new Bot(new Config(
@@ -72,7 +82,8 @@ $bot = new Bot(new Config(
 ));
 ```
 
-Before switching, call `$bot->logOut()` once on the official server. With the server in `--local` mode, `downloadFile()` copies files from its disk.
+Before switching, call `$bot->logOut()` once on the official server. With the
+server in `--local` mode, `downloadFile()` copies files from its disk.
 
 ## HTTP transport
 
@@ -80,10 +91,13 @@ Requests go through `Http\TransportInterface`. The default `CurlTransport`:
 
 - verifies TLS certificates and allows only HTTP and HTTPS;
 - never follows redirects;
-- reuses its connection between requests, which saves a TLS handshake per API call;
+- reuses its connection between requests, which saves a TLS handshake per API
+  call;
 - streams downloads to disk.
 
-To use another HTTP client (a proxy, a PSR-18 client, a fake for tests), implement `TransportInterface` (`post()`, `get()`, `download()`) and pass it to the bot:
+To use another HTTP client (a proxy, a PSR-18 client, a fake for tests),
+implement `TransportInterface` (`post()`, `get()`, `download()`) and pass it to
+the bot:
 
 ```php
 $bot = new Bot($config, new MyTransport());
@@ -93,7 +107,8 @@ For tests, use the ready-made fake: see [Testing](Testing).
 
 ## BotBuilder
 
-`BotBuilder` configures a bot in one fluent expression, which some prefer for small bots:
+`BotBuilder` configures a bot in one fluent expression, which some prefer for
+small bots:
 
 ```php
 use TGbotPHP\Cache\FileCache;
@@ -110,11 +125,14 @@ $bot = new BotBuilder(getenv('TELEGRAM_BOT_TOKEN'))
 $bot->handle();
 ```
 
-It has a `with*()` method for every `Config` option (`withSecretToken`, `withDebug`, `withApiServer`, `withTimeout`, `withRetry`, `withTransport`) and an `add*()` method for every kind of handler.
+It has a `with*()` method for every `Config` option (`withSecretToken`,
+`withDebug`, `withApiServer`, `withTimeout`, `withRetry`, `withTransport`) and
+an `add*()` method for every kind of handler.
 
 ## Command line tool
 
-`vendor/bin/tgbot` manages the bot from the terminal. It reads the token from `TELEGRAM_BOT_TOKEN` (or `--token=`, which ends up in the shell history).
+`vendor/bin/tgbot` manages the bot from the terminal. It reads the token from
+`TELEGRAM_BOT_TOKEN` (or `--token=`, which ends up in the shell history).
 
 ```bash
 export TELEGRAM_BOT_TOKEN=123456789:AA...
@@ -129,4 +147,5 @@ vendor/bin/tgbot commands:delete
 vendor/bin/tgbot version
 ```
 
-Errors go to stderr, and the exit code is 1 when a command fails, so the tool fits in deployment scripts.
+Errors go to stderr, and the exit code is 1 when a command fails, so the tool
+fits in deployment scripts.

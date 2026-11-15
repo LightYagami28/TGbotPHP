@@ -1,15 +1,17 @@
 ---
-title: "Getting started"
-description: "Create a bot, install the library and run your first bot with long polling, then the same bot behind a webhook."
-icon: rocket
----
 
+title: "Getting started" description: "Create a bot, install the library and run
+your first bot with long polling, then the same bot behind a webhook." icon:
+rocket
+
+---
 
 ## 1. Create a bot
 
 1. Open [@BotFather](https://t.me/botfather) in Telegram and send `/newbot`.
 2. Choose a name and a username ending in `bot`.
-3. Copy the token (`123456789:AA...`). Anyone with the token controls the bot: keep it out of your code and your repository.
+3. Copy the token (`123456789:AA...`). Anyone with the token controls the bot:
+   keep it out of your code and your repository.
 
 ## 2. Install
 
@@ -21,7 +23,8 @@ You need PHP 8.5 or later with the `curl` and `json` extensions.
 
 ## 3. Your first bot: long polling
 
-Long polling asks Telegram for new updates in a loop. It works anywhere, even on your laptop, without a public URL.
+Long polling asks Telegram for new updates in a loop. It works anywhere, even on
+your laptop, without a public URL.
 
 `bot.php`:
 
@@ -58,14 +61,19 @@ Open your bot in Telegram and send `/start`.
 
 Things to notice:
 
-- Handlers receive the update payload (here the `Message`, as a `stdClass` decoded from JSON), then the bot, then data from the route.
-- `reply()` answers in the same chat, and in the same forum topic, business connection or direct messages topic.
-- Messages use HTML formatting by default. Escape what users write with `Formatter::escape()`.
-- Long polling does not work while a webhook is set. Remove it with `vendor/bin/tgbot webhook:delete`.
+- Handlers receive the update payload (here the `Message`, as a `stdClass`
+  decoded from JSON), then the bot, then data from the route.
+- `reply()` answers in the same chat, and in the same forum topic, business
+  connection or direct messages topic.
+- Messages use HTML formatting by default. Escape what users write with
+  `Formatter::escape()`.
+- Long polling does not work while a webhook is set. Remove it with
+  `vendor/bin/tgbot webhook:delete`.
 
 ## 4. The same bot behind a webhook
 
-With a webhook, Telegram sends each update to your HTTPS URL. Every update is a new PHP request, so it scales like any web page.
+With a webhook, Telegram sends each update to your HTTPS URL. Every update is a
+new PHP request, so it scales like any web page.
 
 `public/webhook.php`:
 
@@ -97,11 +105,14 @@ vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TE
 vendor/bin/tgbot webhook:info
 ```
 
-`handle()` answers 403 when `TELEGRAM_SECRET_TOKEN` is missing or the request does not carry that secret, so only Telegram can call your bot. See [Deployment](Deployment) for the server configuration.
+`handle()` answers 403 when `TELEGRAM_SECRET_TOKEN` is missing or the request
+does not carry that secret, so only Telegram can call your bot. See
+[Deployment](Deployment) for the server configuration.
 
 ## Next steps
 
-- [Handling Updates](Handling-Updates): commands with arguments, text patterns, buttons
+- [Handling Updates](Handling-Updates): commands with arguments, text patterns,
+  buttons
 - [Keyboards and Callbacks](Keyboards-and-Callbacks): menus and pagination
 - [Conversations](Conversations): ask several questions in a row
 - [Examples](Examples): complete bots

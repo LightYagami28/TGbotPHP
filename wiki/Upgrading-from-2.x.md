@@ -1,11 +1,14 @@
 ---
-title: "Upgrading from 2.x"
-description: "What changes in the constructor, the handlers, the files, the methods and the errors when you move from 2.x to 3.x."
+
+title: "Upgrading from 2.x" description: "What changes in the constructor, the
+handlers, the files, the methods and the errors when you move from 2.x to 3.x."
 icon: arrow-up-right-dots
+
 ---
 
-
-3.0 fixes bugs that made 2.x unusable in several places (most methods threw a `TypeError`, uploads were broken, commands did not match), so upgrading is strongly recommended. It needs **PHP 8.5**.
+3.0 fixes bugs that made 2.x unusable in several places (most methods threw a
+`TypeError`, uploads were broken, commands did not match), so upgrading is
+strongly recommended. It needs **PHP 8.5**.
 
 ## Constructor
 
@@ -23,7 +26,9 @@ $bot = new Bot(new Config(
 ));
 ```
 
-`new Bot($token)` still works when you need no options. `Config` is immutable; `maxRetries`/`maxRetryDelay` became `retry: new RetryPolicy($maxRetries, $maxDelay)`.
+`new Bot($token)` still works when you need no options. `Config` is immutable;
+`maxRetries`/`maxRetryDelay` became
+`retry: new RetryPolicy($maxRetries, $maxDelay)`.
 
 ## Handlers
 
@@ -36,7 +41,8 @@ $bot->command('start', function (stdClass $message, Bot $bot, string $args): voi
 });
 ```
 
-Handlers written as `function ($message)` keep working. Commands registered as `start` now match `/start` and `/start@your_bot`.
+Handlers written as `function ($message)` keep working. Commands registered as
+`start` now match `/start` and `/start@your_bot`.
 
 ## Files
 
@@ -50,7 +56,8 @@ $bot->sendPhoto($chatId, InputFile::fromPath('/path/photo.jpg'));
 
 ## Methods
 
-Rarely used optional parameters moved into the trailing `$options` array, with Telegram's parameter names:
+Rarely used optional parameters moved into the trailing `$options` array, with
+Telegram's parameter names:
 
 | Method | Now in `$options` |
 |---|---|
@@ -63,20 +70,30 @@ Rarely used optional parameters moved into the trailing `$options` array, with T
 
 Also:
 
-- `promoteChatMember()` takes the rights as an array: `['can_delete_messages' => true]`.
-- `createNewStickerSet()` and `addStickerToSet()` take `InputSticker` arrays, as the current API does.
-- Methods return `array` or `bool` instead of `array|null`: errors always throw an exception.
-- `WebhookValidator::validate($body, $secret, $header)` became `validate($secret, $header)`.
-- `getMessageReactions()` was removed: it is not a Bot API method. `ApiClient::getBotToken()` became `getToken()`.
-- `kickChatMember()`, `pinMessage()`, `unpinMessage()` and `getChatMembersCount()` still work, as deprecated aliases.
+- `promoteChatMember()` takes the rights as an array:
+  `['can_delete_messages' => true]`.
+- `createNewStickerSet()` and `addStickerToSet()` take `InputSticker` arrays, as
+  the current API does.
+- Methods return `array` or `bool` instead of `array|null`: errors always throw
+  an exception.
+- `WebhookValidator::validate($body, $secret, $header)` became
+  `validate($secret, $header)`.
+- `getMessageReactions()` was removed: it is not a Bot API method.
+  `ApiClient::getBotToken()` became `getToken()`.
+- `kickChatMember()`, `pinMessage()`, `unpinMessage()` and
+  `getChatMembersCount()` still work, as deprecated aliases.
 
 ## Errors
 
-A handler exception goes to the `onError()` listeners when there are any. Without listeners, `handle()` and `poll()` log it and continue, and `handleUpdate()` throws it.
+A handler exception goes to the `onError()` listeners when there are any.
+Without listeners, `handle()` and `poll()` log it and continue, and
+`handleUpdate()` throws it.
 
 ## Your own implementations
 
-- A custom `CacheInterface` needs `update()`, atomic for the same key (see [Conversations](Conversations#concurrent-updates)).
+- A custom `CacheInterface` needs `update()`, atomic for the same key (see
+  [Conversations](Conversations#concurrent-updates)).
 - A custom `TransportInterface` needs `download()`.
 
-The complete list is in the [CHANGELOG](https://github.com/LightYagami28/TGbotPHP/blob/main/CHANGELOG.md).
+The complete list is in the
+[CHANGELOG](https://github.com/LightYagami28/TGbotPHP/blob/main/CHANGELOG.md).

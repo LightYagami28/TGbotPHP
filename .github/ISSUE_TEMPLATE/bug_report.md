@@ -9,9 +9,10 @@ labels: bug
 <!-- Describe the bug -->
 
 ## Steps to Reproduce
-1. 
-2. 
-3. 
+
+1.
+2.
+3.
 
 ## Expected Behavior
 <!-- What should happen -->
@@ -20,11 +21,13 @@ labels: bug
 <!-- What actually happens -->
 
 ## Environment
-- PHP Version: 
-- Framework Version: 
-- OS: 
+
+- PHP Version:
+- Framework Version:
+- OS:
 
 ## Code Example
+
 ```php
 // Your code here
 ```

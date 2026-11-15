@@ -1,14 +1,17 @@
 ---
-title: "Keyboards and callbacks"
-description: "Build inline keyboards, handle button presses, reply keyboards and format the messages they send."
-icon: keyboard
----
 
+title: "Keyboards and callbacks" description: "Build inline keyboards, handle
+button presses, reply keyboards and format the messages they send." icon:
+keyboard
+
+---
 
 Telegram has two kinds of keyboards:
 
-- **Inline keyboards** are attached to a message. A button sends a callback query to the bot, opens a URL or a Mini App, or starts an inline query.
-- **Reply keyboards** replace the user's keyboard with buttons that send their text as a normal message.
+- **Inline keyboards** are attached to a message. A button sends a callback
+  query to the bot, opens a URL or a Mini App, or starts an inline query.
+- **Reply keyboards** replace the user's keyboard with buttons that send their
+  text as a normal message.
 
 Pass either as `reply_markup`:
 
@@ -58,7 +61,8 @@ Keyboard::links(['Docs' => 'https://core.telegram.org/bots/api']);  // URL butto
 Keyboard::pagination(3, 10, 'page:');                               // « 2 | 3 / 10 | 4 »
 ```
 
-Numeric callback data such as `'123'` is kept as a string: PHP would otherwise turn it into an integer array key.
+Numeric callback data such as `'123'` is kept as a string: PHP would otherwise
+turn it into an integer array key.
 
 ## Handling button presses
 
@@ -77,12 +81,21 @@ $bot->callback('page:*', function (stdClass $callback, Bot $bot, array $matches)
 });
 ```
 
-- `callback()` takes an exact value (`'menu'`), a wildcard (`'page:*'`) or a regular expression (`'/^order:(accept|refuse):(\d+)$/'`). The captured parts are in `$matches`.
-- `answer($callback, $text, $showAlert)` stops the loading indicator on the button, optionally with a notification or an alert. Call it for every callback query.
-- `edit($callback, $text, $options)` edits the message the button belongs to. Pressing the button of the page already shown returns `false` instead of throwing Telegram's "message is not modified" error.
-- To change only the buttons, use `$bot->editMessageReplyMarkup($bot->chatId($callback), $callback->message->message_id, $keyboard)`.
+- `callback()` takes an exact value (`'menu'`), a wildcard (`'page:*'`) or a
+  regular expression (`'/^order:(accept|refuse):(\d+)$/'`). The captured parts
+  are in `$matches`.
+- `answer($callback, $text, $showAlert)` stops the loading indicator on the
+  button, optionally with a notification or an alert. Call it for every callback
+  query.
+- `edit($callback, $text, $options)` edits the message the button belongs to.
+  Pressing the button of the page already shown returns `false` instead of
+  throwing Telegram's "message is not modified" error.
+- To change only the buttons, use
+  `$bot->editMessageReplyMarkup($bot->chatId($callback),
+  $callback->message->message_id, $keyboard)`.
 
-Callback data is sent by the client and can be forged: check that the user may perform the action before doing it.
+Callback data is sent by the client and can be forged: check that the user may
+perform the action before doing it.
 
 ## Reply keyboards
 
@@ -97,12 +110,16 @@ $bot->reply($message, 'Main menu', ['reply_markup' => $keyboard]);
 $bot->hears('📦 My orders', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'You have no orders.'));
 ```
 
-- Rows contain texts, or [KeyboardButton](https://core.telegram.org/bots/api#keyboardbutton) arrays for buttons that request a contact, a location, a poll, a user or a chat.
-- `Keyboard::remove()` removes the keyboard; `Keyboard::forceReply('Your name')` asks the user to reply to the message.
+- Rows contain texts, or
+  [KeyboardButton](https://core.telegram.org/bots/api#keyboardbutton) arrays for
+  buttons that request a contact, a location, a poll, a user or a chat.
+- `Keyboard::remove()` removes the keyboard; `Keyboard::forceReply('Your name')`
+  asks the user to reply to the message.
 
 ## Formatting
 
-Messages are sent with `parse_mode: 'HTML'` by default. `Formatter` builds the tags and escapes the text inside them:
+Messages are sent with `parse_mode: 'HTML'` by default. `Formatter` builds the
+tags and escapes the text inside them:
 
 ```php
 use TGbotPHP\Utilities\Formatter;
@@ -124,4 +141,5 @@ $text = Formatter::bold('Order #42') . "\n"
 | `mention($userId, $name)` | A mention that works for users without a username |
 | `escapeMarkdownV2($text)` | Text safe for `parseMode: 'MarkdownV2'` |
 
-Always escape what users write: an unescaped `<` makes Telegram reject the whole message.
+Always escape what users write: an unescaped `<` makes Telegram reject the whole
+message.

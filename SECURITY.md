@@ -2,7 +2,10 @@
 
 ## Reporting Vulnerabilities
 
-Please do not open public issues for security problems. Report them privately with [GitHub Security Advisories](https://github.com/LightYagami28/TGbotPHP/security/advisories/new) or by email to ceo@retechrevive.it.
+Please do not open public issues for security problems. Report them privately
+with [GitHub Security
+Advisories](https://github.com/LightYagami28/TGbotPHP/security/advisories/new)
+or by email to <ceo@retechrevive.it>.
 
 ## Built-in protections
 
@@ -29,14 +32,17 @@ Please do not open public issues for security problems. Report them privately wi
 
 ### 1. Webhook secret token
 
-A webhook with no secret is refused. Generate the secret with `openssl rand -hex 32` (1–256 characters: `A-Z a-z 0-9 _ -`) and put it in `TELEGRAM_SECRET_TOKEN`.
+A webhook with no secret is refused. Generate the secret with
+`openssl rand -hex 32` (1–256 characters: `A-Z a-z 0-9 _ -`) and put it in
+`TELEGRAM_SECRET_TOKEN`.
 
 ```php
 $bot = new Bot(new Config(getenv('TELEGRAM_BOT_TOKEN'), secretToken: getenv('TELEGRAM_SECRET_TOKEN')));
 $bot->handle(); // 403 when the secret is missing, or the header does not match
 ```
 
-Register the same secret with `vendor/bin/tgbot webhook:set --url=... --secret=...`.
+Register the same secret with
+`vendor/bin/tgbot webhook:set --url=... --secret=...`.
 
 Call `Config::withUnauthenticatedWebhook()` only when you intentionally accept
 requests that have no secret. If `secretToken` is also set, the header must
@@ -57,15 +63,25 @@ $bot->middleware((new RateLimiter($cache))->middleware(10, 60));
 ### 4. Secrets
 
 - Keep the bot token in environment variables, never in the repository
-- The download URL returned by `getFileUrl()` contains the token: never show it to users
-- Keep `FileCache` directories and debug logs outside the web root. Debug logs contain request parameters.
+- The download URL returned by `getFileUrl()` contains the token: never show it
+  to users
+- Keep `FileCache` directories and debug logs outside the web root. Debug logs
+  contain request parameters.
 
 ### 5. HTTPS only
 
-Telegram requires HTTPS for webhooks. Only disable `Config::$enforceHttps` for a local Bot API server on a trusted network.
+Telegram requires HTTPS for webhooks. Only disable `Config::$enforceHttps` for a
+local Bot API server on a trusted network.
 
 ## Dependencies
 
-TGbotPHP has no runtime dependencies. Version updates for Composer, GitHub Actions and Docker are configured in [`.github/dependabot.yml`](https://github.com/LightYagami28/TGbotPHP/blob/main/.github/dependabot.yml). `composer audit` runs in CI.
+TGbotPHP has no runtime dependencies. Version updates for Composer, GitHub
+Actions and Docker are configured in
+[`.github/dependabot.yml`](https://github.com/LightYagami28/TGbotPHP/blob/main/.github/dependabot.yml).
+`composer audit` runs in CI.
 
-Dependabot security updates, the pull requests that fix known vulnerabilities, are a repository setting. An administrator enables them under **Settings → Code security → Dependabot**: Dependency graph, Dependabot alerts, and Dependabot security updates. This file cannot turn that setting on. Once it is on, `dependabot.yml` also limits which ecosystems those security updates cover.
+Dependabot security updates, the pull requests that fix known vulnerabilities,
+are a repository setting. An administrator enables them under **Settings → Code
+security → Dependabot**: Dependency graph, Dependabot alerts, and Dependabot
+security updates. This file cannot turn that setting on. Once it is on,
+`dependabot.yml` also limits which ecosystems those security updates cover.
