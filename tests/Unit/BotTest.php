@@ -108,9 +108,17 @@ final class BotTest extends TestCase
     public function testHearsWithRegexAndFallback(): void
     {
         $log = [];
-        $this->bot->hears('/^my name is (\w+)$/i', function (stdClass $message, Bot $bot, array $matches) use (&$log): void {
+        $this->bot->hears('/^my name is (\w+)$/i', function (
+            stdClass $message,
+            Bot $bot,
+            array $matches,
+        ) use (&$log): void {
             self::assertSame($this->bot, $bot);
-            $log[] = 'name:' . Value::string($matches[1]) . ' in ' . Value::string(Value::path($message, 'chat', 'type'));
+            $log[] = 'name:' . Value::string($matches[1]) . ' in ' . Value::string(Value::path(
+                $message,
+                'chat',
+                'type',
+            ));
         });
         $this->bot->hears('hello', function () use (&$log): void {
             $log[] = 'hello';
@@ -213,7 +221,10 @@ final class BotTest extends TestCase
 
     public function testEditToTheSameContentIsNotAnError(): void
     {
-        $this->transport->queueError(400, 'Bad Request: message is not modified: specified new message content and reply markup are exactly the same');
+        $this->transport->queueError(
+            400,
+            'Bad Request: message is not modified: specified new message content and reply markup are exactly the same',
+        );
         $result = null;
         $this->bot->callback('same', function (stdClass $callback, Bot $bot) use (&$result): void {
             $result = $bot->edit($callback, 'Same text');
@@ -269,7 +280,11 @@ final class BotTest extends TestCase
     {
         /** @var \ArrayObject<string, mixed> $received */
         $received = new \ArrayObject();
-        $this->bot->onUpdate('pre_checkout_query', function (stdClass $query, Bot $bot, stdClass $update) use ($received): void {
+        $this->bot->onUpdate('pre_checkout_query', function (
+            stdClass $query,
+            Bot $bot,
+            stdClass $update,
+        ) use ($received): void {
             self::assertSame($this->bot, $bot);
             $received['query'] = $query->id;
             $received['update'] = $update->update_id;
@@ -277,7 +292,8 @@ final class BotTest extends TestCase
 
         $this->bot->handleUpdate([
             'update_id' => 99,
-            'pre_checkout_query' => ['id' => 'pcq', 'from' => ['id' => 1], 'currency' => 'XTR', 'total_amount' => 1, 'invoice_payload' => 'p'],
+            'pre_checkout_query' => ['id' => 'pcq', 'from' => ['id' => 1], 'currency' => 'XTR', 'total_amount' => 1,
+                'invoice_payload' => 'p'],
         ]);
 
         self::assertSame(['query' => 'pcq', 'update' => 99], $received->getArrayCopy());
@@ -368,7 +384,10 @@ final class BotTest extends TestCase
         $update = Updates::message('/start');
         $this->bot->handleUpdate($update);
 
-        self::assertSame(['api 403', 'Forbidden: bot was blocked by the user #' . Value::int($update['update_id'])], $errors);
+        self::assertSame(
+            ['api 403', 'Forbidden: bot was blocked by the user #' . Value::int($update['update_id'])],
+            $errors,
+        );
     }
 
     public function testReplySendsToSameChatAndTopic(): void
@@ -377,7 +396,8 @@ final class BotTest extends TestCase
             'reply_markup' => ['remove_keyboard' => true],
         ]));
 
-        $this->bot->handleUpdate(Updates::message('/start', chatId: -100500, extra: ['is_topic_message' => true, 'message_thread_id' => 12]));
+        $this->bot->handleUpdate(Updates::message('/start', chatId: -100500, extra: ['is_topic_message' => true,
+            'message_thread_id' => 12]));
 
         $fields = $this->transport->lastRequest()['fields'];
         self::assertSame('sendMessage', $this->transport->lastRequest()['method']);
@@ -392,7 +412,8 @@ final class BotTest extends TestCase
         $this->bot->onUpdate('business_message', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi'));
 
         $message = Value::map(Updates::message('hello', chatId: 55)['message']);
-        $this->bot->handleUpdate(['update_id' => 3, 'business_message' => ['business_connection_id' => 'bc-1'] + $message]);
+        $this->bot->handleUpdate(['update_id' => 3,
+            'business_message' => ['business_connection_id' => 'bc-1'] + $message]);
 
         $fields = $this->transport->lastRequest()['fields'];
         self::assertSame('55', $fields['chat_id']);
@@ -402,14 +423,26 @@ final class BotTest extends TestCase
 
     public function testReplyInChannelDirectMessagesUsesTheTopic(): void
     {
-        $this->bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi', ['direct_messages_topic_id' => 1]));
+        $this->bot->fallback(fn(stdClass $message, Bot $bot) => $bot->reply(
+            $message,
+            'Hi',
+            ['direct_messages_topic_id' => 1],
+        ));
         $this->bot->hears('topic', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi'));
 
-        $this->bot->handleUpdate(Updates::message('topic', chatId: -100600, extra: ['direct_messages_topic' => ['topic_id' => 9]]));
+        $this->bot->handleUpdate(Updates::message(
+            'topic',
+            chatId: -100600,
+            extra: ['direct_messages_topic' => ['topic_id' => 9]],
+        ));
         self::assertSame('9', $this->transport->lastRequest()['fields']['direct_messages_topic_id']);
 
         // Explicit options win
-        $this->bot->handleUpdate(Updates::message('other', chatId: -100600, extra: ['direct_messages_topic' => ['topic_id' => 9]]));
+        $this->bot->handleUpdate(Updates::message(
+            'other',
+            chatId: -100600,
+            extra: ['direct_messages_topic' => ['topic_id' => 9]],
+        ));
         self::assertSame('1', $this->transport->lastRequest()['fields']['direct_messages_topic_id']);
     }
 
@@ -593,7 +626,10 @@ final class BotTest extends TestCase
         self::assertSame(['start', 'hello'], $seen);
         self::assertSame('poll_bot', $this->bot->getUsername());
         self::assertSame(['getMe', 'getUpdates', 'getUpdates'], $this->transport->methods());
-        self::assertSame((string) (Value::int($second['update_id']) + 1), $this->transport->lastRequest()['fields']['offset']);
+        self::assertSame(
+            (string) (Value::int($second['update_id']) + 1),
+            $this->transport->lastRequest()['fields']['offset'],
+        );
         self::assertFalse($this->bot->isRunning());
     }
 
@@ -698,7 +734,8 @@ final class BotTest extends TestCase
 
         self::assertSame('built_bot', $bot->getUsername());
         self::assertSame(
-            ['middleware', 'start', 'processed', 'middleware', 'callback', 'processed', 'middleware', 'text', 'processed'],
+            ['middleware', 'start', 'processed', 'middleware', 'callback', 'processed', 'middleware', 'text',
+                'processed'],
             $log,
         );
     }
@@ -707,7 +744,11 @@ final class BotTest extends TestCase
     {
         $this->bot->useConversations(new ArrayCache());
 
-        $message = Value::object(UpdateParser::fromArray(Updates::message('x', chatId: 1, userId: 23))->message ?? null);
+        $message = Value::object(UpdateParser::fromArray(Updates::message(
+            'x',
+            chatId: 1,
+            userId: 23,
+        ))->message ?? null);
         self::assertNotNull($message);
         $this->bot->setState($message, 'first');
 
@@ -726,7 +767,8 @@ final class BotTest extends TestCase
 
     public function testEditNeedsAMessage(): void
     {
-        $callback = UpdateParser::fromArray(['update_id' => 1, 'callback_query' => ['id' => 'q', 'from' => ['id' => 1], 'data' => 'x']])->callback_query;
+        $callback = UpdateParser::fromArray(['update_id' => 1, 'callback_query' => ['id' => 'q', 'from' => ['id' => 1],
+            'data' => 'x']])->callback_query;
         self::assertInstanceOf(stdClass::class, $callback);
 
         $this->expectException(\InvalidArgumentException::class);

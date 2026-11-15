@@ -38,11 +38,22 @@ final class BotApiCoverageTest extends TestCase
     ];
 
     /**
-     * @return array{version: string, updates: list<string>, methods: array<string, array{returns: string, parameters: array<string, array{type: string, required: bool}>}>}
+     * @return array{
+     *     version: string,
+     *     updates: list<string>,
+     *     methods: array<string, array{
+     *         returns: string,
+     *         parameters: array<string, array{type: string, required: bool}>
+     *     }>
+     * }
      */
     private static function spec(): array
     {
-        $spec = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/tools/bot-api.json'), true, flags: JSON_THROW_ON_ERROR);
+        $spec = json_decode(
+            (string) file_get_contents(dirname(__DIR__, 2) . '/tools/bot-api.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
         $spec = Value::map($spec);
 
         $methods = [];
@@ -106,7 +117,10 @@ final class BotApiCoverageTest extends TestCase
         $client = new ApiClient(new Config(Updates::TOKEN), $transport);
 
         $method = new ReflectionMethod(ApiClient::class, $name);
-        $arguments = array_map(static fn(ReflectionParameter $parameter): mixed => self::argument($parameter), $method->getParameters());
+        $arguments = array_map(
+            static fn(ReflectionParameter $parameter): mixed => self::argument($parameter),
+            $method->getParameters(),
+        );
         $method->invokeArgs($client, $arguments);
 
         $request = $transport->lastRequest();
@@ -114,7 +128,10 @@ final class BotApiCoverageTest extends TestCase
 
         $sent = array_keys($request['fields']);
         $unknown = array_diff($sent, array_keys($parameters));
-        $missing = array_diff(array_keys(array_filter($parameters, static fn(array $p): bool => $p['required'])), $sent);
+        $missing = array_diff(
+            array_keys(array_filter($parameters, static fn(array $p): bool => $p['required'])),
+            $sent,
+        );
 
         self::assertSame([], array_values($unknown), "$name sends unknown parameters");
         self::assertSame([], array_values($missing), "$name does not send required parameters");
@@ -131,7 +148,9 @@ final class BotApiCoverageTest extends TestCase
 
         $types = $type instanceof \ReflectionUnionType ? $type->getTypes() : [];
 
-        return array_values(array_map(static fn(\ReflectionType $t): string => $t instanceof ReflectionNamedType ? $t->getName() : 'mixed', $types));
+        $names = static fn(\ReflectionType $t): string => $t instanceof ReflectionNamedType ? $t->getName() : 'mixed';
+
+        return array_values(array_map($names, $types));
     }
 
     /**
@@ -148,7 +167,11 @@ final class BotApiCoverageTest extends TestCase
             in_array('string', $names, true) => $parameter->getName() === 'url' ? 'https://example.com/hook' : 'x',
             in_array('float', $names, true) => 1.5,
             in_array('bool', $names, true) => true,
-            in_array('array', $names, true) => $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : [['type' => 'x']],
+            in_array(
+                'array',
+                $names,
+                true,
+            ) => $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : [['type' => 'x']],
             default => $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null,
         };
     }

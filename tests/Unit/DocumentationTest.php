@@ -76,7 +76,11 @@ final class DocumentationTest extends TestCase
      */
     public static function wikiPages(): array
     {
-        return array_filter(self::documents(), static fn(string $name): bool => str_starts_with($name, 'wiki/'), ARRAY_FILTER_USE_KEY);
+        return array_filter(
+            self::documents(),
+            static fn(string $name): bool => str_starts_with($name, 'wiki/'),
+            ARRAY_FILTER_USE_KEY,
+        );
     }
 
     #[DataProvider('wikiPages')]
@@ -126,7 +130,8 @@ final class DocumentationTest extends TestCase
             $class = match (true) {
                 // $bot->method(
                 $token->is(T_VARIABLE) && isset(self::VARIABLES[substr($token->text, 1)])
-                    && ($tokens[$i + 1] ?? null)?->is(T_OBJECT_OPERATOR) === true => self::VARIABLES[substr($token->text, 1)],
+                    && ($tokens[$i + 1] ?? null)?->is(T_OBJECT_OPERATOR) === true
+                    => self::VARIABLES[substr($token->text, 1)],
                 // Formatter::method(
                 $token->is(T_STRING) && isset($classes[$token->text])
                     && ($tokens[$i + 1] ?? null)?->is(T_DOUBLE_COLON) === true => $classes[$token->text],
@@ -173,7 +178,10 @@ final class DocumentationTest extends TestCase
             return ["$short::$method() is spelled {$reflection->getName()}()"];
         }
 
-        $parameters = array_map(static fn(\ReflectionParameter $p): string => $p->getName(), $reflection->getParameters());
+        $parameters = array_map(
+            static fn(\ReflectionParameter $p): string => $p->getName(),
+            $reflection->getParameters(),
+        );
         $problems = [];
 
         foreach (self::namedArguments($tokens, $open) as $argument) {
@@ -207,7 +215,9 @@ final class DocumentationTest extends TestCase
 
             $previous = $tokens[$i - 1]->text;
 
-            if ($depth === 1 && ($tokens[$i + 1] ?? null)?->text === ':' && ($previous === '(' || $previous === ',') && $tokens[$i]->is(T_STRING)) {
+            $isNamedArgument = ($tokens[$i + 1] ?? null)?->text === ':' && $tokens[$i]->is(T_STRING);
+
+            if ($depth === 1 && $isNamedArgument && ($previous === '(' || $previous === ',')) {
                 $names[] = $text;
             }
         }
@@ -250,7 +260,11 @@ final class DocumentationTest extends TestCase
         preg_match_all('/^#{1,6}\s+(.+)$/m', self::read($file), $headings);
 
         return array_map(
-            static fn(string $heading): string => str_replace(' ', '-', (string) preg_replace('/[^\p{L}\p{N}\s_-]/u', '', strtolower(trim($heading)))),
+            static fn(string $heading): string => str_replace(' ', '-', (string) preg_replace(
+                '/[^\p{L}\p{N}\s_-]/u',
+                '',
+                strtolower(trim($heading)),
+            )),
             $headings[1],
         );
     }

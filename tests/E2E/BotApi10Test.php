@@ -44,7 +44,11 @@ final class BotApi10Test extends TelegramTestCase
         }
 
         try {
-            self::assertTrue($this->bot->sendMessageDraft($chatId, random_int(1, PHP_INT_MAX), 'TGbotPHP end-to-end test: this preview disappears'));
+            self::assertTrue($this->bot->sendMessageDraft(
+                $chatId,
+                random_int(1, PHP_INT_MAX),
+                'TGbotPHP end-to-end test: this preview disappears',
+            ));
         } catch (ApiException $e) {
             // Drafts can be limited to bots with some features enabled: the request itself was accepted as valid
             self::assertSame(400, $e->getCode(), $e->getMessage());

@@ -66,7 +66,10 @@ final class MessagingTest extends TelegramTestCase
     public function testSendEditAndDeleteText(): void
     {
         $chatId = $this->chatId();
-        $keyboard = InlineKeyboard::make()->button('One', 'e2e:1')->button('Two', 'e2e:2')->row()->url('Docs', 'https://core.telegram.org/bots/api');
+        $keyboard = InlineKeyboard::make()->button('One', 'e2e:1')->button('Two', 'e2e:2')->row()->url(
+            'Docs',
+            'https://core.telegram.org/bots/api',
+        );
 
         // Quotes and apostrophes must survive HTML escaping (Telegram rejects &apos;)
         $text = Formatter::bold('TGbotPHP E2E') . "\n" . Formatter::escape("it's <not> a \"tag\" & more");
@@ -76,7 +79,12 @@ final class MessagingTest extends TelegramTestCase
         self::assertSame('e2e:1', Value::path($message, 'reply_markup', 'inline_keyboard', '0', '0', 'callback_data'));
 
         // Without replyMarkup Telegram would drop the buttons: pass them again to keep them
-        $edited = $this->bot->editMessageText($chatId, self::messageId($message), Formatter::italic('edited'), replyMarkup: $keyboard);
+        $edited = $this->bot->editMessageText(
+            $chatId,
+            self::messageId($message),
+            Formatter::italic('edited'),
+            replyMarkup: $keyboard,
+        );
         self::assertIsArray($edited);
         self::assertSame('edited', $edited['text'] ?? null);
         self::assertSame('e2e:1', Value::path($edited, 'reply_markup', 'inline_keyboard', '0', '0', 'callback_data'));
@@ -92,12 +100,18 @@ final class MessagingTest extends TelegramTestCase
     {
         $chatId = $this->chatId();
 
-        $message = $this->track($this->bot->sendMessage($chatId, 'Reply keyboard', replyMarkup: Keyboard::reply([['Yes', 'No']], oneTime: true), options: [
-            'protect_content' => true,
-        ]));
+        $message = $this->track($this->bot->sendMessage($chatId, 'Reply keyboard', replyMarkup: Keyboard::reply([['Yes',
+            'No']], oneTime: true), options: [
+                'protect_content' => true,
+            ]));
         self::assertTrue($message['has_protected_content'] ?? null);
 
-        $this->track($this->bot->sendMessage($chatId, 'Keyboard removed', replyMarkup: Keyboard::remove(), disableNotification: true));
+        $this->track($this->bot->sendMessage(
+            $chatId,
+            'Keyboard removed',
+            replyMarkup: Keyboard::remove(),
+            disableNotification: true,
+        ));
 
         $reply = $this->track($this->bot->sendMessage($chatId, 'Reply to the first message', options: [
             'reply_parameters' => ['message_id' => self::messageId($message)],
@@ -110,7 +124,11 @@ final class MessagingTest extends TelegramTestCase
         $chatId = $this->chatId();
         $contents = "id,name\n1,TGbotPHP\n2," . bin2hex(random_bytes(8)) . "\n";
 
-        $message = $this->track($this->bot->sendDocument($chatId, InputFile::fromContents($contents, 'e2e.csv', 'text/csv'), 'CSV upload'));
+        $message = $this->track($this->bot->sendDocument($chatId, InputFile::fromContents(
+            $contents,
+            'e2e.csv',
+            'text/csv',
+        ), 'CSV upload'));
         $fileId = Value::string(Value::path($message, 'document', 'file_id'));
         self::assertNotSame('', $fileId);
         self::assertSame('e2e.csv', Value::path($message, 'document', 'file_name'));
@@ -129,7 +147,11 @@ final class MessagingTest extends TelegramTestCase
 
         // Re-send by file_id: no upload
         $resent = $this->track($this->bot->sendDocument($chatId, $fileId, 'Re-sent by file_id'));
-        self::assertSame(Value::path($message, 'document', 'file_unique_id'), Value::path($resent, 'document', 'file_unique_id'));
+        self::assertSame(Value::path($message, 'document', 'file_unique_id'), Value::path(
+            $resent,
+            'document',
+            'file_unique_id',
+        ));
     }
 
     public function testPhotoUploadFromPath(): void
@@ -147,7 +169,11 @@ final class MessagingTest extends TelegramTestCase
         imagepng($image, $path);
 
         try {
-            $message = $this->track($this->bot->sendPhoto($this->chatId(), InputFile::fromPath($path), Formatter::bold('Photo') . ' upload'));
+            $message = $this->track($this->bot->sendPhoto(
+                $this->chatId(),
+                InputFile::fromPath($path),
+                Formatter::bold('Photo') . ' upload',
+            ));
         } finally {
             unlink($path);
         }
@@ -162,14 +188,19 @@ final class MessagingTest extends TelegramTestCase
     {
         $messages = $this->bot->sendMediaGroup($this->chatId(), [
             ['type' => 'document', 'media' => InputFile::fromContents('first', 'first.txt', 'text/plain')],
-            ['type' => 'document', 'media' => InputFile::fromContents('second', 'second.txt', 'text/plain'), 'caption' => 'Album'],
+            ['type' => 'document', 'media' => InputFile::fromContents('second', 'second.txt', 'text/plain'),
+                'caption' => 'Album'],
         ]);
 
         self::assertCount(2, $messages);
         foreach ($messages as $message) {
             $this->track($message);
         }
-        self::assertSame(['first.txt', 'second.txt'], array_map(static fn(array $m): mixed => Value::path($m, 'document', 'file_name'), $messages));
+        self::assertSame(['first.txt', 'second.txt'], array_map(static fn(array $m): mixed => Value::path(
+            $m,
+            'document',
+            'file_name',
+        ), $messages));
     }
 
     public function testPollDiceReactionPinCopyForward(): void

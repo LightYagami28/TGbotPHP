@@ -29,7 +29,11 @@ final class ApiClientTest extends TestCase
     protected function setUp(): void
     {
         $this->transport = new FakeTransport();
-        $this->client = new ApiClient(new Config(Updates::TOKEN, retry: new RetryPolicy(maxRetries: 2, maxDelay: 0, transientRetries: 0)), $this->transport);
+        $this->client = new ApiClient(new Config(Updates::TOKEN, retry: new RetryPolicy(
+            maxRetries: 2,
+            maxDelay: 0,
+            transientRetries: 0,
+        )), $this->transport);
     }
 
     public function testBuildsMethodUrl(): void
@@ -39,7 +43,10 @@ final class ApiClientTest extends TestCase
         $me = $this->client->getMe();
 
         self::assertSame('test_bot', $me['username']);
-        self::assertSame('https://api.telegram.org/bot' . Updates::TOKEN . '/getMe', $this->transport->lastRequest()['url']);
+        self::assertSame(
+            'https://api.telegram.org/bot' . Updates::TOKEN . '/getMe',
+            $this->transport->lastRequest()['url'],
+        );
     }
 
     public function testDebugLogRedactsSecrets(): void
@@ -93,7 +100,10 @@ final class ApiClientTest extends TestCase
 
         $client->getMe();
 
-        self::assertSame('http://localhost:8081/bot' . Updates::TOKEN . '/getMe', $this->transport->lastRequest()['url']);
+        self::assertSame(
+            'http://localhost:8081/bot' . Updates::TOKEN . '/getMe',
+            $this->transport->lastRequest()['url'],
+        );
     }
 
     public function testRejectsPlainHttpApiServerByDefault(): void
@@ -130,7 +140,10 @@ final class ApiClientTest extends TestCase
             }
         }
 
-        self::assertSame(str_repeat('a', 256), new Config(Updates::TOKEN, secretToken: str_repeat('a', 256))->secretToken);
+        self::assertSame(str_repeat('a', 256), new Config(Updates::TOKEN, secretToken: str_repeat(
+            'a',
+            256,
+        ))->secretToken);
     }
 
     public function testConfigDefaults(): void
@@ -158,7 +171,12 @@ final class ApiClientTest extends TestCase
     {
         $this->transport->queueResult(['message_id' => 10]);
 
-        $this->client->sendMessage(42, 'Hello', replyMarkup: Keyboard::inline(['Yes' => 'y']), disableWebPagePreview: true);
+        $this->client->sendMessage(
+            42,
+            'Hello',
+            replyMarkup: Keyboard::inline(['Yes' => 'y']),
+            disableWebPagePreview: true,
+        );
 
         $request = $this->transport->lastRequest();
         self::assertSame('sendMessage', $request['method']);
@@ -166,13 +184,17 @@ final class ApiClientTest extends TestCase
         self::assertSame('42', $request['fields']['chat_id']);
         self::assertSame('HTML', $request['fields']['parse_mode']);
         self::assertSame('{"is_disabled":true}', $request['fields']['link_preview_options']);
-        self::assertSame('{"inline_keyboard":[[{"text":"Yes","callback_data":"y"}]]}', $request['fields']['reply_markup']);
+        self::assertSame(
+            '{"inline_keyboard":[[{"text":"Yes","callback_data":"y"}]]}',
+            $request['fields']['reply_markup'],
+        );
         self::assertArrayNotHasKey('disable_notification', $request['fields']);
     }
 
     public function testOptionsAreMergedAndOverrideDefaults(): void
     {
-        $this->client->sendMessage(42, 'Hi', options: ['message_thread_id' => 3, 'parse_mode' => 'MarkdownV2', 'protect_content' => true]);
+        $this->client->sendMessage(42, 'Hi', options: ['message_thread_id' => 3, 'parse_mode' => 'MarkdownV2',
+            'protect_content' => true]);
 
         $fields = $this->transport->lastRequest()['fields'];
         self::assertSame('3', $fields['message_thread_id']);
@@ -401,7 +423,8 @@ final class ApiClientTest extends TestCase
     public function testDownloadFileStreamsToDestination(): void
     {
         $destination = sys_get_temp_dir() . '/tgbotphp-download-' . bin2hex(random_bytes(4));
-        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'documents/a.pdf', 'file_size' => 50 * 1024 * 1024]);
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'documents/a.pdf',
+            'file_size' => 50 * 1024 * 1024]);
         $this->transport->queueRaw('pdf-data');
 
         try {
@@ -431,7 +454,8 @@ final class ApiClientTest extends TestCase
 
     public function testRefusesToLoadLargeFilesInMemory(): void
     {
-        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'videos/v.mp4', 'file_size' => ApiClient::MAX_MEMORY_DOWNLOAD + 1]);
+        $this->transport->queueResult(['file_id' => 'f', 'file_path' => 'videos/v.mp4',
+            'file_size' => ApiClient::MAX_MEMORY_DOWNLOAD + 1]);
 
         $this->expectException(StorageException::class);
 
@@ -484,13 +508,25 @@ final class ApiClientTest extends TestCase
 
     public function testFetchUpdatesDecodesObjectsLikeWebhooks(): void
     {
-        $this->transport->queueRaw('{"ok":true,"result":[{"update_id":7,"callback_query":{"id":"q","data":"x","message":{"reply_markup":{"inline_keyboard":[[{"text":"Play","callback_game":{}}]]}}}}]}');
+        $this->transport->queueRaw(
+            '{"ok":true,"result":[{"update_id":7,"callback_query":{"id":"q","data":"x",'
+            . '"message":{"reply_markup":{"inline_keyboard":[[{"text":"Play","callback_game":{}}]]}}}}]}',
+        );
 
         $updates = $this->client->fetchUpdates();
 
         self::assertCount(1, $updates);
         self::assertSame(7, $updates[0]->update_id);
-        self::assertInstanceOf(\stdClass::class, Value::path($updates[0], 'callback_query', 'message', 'reply_markup', 'inline_keyboard', '0', '0', 'callback_game'));
+        self::assertInstanceOf(\stdClass::class, Value::path(
+            $updates[0],
+            'callback_query',
+            'message',
+            'reply_markup',
+            'inline_keyboard',
+            '0',
+            '0',
+            'callback_game',
+        ));
     }
 
     public function testFetchUpdatesRejectsUnexpectedResults(): void
@@ -517,10 +553,12 @@ final class ApiClientTest extends TestCase
 
     public function testCommandNamesAreNormalized(): void
     {
-        $this->client->setMyCommands(['/Start' => 'Start', '2024' => 'Numeric', 7 => ['command' => 'raw', 'description' => 'Raw']]);
+        $this->client->setMyCommands(['/Start' => 'Start', '2024' => 'Numeric', 7 => ['command' => 'raw',
+            'description' => 'Raw']]);
 
         self::assertSame(
-            '[{"command":"start","description":"Start"},{"command":"2024","description":"Numeric"},{"command":"raw","description":"Raw"}]',
+            '[{"command":"start","description":"Start"},{"command":"2024","description":"Numeric"},'
+            . '{"command":"raw","description":"Raw"}]',
             $this->transport->lastRequest()['fields']['commands'],
         );
     }
@@ -571,7 +609,8 @@ final class ApiClientTest extends TestCase
 
     public function testListResultsKeepEveryItem(): void
     {
-        $this->transport->queueResult([['command' => 'a', 'description' => 'A'], ['command' => 'b', 'description' => 'B']]);
+        $this->transport->queueResult([['command' => 'a', 'description' => 'A'], ['command' => 'b',
+            'description' => 'B']]);
 
         self::assertCount(2, $this->client->getMyCommands());
     }
@@ -582,7 +621,10 @@ final class ApiClientTest extends TestCase
         self::assertIsString($log);
 
         try {
-            $client = new ApiClient(new Config(Updates::TOKEN, debug: $log, retry: RetryPolicy::none()), $this->transport);
+            $client = new ApiClient(
+                new Config(Updates::TOKEN, debug: $log, retry: RetryPolicy::none()),
+                $this->transport,
+            );
             // A proxy error page: real line breaks that could forge log entries
             $this->transport->queueRaw("<html>\n[2030-01-01 00:00:00] forged\n</html>", 502);
 
@@ -594,9 +636,13 @@ final class ApiClientTest extends TestCase
 
             $lines = explode("\n", trim((string) file_get_contents($log)));
             self::assertCount(2, $lines);
-            self::assertMatchesRegularExpression('/^\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] → sendDocument \{/', $lines[0]);
+            self::assertMatchesRegularExpression(
+                '/^\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] → sendDocument \{/',
+                $lines[0],
+            );
             self::assertStringContainsString('"document":"<file notes.txt>"', $lines[0]);
-            self::assertStringEndsWith('← sendDocument [502] ' . strlen("<html>\n[2030-01-01 00:00:00] forged\n</html>") . ' bytes', $lines[1]);
+            $forged = "<html>\n[2030-01-01 00:00:00] forged\n</html>";
+            self::assertStringEndsWith('← sendDocument [502] ' . strlen($forged) . ' bytes', $lines[1]);
             self::assertStringNotContainsString('forged', $lines[1]);
             self::assertStringNotContainsString('<html>', $lines[1]);
         } finally {
@@ -639,7 +685,10 @@ final class ApiClientTest extends TestCase
         file_put_contents($source, 'secret');
 
         $transport = new FakeTransport();
-        $client = new ApiClient(new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false), $transport);
+        $client = new ApiClient(
+            new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false),
+            $transport,
+        );
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
 
         try {
@@ -719,7 +768,9 @@ final class ApiClientTest extends TestCase
         }
 
         try {
-            new Config(Updates::TOKEN)->withLocalFileRoot(sys_get_temp_dir() . '/tgbotphp-missing-' . bin2hex(random_bytes(4)));
+            new Config(Updates::TOKEN)->withLocalFileRoot(
+                sys_get_temp_dir() . '/tgbotphp-missing-' . bin2hex(random_bytes(4)),
+            );
             self::fail('Accepted a missing local file root');
         } catch (\InvalidArgumentException) {
             // expected

@@ -32,7 +32,11 @@ final class ConsoleTest extends TestCase
         $errors = fopen('php://memory', 'w+');
         self::assertIsResource($errors);
         $this->errors = $errors;
-        $this->console = new Console(fn(string $token) => new Bot($token, transport: $this->transport), $this->output, $this->errors);
+        $this->console = new Console(
+            fn(string $token) => new Bot($token, transport: $this->transport),
+            $this->output,
+            $this->errors,
+        );
     }
 
     private function readOutput(): string
@@ -74,7 +78,12 @@ final class ConsoleTest extends TestCase
         $this->transport->queueResult(true);
 
         $code = $this->console->run([
-            'tgbot', 'webhook:set', '--token=' . Updates::TOKEN, '--url=https://example.com/hook', '--secret=webhook-secret-value', '--drop-pending',
+            'tgbot',
+            'webhook:set',
+            '--token=' . Updates::TOKEN,
+            '--url=https://example.com/hook',
+            '--secret=webhook-secret-value',
+            '--drop-pending',
         ]);
 
         self::assertSame(0, $code);

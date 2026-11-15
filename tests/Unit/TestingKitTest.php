@@ -75,7 +75,8 @@ final class TestingKitTest extends TestCase
         self::assertSame('cats', Value::path($inline, 'inline_query', 'query'));
         self::assertSame(['id' => 'p'], $other['poll']);
 
-        $ids = array_map(static fn(array $update): int => Value::int($update['update_id']), [$message, $group, $inline, $other]);
+        $ids = array_map(static fn(array $update): int => Value::int($update['update_id']), [$message, $group, $inline,
+            $other]);
         self::assertSame($ids, array_unique($ids), 'Update ids are unique');
     }
 }

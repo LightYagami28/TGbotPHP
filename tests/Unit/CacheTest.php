@@ -117,7 +117,8 @@ final class CacheTest extends TestCase
         $cache->forget('shared-counter');
 
         $script = sprintf(
-            'require %s; $c = new TGbotPHP\Cache\FileCache(%s); for ($i = 0; $i < 50; $i++) { $c->update("shared-counter", fn($v) => (int) $v + 1); }',
+            'require %s; $c = new TGbotPHP\Cache\FileCache(%s); '
+            . 'for ($i = 0; $i < 50; $i++) { $c->update("shared-counter", fn($v) => (int) $v + 1); }',
             var_export(dirname(__DIR__, 2) . '/vendor/autoload.php', true),
             var_export(self::$directory, true),
         );
@@ -236,9 +237,13 @@ final class CacheTest extends TestCase
     public function testRateLimiterMiddleware(): void
     {
         $limited = [];
-        $middleware = (new RateLimiter(new ArrayCache()))->middleware(1, 60, function (\stdClass $update) use (&$limited): void {
-            $limited[] = Value::int(Value::path($update, 'update_id'));
-        });
+        $middleware = (new RateLimiter(new ArrayCache()))->middleware(
+            1,
+            60,
+            function (\stdClass $update) use (&$limited): void {
+                $limited[] = Value::int(Value::path($update, 'update_id'));
+            },
+        );
 
         $first = UpdateParser::fromArray(Updates::message('a'));
         $second = UpdateParser::fromArray(Updates::message('b'));
