@@ -25,12 +25,24 @@ final class InputFile
         private readonly string $filename,
         private readonly string $mimeType,
     ) {
-        if (
-            $filename === '' || preg_match('/[\x00-\x1f\x7f\/\\\\]/', $filename) === 1
-            || preg_match('/[\x00-\x1f\x7f]/', $mimeType) === 1
-        ) {
+        if (!self::isSafeFilename($filename) || self::hasControlCharacters($mimeType)) {
             throw new InvalidArgumentException('Invalid upload filename or MIME type');
         }
+    }
+
+    private static function isSafeFilename(string $filename): bool
+    {
+        return $filename !== '' && preg_match('/[\x00-\x1f\x7f\/\\\\]/', $filename) !== 1;
+    }
+
+    private static function hasControlCharacters(string $text): bool
+    {
+        return preg_match('/[\x00-\x1f\x7f]/', $text) === 1;
+    }
+
+    private static function isReadableLocalFile(string $path): bool
+    {
+        return !str_contains($path, '://') && !str_contains($path, "\0") && is_file($path) && is_readable($path);
     }
 
     /**
@@ -38,7 +50,7 @@ final class InputFile
      */
     public static function fromPath(string $path, ?string $filename = null, ?string $mimeType = null): self
     {
-        if (str_contains($path, '://') || str_contains($path, "\0") || !is_file($path) || !is_readable($path)) {
+        if (!self::isReadableLocalFile($path)) {
             throw new InvalidArgumentException("File not found or not readable: $path");
         }
 
