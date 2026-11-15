@@ -1,9 +1,8 @@
 ---
 
-title: "Keyboards and callbacks" description: "Build inline keyboards, handle
-button presses, reply keyboards and format the messages they send." icon:
-keyboard
-
+title: "Keyboards and callbacks"
+description: "Build inline keyboards, handle button presses, reply keyboards and format the messages they send."
+icon: keyboard
 ---
 
 Telegram has two kinds of keyboards:
