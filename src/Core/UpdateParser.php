@@ -102,12 +102,17 @@ class UpdateParser
     private static function unknownType(stdClass $update): ?string
     {
         foreach (get_object_vars($update) as $key => $value) {
-            if (is_string($key) && $key !== 'update_id' && $value instanceof stdClass) {
-                return $key;
+            if (self::isTypeEntry($key, $value)) {
+                return (string) $key;
             }
         }
 
         return null;
+    }
+
+    private static function isTypeEntry(int|string $key, mixed $value): bool
+    {
+        return is_string($key) && $key !== 'update_id' && $value instanceof stdClass;
     }
 
     /**
