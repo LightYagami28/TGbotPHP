@@ -59,7 +59,7 @@ final class LongPolling
 
         try {
             $this->bot->getEvents()->dispatch('polling.started', $this->bot);
-            for ($i = 0; $this->running && ($maxIterations === 0 || $i < $maxIterations); $i++) {
+            for ($i = 0; $this->shouldContinue($i, $maxIterations); $i++) {
                 $this->processBatch($this->fetch($timeout, $allowedUpdates, $limit));
             }
         } finally {
@@ -67,6 +67,11 @@ final class LongPolling
             $this->acknowledge($allowedUpdates);
             $this->bot->getEvents()->dispatch('polling.stopped', $this->bot);
         }
+    }
+
+    private function shouldContinue(int $iteration, int $maxIterations): bool
+    {
+        return $this->running && ($maxIterations === 0 || $iteration < $maxIterations);
     }
 
     public function isRunning(): bool
@@ -126,11 +131,19 @@ final class LongPolling
 
             $updateId = Value::nullableInt($update->update_id ?? null);
 
-            if ($updateId !== null && $updateId >= 0 && $updateId < PHP_INT_MAX) {
+            if (self::isUsableId($updateId)) {
                 $this->offset = $updateId + 1;
                 $this->process($update);
             }
         }
+    }
+
+    /**
+     * @phpstan-assert-if-true int $updateId
+     */
+    private static function isUsableId(?int $updateId): bool
+    {
+        return $updateId !== null && $updateId >= 0 && $updateId < PHP_INT_MAX;
     }
 
     private function process(stdClass $update): void

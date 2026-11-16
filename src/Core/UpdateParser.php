@@ -59,14 +59,18 @@ class UpdateParser
             throw new JsonException('Invalid webhook JSON: ' . $e->getMessage(), 0, $e);
         }
 
-        if (
-            !$decoded instanceof stdClass || !isset($decoded->update_id)
-            || !is_int($decoded->update_id) || $decoded->update_id < 0 || $decoded->update_id === PHP_INT_MAX
-        ) {
+        if (!$decoded instanceof stdClass || !self::hasValidUpdateId($decoded)) {
             throw new JsonException('Invalid webhook JSON: update_id must be a non-negative integer below PHP_INT_MAX');
         }
 
         return $decoded;
+    }
+
+    private static function hasValidUpdateId(stdClass $update): bool
+    {
+        $id = $update->update_id ?? null;
+
+        return is_int($id) && $id >= 0 && $id !== PHP_INT_MAX;
     }
 
     /**
@@ -92,6 +96,11 @@ class UpdateParser
             }
         }
 
+        return self::unknownType($update);
+    }
+
+    private static function unknownType(stdClass $update): ?string
+    {
         foreach (get_object_vars($update) as $key => $value) {
             if (is_string($key) && $key !== 'update_id' && $value instanceof stdClass) {
                 return $key;
@@ -141,13 +150,9 @@ class UpdateParser
             return null;
         }
 
-        foreach (['from', 'user'] as $key) {
-            if (isset($payload->$key) && $payload->$key instanceof stdClass) {
-                return $payload->$key;
-            }
-        }
+        $from = $payload->from ?? null;
 
-        return null;
+        return $from instanceof stdClass ? $from : Value::object($payload->user ?? null);
     }
 
     /**

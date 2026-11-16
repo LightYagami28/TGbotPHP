@@ -137,21 +137,28 @@ final class Router
      */
     public function dispatch(stdClass $update, ?string $state = null, array $stateData = []): bool
     {
+        $payload = UpdateParser::getPayload($update);
         $type = UpdateParser::getType($update);
-        $payload = $type !== null ? Value::object($update->$type) : null;
 
         if ($type === null || $payload === null) {
             return false;
         }
 
-        $handled = match ($type) {
-            'message' => $this->handleMessage($payload, $state, $stateData),
+        return $this->dispatchTyped($type, $payload, $update, [$state, $stateData])
+            || $this->runUpdateHandlers($type, $payload, $update);
+    }
+
+    /**
+     * @param array{?string, array<string, mixed>} $conversation Conversation state and its data
+     */
+    private function dispatchTyped(string $type, stdClass $payload, stdClass $update, array $conversation): bool
+    {
+        return match ($type) {
+            'message' => $this->handleMessage($payload, $conversation[0], $conversation[1]),
             'callback_query' => $this->handleCallback($payload),
             'inline_query' => $this->handleInlineQuery($payload),
             default => false,
         };
-
-        return $handled || $this->runUpdateHandlers($type, $payload, $update);
     }
 
     /**
