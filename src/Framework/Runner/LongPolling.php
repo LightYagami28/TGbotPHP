@@ -99,7 +99,7 @@ final class LongPolling
 
             return $updates;
         } catch (TooManyRequestsException $e) {
-            ($this->sleep)(max(1, $e->getRetryAfter()));
+            ($this->sleep)((int) max(1, $e->getRetryAfter()));
         } catch (ApiException $e) {
             $this->recover($e, fatal: in_array($e->getCode(), self::FATAL_ERRORS, true));
         } catch (NetworkException $e) {
