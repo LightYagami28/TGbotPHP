@@ -6,6 +6,9 @@ routing, middleware and conversations for building bots.
 [![Tests](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml)
 [![Code Analysis](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml)
 [![PHP](https://img.shields.io/badge/PHP-8.5%2B-777bb4)](https://www.php.net/)
+[![PHPStan](https://img.shields.io/badge/PHPStan-level%2010-brightgreen)](https://phpstan.org/)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/LightYagami28/TGbotPHP)
+[![Telegram Bot API](https://img.shields.io/badge/Bot%20API-10.4-2CA5E0?logo=telegram)](https://core.telegram.org/bots/api)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue)](https://github.com/LightYagami28/TGbotPHP/blob/main/LICENSE)
 
 Fork of
