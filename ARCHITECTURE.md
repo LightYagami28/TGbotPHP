@@ -1,3 +1,8 @@
+---
+title: "Architecture"
+description: "Modules, the request and update flow, and the design choices of TGbotPHP."
+---
+
 # Architettura
 
 `TGbotPHP` è una libreria modulare orientata agli oggetti per l'interazione con le API Bot di Telegram.

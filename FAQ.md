@@ -1,3 +1,8 @@
+---
+title: "FAQ"
+description: "System requirements, tests, static analysis and token redaction in the logs."
+---
+
 # Domande frequenti
 
 ## Quali sono i requisiti di sistema?
