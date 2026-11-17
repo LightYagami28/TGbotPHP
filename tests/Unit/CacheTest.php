@@ -443,6 +443,10 @@ final class CacheTest extends TestCase
 
     public function testPutReportsADirectoryThatCannotCreateFiles(): void
     {
+        if (PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('POSIX directory permissions (chmod 0555) not supported on Windows NTFS');
+        }
+
         $cache = new FileCache(self::$directory);
         $cache->put('locked-stripe', 'v');
         $stripe = substr(hash('sha256', 'locked-stripe'), 0, 2);
@@ -541,6 +545,10 @@ final class CacheTest extends TestCase
 
     public function testOpeningALockInAReadOnlyDirectoryIsReported(): void
     {
+        if (PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('POSIX directory permissions (chmod 0555) not supported on Windows NTFS');
+        }
+
         $directory = sys_get_temp_dir() . '/tgbotphp-lockro-' . bin2hex(random_bytes(3));
         $cache = new FileCache($directory);
         chmod($directory, 0555);

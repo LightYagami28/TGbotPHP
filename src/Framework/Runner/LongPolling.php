@@ -9,6 +9,7 @@ use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
 use TGbotPHP\Framework\Bot;
+use TGbotPHP\Security\LogRedactor;
 use TGbotPHP\Support\Value;
 use Throwable;
 
@@ -116,7 +117,7 @@ final class LongPolling
         }
 
         $this->bot->getEvents()->dispatch('error', $e, null, $this->bot);
-        ($this->sleep)((int) min(self::MAX_BACKOFF, 2 ** min($this->failures++, 5)));
+        ($this->sleep)(min(self::MAX_BACKOFF, 2 ** min($this->failures++, 5)));
     }
 
     /**
@@ -151,7 +152,7 @@ final class LongPolling
         try {
             $this->bot->processUpdate($update);
         } catch (Throwable $e) {
-            error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
+            error_log('TGbotPHP: unhandled ' . $e::class . ': ' . LogRedactor::safeExceptionMessage($e));
         }
     }
 

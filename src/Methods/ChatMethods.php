@@ -397,4 +397,17 @@ trait ChatMethods
             'tag' => $tag,
         ], $options);
     }
+
+    /**
+     * Get the list of backdrops that can be used as the background of a theme for sharing
+     *
+     * @param array<string, mixed> $options
+     * @return list<array<string, mixed>>
+     *
+     * @see https://core.telegram.org/bots/api#getchatsharethemebackdrops
+     */
+    public function getChatShareThemeBackdrops(array $options = []): array
+    {
+        return $this->apiCallList('getChatShareThemeBackdrops', [], $options);
+    }
 }

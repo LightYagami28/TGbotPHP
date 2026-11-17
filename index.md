@@ -46,7 +46,7 @@ composer require lightyagami28/tgbotphp
 
 | Area | What you get |
 | --- | --- |
-| API client | Every method of Bot API 10.3, `call()` for methods Telegram adds later, and an `$options` array on sending methods for optional parameters |
+| API client | Every method of Bot API 10.4, `call()` for methods Telegram adds later, and an `$options` array on sending methods for optional parameters |
 | Files | `InputFile` uploads local files or in-memory contents, including albums and sticker sets, and `downloadFile()` fetches them back |
 | Routing | Commands (including `/cmd@bot` and deep-link payloads), text patterns, callback and inline query patterns (exact, `prefix:*` or a regex), and handlers for any update type |
 | Testing | `TGbotPHP\Testing\BotTester` and `FakeUpdate` test your handlers without network access |

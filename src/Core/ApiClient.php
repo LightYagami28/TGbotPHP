@@ -25,6 +25,7 @@ use TGbotPHP\Methods\StoryMethods;
 use TGbotPHP\Methods\UpdateMethods;
 use TGbotPHP\Methods\UserMethods;
 use TGbotPHP\Methods\VerificationMethods;
+use TGbotPHP\Methods\WidgetMethods;
 use TGbotPHP\Traits\HttpClientTrait;
 
 /**
@@ -55,12 +56,13 @@ class ApiClient
     use UpdateMethods;
     use UserMethods;
     use VerificationMethods;
+    use WidgetMethods;
     use HttpClientTrait;
 
     public const string VERSION = '3.0.0';
 
     /** Bot API version whose methods are all implemented */
-    public const string BOT_API_VERSION = '10.3';
+    public const string BOT_API_VERSION = '10.4';
 
     protected readonly Config $config;
 

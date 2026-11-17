@@ -61,7 +61,7 @@ with conversations and rate limiting.
 
 ## What it covers
 
-- **API client:** every method of Bot API 10.3 (checked against the official
+- **API client:** every method of Bot API 10.4 (checked against the official
   documentation by the tests), `call()` for methods Telegram adds later, and an
   `$options` array on sending methods for optional parameters. Results are
   checked against the type each method declares.

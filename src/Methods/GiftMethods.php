@@ -101,4 +101,38 @@ trait GiftMethods
             'text' => $text,
         ], $options);
     }
+
+    /**
+     * Get information about a unique gift by its name
+     *
+     * @param string $name Unique name of the gift
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     *
+     * @see https://core.telegram.org/bots/api#getuniquegift
+     */
+    public function getUniqueGift(string $name, array $options = []): array
+    {
+        return $this->apiCallObject('getUniqueGift', [
+            'name' => $name,
+        ], $options);
+    }
+
+    /**
+     * Delete a regular gift owned by a managed business account
+     *
+     * @param string $businessConnectionId Unique identifier of the business connection
+     * @param string $ownedGiftId Identifier of the owned gift to delete
+     * @param array<string, mixed> $options
+     * @return bool
+     *
+     * @see https://core.telegram.org/bots/api#deletebusinessaccountgift
+     */
+    public function deleteBusinessAccountGift(string $businessConnectionId, string $ownedGiftId, array $options = []): bool
+    {
+        return $this->apiCallBool('deleteBusinessAccountGift', [
+            'business_connection_id' => $businessConnectionId,
+            'owned_gift_id' => $ownedGiftId,
+        ], $options);
+    }
 }

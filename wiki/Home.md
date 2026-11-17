@@ -21,7 +21,7 @@ $bot->poll();
 
 ## Why TGbotPHP
 
-- **All of Bot API 10.3.** The 185 methods and 27 update types are implemented,
+- **All of Bot API 10.4.** The 193 methods and 29 update types are implemented,
   and a test checks each one against the official documentation. Methods
   Telegram adds later work through `call()`, and new parameters through
   `$options`.

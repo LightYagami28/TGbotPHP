@@ -492,16 +492,18 @@ final class FullCoverageTest extends TestCase
         }
 
         $hidden = $root . '/hidden.txt';
-        file_put_contents($hidden, 'secret');
-        chmod($hidden, 0000);
-        $localTransport->queueResult(['file_id' => 'f', 'file_path' => $hidden]);
-        try {
-            $local->downloadFile('f');
-            self::fail('Read an unreadable local file');
-        } catch (StorageException $e) {
-            self::assertStringContainsString('Unable to read file', $e->getMessage());
-        } finally {
-            chmod($hidden, 0600);
+        if (PHP_OS_FAMILY !== 'Windows') {
+            file_put_contents($hidden, 'secret');
+            chmod($hidden, 0000);
+            $localTransport->queueResult(['file_id' => 'f', 'file_path' => $hidden]);
+            try {
+                $local->downloadFile('f');
+                self::fail('Read an unreadable local file');
+            } catch (StorageException $e) {
+                self::assertStringContainsString('Unable to read file', $e->getMessage());
+            } finally {
+                chmod($hidden, 0600);
+            }
         }
 
         $outside = new ReflectionMethod(ApiClient::class, 'copyLocalFile');

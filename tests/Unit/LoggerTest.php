@@ -121,7 +121,11 @@ final class LoggerTest extends TestCase
                 'token' => '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw',
             ]);
 
-            self::assertSame('0600', substr(sprintf('%o', fileperms($path)), -4));
+            if (PHP_OS_FAMILY === 'Windows') {
+                self::assertFileExists($path);
+            } else {
+                self::assertSame('0600', substr(sprintf('%o', fileperms($path)), -4));
+            }
             $contents = (string) file_get_contents($path);
             self::assertStringContainsString('chat 42 said hello', $contents);
             self::assertStringContainsString('<redacted>', $contents);

@@ -1,6 +1,6 @@
 ---
 title: "API reference"
-description: "Every method of the Telegram Bot API 10.3, the Bot routing API, the Config options, the exceptions, the utilities and the tgbot command line tool."
+description: "Every method of the Telegram Bot API 10.4, the Bot routing API, the Config options, the exceptions, the utilities and the tgbot command line tool."
 icon: code
 ---
 
@@ -194,7 +194,7 @@ $bot->downloadFile($fileId, '/tmp/download.jpg');
 
 ### Method groups
 
-Every method of Bot API 10.3 is implemented. `tests/Unit/BotApiCoverageTest.php`
+Every method of Bot API 10.4 is implemented. `tests/Unit/BotApiCoverageTest.php`
 checks each one against the official documentation: method name, required
 parameters, parameter names and result type.
 
@@ -207,14 +207,15 @@ parameters, parameter names and result type.
 | Ephemeral messages | `deleteEphemeralMessage`, `editEphemeralMessageCaption`, `editEphemeralMessageMedia`, `editEphemeralMessageReplyMarkup`, `editEphemeralMessageText` |
 | Location & polls | `sendLocation`, `editMessageLiveLocation`, `stopMessageLiveLocation`, `sendVenue`, `sendContact`, `sendPoll`, `stopPoll`, `sendDice` |
 | Callbacks & inline | `answerCallbackQuery`, `answerInlineQuery`, `answerWebAppQuery`, `answerGuestQuery`, `savePreparedInlineMessage`, `savePreparedKeyboardButton` |
-| Chats | `getChat`, `getChatMember`, `getChatAdministrators`, `getChatMemberCount`, `leaveChat`, `setChatTitle`, `setChatDescription`, `setChatPhoto`, `deleteChatPhoto`, `setChatPermissions`, `pinChatMessage`, `unpinChatMessage`, `unpinAllChatMessages`, `exportChatInviteLink`, `createChatInviteLink`, `editChatInviteLink`, `revokeChatInviteLink`, `approveChatJoinRequest`, `declineChatJoinRequest`, `setChatStickerSet`, `deleteChatStickerSet`, `answerChatJoinRequestQuery`, `createChatSubscriptionInviteLink`, `editChatSubscriptionInviteLink`, `sendChatJoinRequestWebApp`, `setChatMemberTag` |
+| Widgets | `sendWidget`, `sendSharedWidget`, `answerWidgetQuery`, `editMessageWidgetData`, `editSharedWidgetData` |
+| Chats | `getChat`, `getChatMember`, `getChatAdministrators`, `getChatMemberCount`, `leaveChat`, `setChatTitle`, `setChatDescription`, `setChatPhoto`, `deleteChatPhoto`, `setChatPermissions`, `pinChatMessage`, `unpinChatMessage`, `unpinAllChatMessages`, `exportChatInviteLink`, `createChatInviteLink`, `editChatInviteLink`, `revokeChatInviteLink`, `approveChatJoinRequest`, `declineChatJoinRequest`, `setChatStickerSet`, `deleteChatStickerSet`, `answerChatJoinRequestQuery`, `createChatSubscriptionInviteLink`, `editChatSubscriptionInviteLink`, `sendChatJoinRequestWebApp`, `setChatMemberTag`, `getChatShareThemeBackdrops` |
 | Administration | `banChatMember`, `unbanChatMember`, `restrictChatMember`, `promoteChatMember`, `setChatAdministratorCustomTitle`, `banChatSenderChat`, `unbanChatSenderChat` |
 | Bot profile | `setMyCommands`, `getMyCommands`, `deleteMyCommands`, `setMyName`, `getMyName`, `setMyDescription`, `getMyDescription`, `setMyShortDescription`, `getMyShortDescription`, `setChatMenuButton`, `getChatMenuButton`, `setMyDefaultAdministratorRights`, `getMyDefaultAdministratorRights`, `removeMyProfilePhoto`, `setMyProfilePhoto` |
 | Forum topics | `getForumTopicIconStickers`, `createForumTopic`, `editForumTopic`, `closeForumTopic`, `reopenForumTopic`, `deleteForumTopic`, `unpinAllForumTopicMessages`, `editGeneralForumTopic`, `closeGeneralForumTopic`, `reopenGeneralForumTopic`, `hideGeneralForumTopic`, `unhideGeneralForumTopic`, `unpinAllGeneralForumTopicMessages` |
 | Stickers | `sendSticker`, `getStickerSet`, `getCustomEmojiStickers`, `uploadStickerFile`, `createNewStickerSet`, `addStickerToSet`, `setStickerPositionInSet`, `deleteStickerFromSet`, `setStickerEmojiList`, `setStickerKeywords`, `setStickerSetTitle`, `deleteStickerSet`, `replaceStickerInSet`, `setCustomEmojiStickerSetThumbnail`, `setStickerMaskPosition`, `setStickerSetThumbnail` |
 | Reactions | `setMessageReaction`, `deleteAllMessageReactions`, `deleteMessageReaction` |
 | Payments & Stars | `sendInvoice`, `createInvoiceLink`, `answerShippingQuery`, `answerPreCheckoutQuery`, `refundStarPayment`, `getStarTransactions`, `editUserStarSubscription`, `getMyStarBalance` |
-| Gifts | `getAvailableGifts`, `getChatGifts`, `getUserGifts`, `giftPremiumSubscription`, `sendGift` |
+| Gifts | `getAvailableGifts`, `getChatGifts`, `getUserGifts`, `giftPremiumSubscription`, `sendGift`, `getUniqueGift`, `deleteBusinessAccountGift` |
 | Business accounts | `convertGiftToStars`, `deleteBusinessMessages`, `getBusinessAccountGifts`, `getBusinessAccountStarBalance`, `getBusinessConnection`, `readBusinessMessage`, `removeBusinessAccountProfilePhoto`, `setBusinessAccountBio`, `setBusinessAccountGiftSettings`, `setBusinessAccountName`, `setBusinessAccountProfilePhoto`, `setBusinessAccountUsername`, `transferBusinessAccountStars`, `transferGift`, `upgradeGift` |
 | Stories | `deleteStory`, `editStory`, `postStory`, `repostStory` |
 | Managed bots | `getManagedBotAccessSettings`, `getManagedBotToken`, `replaceManagedBotToken`, `setManagedBotAccessSettings` |

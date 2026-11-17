@@ -8,6 +8,17 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Full Telegram Bot API 10.4 coverage**: Added support for 8 new methods (`sendWidget`, `sendSharedWidget`, `answerWidgetQuery`, `editMessageWidgetData`, `editSharedWidgetData`, `getChatShareThemeBackdrops`, `getUniqueGift`, `deleteBusinessAccountGift`) and 2 new update types (`widget_query`, `shared_widget_query`) for HTML Widgets and business account gifts.
+- Added `WidgetMethods` trait to `ApiClient`.
+- Added `LogRedactor::safeExceptionMessage()` for sanitizing exception messages against CRLF log injection (CWE-117) and masking sensitive tokens in webhook and long polling runners.
+
+### Fixed
+
+- Handled Windows NTFS paths and case insensitivity in `UserMethods::isLocalServerFile` and `isInsideRoot`.
+- Fixed directory and file permission checks on Windows in test suite (`CacheTest`, `LoggerTest`, `FullCoverageTest`).
+
 ### Changed
 
 - The webhook and local-file options of `Config` are set with immutable

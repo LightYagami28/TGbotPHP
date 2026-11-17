@@ -9,6 +9,7 @@ use stdClass;
 use TGbotPHP\Cache\CacheInterface;
 use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Framework\Bot;
+use TGbotPHP\Security\LogRedactor;
 use TGbotPHP\Security\WebhookValidator;
 use TGbotPHP\Support\Value;
 use Throwable;
@@ -180,7 +181,7 @@ final readonly class WebhookHandler
 
             return true;
         } catch (Throwable $e) {
-            error_log('TGbotPHP: unhandled ' . $e::class . ': ' . $e->getMessage());
+            error_log('TGbotPHP: unhandled ' . $e::class . ': ' . LogRedactor::safeExceptionMessage($e));
 
             if ($this->bot->getConfig()->acknowledgeHandlerErrors) {
                 return true;

@@ -225,13 +225,26 @@ trait UserMethods
         }
 
         $real = realpath($filePath);
+        $rootReal = realpath($root);
 
-        return $real !== false && is_file($real) && self::isInsideRoot($real, $root);
+        if ($real === false || $rootReal === false || !is_file($real)) {
+            return false;
+        }
+
+        return self::isInsideRoot($real, $rootReal);
     }
 
     private static function isInsideRoot(string $real, string $root): bool
     {
-        return $real === $root || str_starts_with($real, rtrim($root, '/') . '/');
+        $realNorm = str_replace('\\', '/', $real);
+        $rootNorm = str_replace('\\', '/', $root);
+
+        if (PHP_OS_FAMILY === 'Windows') {
+            $realNorm = strtolower($realNorm);
+            $rootNorm = strtolower($rootNorm);
+        }
+
+        return $realNorm === $rootNorm || str_starts_with($realNorm, rtrim($rootNorm, '/') . '/');
     }
 
     private function copyLocalFile(string $filePath, ?string $destination): string

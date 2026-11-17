@@ -39,6 +39,16 @@ final class LogRedactor
     }
 
     /**
+     * Format an exception message safely for single-line log output without CRLF or credentials
+     */
+    public static function safeExceptionMessage(\Throwable $e): string
+    {
+        $message = str_replace(["\r", "\n"], ['\r', '\n'], $e->getMessage());
+
+        return self::text($message);
+    }
+
+    /**
      * @param array<array-key, mixed> $context
      * @return array<array-key, mixed>
      */

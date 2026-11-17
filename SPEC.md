@@ -18,7 +18,7 @@ fork di OpenTelegramFiles/TGbotPHP.
 | --- | --- | --- |
 | PHP | `>=8.5` (CI su 8.5; 8.6 sperimentale e non bloccante) | `composer.json`, `.github/workflows/tests.yml` |
 | Estensioni | `curl`, `json` obbligatorie; `sodium` facoltativa | `composer.json` |
-| Bot API coperta | 10.3 | `tools/bot-api.json` |
+| Bot API coperta | 10.4 | `tools/bot-api.json` |
 | PHPUnit | ^13.4 | `composer.json` |
 | PHPStan | ^2.3, livello 10 (+ phpstan-phpunit ^2.1, phpstan-strict-rules ^2.1) | `composer.json`, `phpstan.neon.dist` |
 | Stile del codice | PER-CS 2.0 con php-cs-fixer | `.php-cs-fixer.dist.php`, `lint.yml` |
@@ -110,7 +110,7 @@ Interfacce:
 
 ## Requisiti funzionali
 
-1. Ogni metodo e tipo di aggiornamento della Bot API 10.3 è presente, con nomi e
+1. Ogni metodo e tipo di aggiornamento della Bot API 10.4 è presente, con nomi e
    tipi dei parametri uguali alla documentazione ufficiale; `call()` copre i
    metodi futuri. Accettazione: `tests/Unit/BotApiCoverageTest.php` passa contro
    `tools/bot-api.json`.

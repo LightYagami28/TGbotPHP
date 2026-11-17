@@ -14,7 +14,7 @@ PHP-CS-Fixer are only needed to work on the library itself.
 even on your laptop. Webhooks need a public HTTPS URL but fit any PHP hosting
 and scale like web pages. See [Deployment](Deployment).
 
-**Which Bot API version is supported?** All of Bot API 10.3. A weekly check
+**Which Bot API version is supported?** All of Bot API 10.4. A weekly check
 compares the library with the official documentation. A method or parameter
 Telegram adds before the library does is usable at once through `call()` and
 `$options`.

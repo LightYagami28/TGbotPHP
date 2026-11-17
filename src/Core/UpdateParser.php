@@ -44,6 +44,8 @@ class UpdateParser
         'managed_bot',
         'subscription',
         'stopped_message_generation',
+        'widget_query',
+        'shared_widget_query',
     ];
 
     /**
