@@ -1,10 +1,10 @@
 # Roadmap
 
-This document records proposals already identified in [SPEC.md](SPEC.md); it does not promise delivery dates or releases. Revalidate each item against current maintainers' priorities before implementation.
+This document records proposals already identified in [SPEC.md](https://github.com/LightYagami28/TGbotPHP/blob/main/SPEC.md); it does not promise delivery dates or releases. Revalidate each item against current maintainers' priorities before implementation.
 
 ## Existing project scope
 
-TGbotPHP is a PHP library for Telegram Bot API routing, middleware, and conversations. See the [README](README.md) and [architecture](docs/architecture.md) for the current documented scope.
+TGbotPHP is a PHP library for Telegram Bot API routing, middleware, and conversations. See the [README](https://github.com/LightYagami28/TGbotPHP/blob/main/README.md) and [architecture](docs/architecture.md) for the current documented scope.
 
 ## Proposals from SPEC
 
