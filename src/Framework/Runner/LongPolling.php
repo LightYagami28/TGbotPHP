@@ -117,7 +117,7 @@ final class LongPolling
         }
 
         $this->bot->getEvents()->dispatch('error', $e, null, $this->bot);
-        ($this->sleep)(min(self::MAX_BACKOFF, 2 ** min($this->failures++, 5)));
+        ($this->sleep)(min(self::MAX_BACKOFF, 1 << min($this->failures++, 5)));
     }
 
     /**
