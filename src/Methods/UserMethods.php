@@ -239,11 +239,6 @@ trait UserMethods
         $realNorm = str_replace('\\', '/', $real);
         $rootNorm = str_replace('\\', '/', $root);
 
-        if (PHP_OS_FAMILY === 'Windows') {
-            $realNorm = strtolower($realNorm);
-            $rootNorm = strtolower($rootNorm);
-        }
-
         return $realNorm === $rootNorm || str_starts_with($realNorm, rtrim($rootNorm, '/') . '/');
     }
 
