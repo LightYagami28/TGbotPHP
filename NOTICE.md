@@ -1,3 +1,8 @@
+---
+title: "NOTICE"
+description: "Legal notes, authorship, Telegram Bot API references and dependency licenses."
+---
+
 # NOTICE — Note Legali e Licenze
 
 Questo repository contiene il framework SDK Telegram Bot in PHP 8.3 `TGbotPHP`.

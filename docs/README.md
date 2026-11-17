@@ -9,3 +9,5 @@
 - [Deployment](deployment.md)
 - [Roadmap and open decisions](../ROADMAP.md)
 - [Specification](../SPEC.md)
+- [FAQ](../FAQ.md)
+- [Legal notice](../NOTICE.md)
