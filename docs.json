@@ -56,6 +56,7 @@
         "pages": [
           "docs/architecture",
           "docs/development",
+          "ROADMAP",
           "wiki/Upgrading-from-2.x",
           "wiki/Changelog"
         ]
