@@ -35,3 +35,15 @@ This document records proposals and completed milestones aligned with [SPEC.md](
 
 - Dipendenze pesanti a runtime o framework monolitici.
 - Imposizione di rate-limiting Telegram lato client al di fuori del `RateLimiter` per-user.
+
+## Proposals from SPEC
+
+This document records proposals already identified in [SPEC.md](SPEC.md); it does not promise delivery dates or releases. Revalidate each item against current maintainers' priorities before implementation.
+
+### Existing project scope
+
+TGbotPHP is a PHP library for Telegram Bot API routing, middleware, and conversations. See the [README](README.md) and [architecture](docs/architecture.md) for the current documented scope.
+
+### Review
+
+Update this page when maintainers approve or close an item. The testing snapshot in project documents is time-bound and should be checked against current CI before being treated as current.

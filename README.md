@@ -170,3 +170,11 @@ project is a fork of
 [OpenTelegramFiles/TGbotPHP](https://github.com/OpenTelegramFiles/TGbotPHP),
 released under the same license.
 
+## Documentation
+
+- [Documentation index](docs/README.md)
+- [Architecture](ARCHITECTURE.md)
+- [Roadmap](ROADMAP.md)
+- [Testing](docs/TESTING.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+
