@@ -5,7 +5,7 @@ description: "Legal notes, authorship, Telegram Bot API references and dependenc
 
 # NOTICE — Note Legali e Licenze
 
-> L'indice della documentazione è in [docs/README.md](docs/README.md).
+> L'indice della documentazione è in [docs/README.md](docs/README.md), il piano di lavoro in [ROADMAP.md](ROADMAP.md).
 
 Questo repository contiene il framework SDK Telegram Bot in PHP 8.3 `TGbotPHP`.
 
