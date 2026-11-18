@@ -5,6 +5,8 @@ description: "Modules, the request and update flow, and the design choices of TG
 
 # Architettura
 
+> L'indice della documentazione è in [docs/README.md](docs/README.md).
+
 `TGbotPHP` è una libreria modulare orientata agli oggetti per l'interazione con le API Bot di Telegram.
 
 ```text
