@@ -173,8 +173,9 @@ released under the same license.
 ## Documentation
 
 - [Documentation index](docs/README.md)
-- [Architecture](ARCHITECTURE.md)
+- [Architecture](docs/architecture.md)
+- [FAQ](FAQ.md)
 - [Roadmap](ROADMAP.md)
-- [Testing](docs/TESTING.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Testing](docs/testing.md)
+- [Troubleshooting](wiki/Troubleshooting.md)
 
