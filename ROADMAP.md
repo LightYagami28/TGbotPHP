@@ -1,3 +1,8 @@
+---
+title: "Roadmap"
+description: "Completed milestones and future plans for TGbotPHP, aligned with SPEC.md."
+---
+
 # Roadmap
 
 Stato al 2026-11-17.
