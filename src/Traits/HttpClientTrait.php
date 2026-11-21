@@ -24,28 +24,29 @@ use TGbotPHP\Support\Value;
 use TGbotPHP\Types\InputFile;
 
 /**
- * HTTP client functionality for API calls
+ * HTTP client functionality for API calls.
  *
  * Expects the using class to expose a Config through `$this->config`.
  */
 trait HttpClientTrait
 {
-    /** Expected result of the methods returning arrays of objects */
+    /** Expected result of the methods returning arrays of objects. */
     private const string ARRAY_OF_OBJECTS = 'an array of objects';
 
-    /** Parameters never written to the debug log */
+    /** Parameters never written to the debug log. */
     private const array SECRET_FIELDS = ['secret_token', 'provider_token'];
 
+    /** Transport used for every request; created on first use when not injected. */
     private ?TransportInterface $transport = null;
 
-    /** True while a webhook handler is running: retries must not sleep */
+    /** True while a webhook handler is running: retries must not sleep. */
     private bool $handlingWebhook = false;
 
-    /** @var (callable(int): void)|null */
+    /** @var (callable(int): void)|null Replacement for sleep() during retries */
     private $retrySleeper = null;
 
     /**
-     * Webhook requests must not block the worker on retry_after
+     * Webhook requests must not block the worker on retry_after.
      *
      * @internal Used by WebhookHandler
      */
@@ -55,32 +56,31 @@ trait HttpClientTrait
     }
 
     /**
-     * Replace sleep() during retries. Tests use it to record the wait
+     * Replace sleep() during retries. Tests use it to record the wait.
      *
-     * @param callable(int): void $sleeper
+     * @param callable(int): void $sleeper Callback receiving the seconds to wait
      */
     public function setRetrySleeper(callable $sleeper): void
     {
         $this->retrySleeper = $sleeper;
     }
 
-    /**
-     * Replace the HTTP transport (useful for tests or custom HTTP clients)
-     */
+    /** Replace the HTTP transport (useful for tests or custom HTTP clients). */
     public function setTransport(TransportInterface $transport): void
     {
         $this->transport = $transport;
     }
 
+    /** The current transport, creating the cURL one on first use. */
     public function getTransport(): TransportInterface
     {
         return $this->transport ??= new CurlTransport();
     }
 
     /**
-     * Make HTTP request to Telegram API
+     * Make an HTTP request to the Telegram API.
      *
-     * @param array<string, mixed> $data
+     * @param array<string, mixed> $data Request parameters
      * @param bool $objects Decode JSON objects as stdClass instead of arrays
      * @return mixed The "result" field of the API response, or null when $returnResponse is false
      *
@@ -123,22 +123,21 @@ trait HttpClientTrait
         }
     }
 
+    /** Build the full endpoint URL for a Bot API method. */
     private function endpoint(string $method): string
     {
         return $this->config->apiBaseUrl . '/bot' . $this->config->token . '/' . rawurlencode($method);
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<string, mixed> $data Request parameters
      */
     private function requestTimeout(array $data): int
     {
         return $this->config->timeout + max(0, Value::int($data['timeout'] ?? null));
     }
 
-    /**
-     * Retry an HTTP 5xx response unless this is a webhook request
-     */
+    /** Retry an HTTP 5xx response unless this is a webhook request. */
     private function retryServerError(int $statusCode, int &$attempt): bool
     {
         if ($statusCode < 500 || !$this->retryTransient($attempt)) {
@@ -151,7 +150,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Post the request, retrying network errors; $transientAttempt is shared with the 5xx retries
+     * Post the request, retrying network errors; $transientAttempt is shared with the 5xx retries.
      *
      * @param array<string, mixed> $fields
      */
@@ -191,9 +190,7 @@ trait HttpClientTrait
         return $response;
     }
 
-    /**
-     * Wait out a 429 when allowed; false means the caller must give up
-     */
+    /** Wait out a 429 when allowed; false means the caller must give up. */
     private function retryRateLimited(TooManyRequestsException $e, int $attempt): bool
     {
         $retryAfter = $e->getRetryAfter();
@@ -208,9 +205,7 @@ trait HttpClientTrait
         return true;
     }
 
-    /**
-     * Retry a network error or an HTTP 5xx response, unless this is a webhook request
-     */
+    /** Retry a network error or an HTTP 5xx response, unless this is a webhook request. */
     private function retryTransient(int $attempt): bool
     {
         if ($this->handlingWebhook || !$this->config->retry->allowsTransient($attempt)) {
@@ -238,13 +233,13 @@ trait HttpClientTrait
     }
 
     /**
-     * Call an API method and return its result
+     * Call an API method and return its result.
      *
      * Values in $options are merged over $params, so any optional or newer
      * API parameter can be passed without a dedicated argument.
      *
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $params Named API parameters
+     * @param array<string, mixed> $options Extra parameters overriding $params
      *
      * @throws ApiException
      */
@@ -254,7 +249,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Call a method returning an object (User, Message, Chat, ...)
+     * Call a method returning an object (User, Message, Chat, ...).
      *
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
@@ -274,7 +269,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Call a method returning an array of objects
+     * Call a method returning an array of objects.
      *
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
@@ -294,7 +289,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Call an edit method: returns the edited Message, or true for inline messages
+     * Call an edit method: returns the edited Message, or true for inline messages.
      *
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
@@ -314,7 +309,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Call a method returning True on success
+     * Call a method returning True on success.
      *
      * @param array<string, mixed> $params
      * @param array<string, mixed> $options
@@ -367,7 +362,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Call a method returning an array of objects, decoded as stdClass like webhook updates
+     * Call a method returning an array of objects, decoded as stdClass like webhook updates.
      *
      * @param array<string, mixed> $params
      * @return list<\stdClass>
@@ -393,6 +388,7 @@ trait HttpClientTrait
         return $objects;
     }
 
+    /** Build the exception describing an unexpected result type. */
     private static function unexpectedResult(string $method, string $expected, mixed $result): ApiException
     {
         return new ApiException(
@@ -404,7 +400,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Decode an API response and throw on errors
+     * Decode an API response and throw on errors.
      *
      * @throws ApiException
      */
@@ -426,7 +422,7 @@ trait HttpClientTrait
     }
 
     /**
-     * The result of a successful response decoded as objects, or null for an error response
+     * The result of a successful response decoded as objects, or null for an error response.
      *
      * @return array{value: mixed}|null
      */
@@ -440,7 +436,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Decode a response as arrays and throw when it is not successful
+     * Decode a response as arrays and throw when it is not successful.
      *
      * @return array<string, mixed>
      *
@@ -463,7 +459,9 @@ trait HttpClientTrait
     }
 
     /**
-     * @return array<mixed>
+     * @return array<mixed> Decoded response body
+     *
+     * @throws ApiException When the body is empty or not valid JSON
      */
     private static function decodedBody(string $method, int $statusCode, string $body): array
     {
@@ -481,7 +479,7 @@ trait HttpClientTrait
     }
 
     /**
-     * @param array<string, mixed> $response
+     * @param array<string, mixed> $response Decoded error response
      */
     private static function errorFromResponse(string $method, int $statusCode, array $response): ApiException
     {
@@ -494,7 +492,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Convert method parameters to HTTP fields
+     * Convert method parameters to HTTP fields.
      *
      * - null values are dropped
      * - dates become Unix timestamps, backed enums their value
@@ -519,7 +517,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Convert one parameter value, appending it to $fields or $files
+     * Convert one parameter value, appending it to $fields or $files.
      *
      * @param array<string, mixed> $fields
      * @param array<string, CURLFile|CURLStringFile> $files
@@ -545,7 +543,7 @@ trait HttpClientTrait
     }
 
     /**
-     * Replace nested InputFile objects with attach:// references
+     * Replace nested InputFile objects with attach:// references.
      *
      * @param array<string, CURLFile|CURLStringFile> $files
      */
@@ -576,9 +574,7 @@ trait HttpClientTrait
         return self::hasOnlyIntegerKeys($value) ? array_values($value) : $value;
     }
 
-    /**
-     * Dates become Unix timestamps (until_date, expire_date...), backed enums their value
-     */
+    /** Dates become Unix timestamps (until_date, expire_date...), backed enums their value. */
     private static function scalarValue(mixed $value): mixed
     {
         return match (true) {
@@ -621,9 +617,7 @@ trait HttpClientTrait
         return (string) json_encode($described, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
-    /**
-     * The debug log contains messages: create it readable by the bot only
-     */
+    /** The debug log contains messages: create it readable by the bot only. */
     private static function createPrivateFile(string $path): void
     {
         PrivateFile::create($path);
