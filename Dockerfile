@@ -35,11 +35,12 @@ WORKDIR /app
 
 COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
 COPY --from=build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
-RUN useradd --system --no-create-home --shell /usr/sbin/nologin bot
+RUN groupadd --gid 10001 bot \
+    && useradd --system --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin bot
 
-COPY --from=build --chown=root:root /app /app
+COPY --from=build --chown=10001:10001 /app /app
 
-USER bot
+USER 10001:10001
 
 # Long polling by default; override the command to run your own bot
 CMD ["php", "examples/polling.php"]
