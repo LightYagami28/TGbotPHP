@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Security;
 
+use Throwable;
+
 /**
- * Redacts credentials in log lines
+ * Redact credentials in log lines.
  *
  * Bot tokens, URL userinfo and fields whose name is a secret are replaced.
  * Operational ids such as chat_id and user_id, and message text, are kept:
@@ -25,6 +27,7 @@ final class LogRedactor
         // Static helpers only
     }
 
+    /** Replace tokens, URL credentials and key=value secrets with a placeholder. */
     public static function text(string $text): string
     {
         $text = (string) preg_replace('/\b\d+:[A-Za-z0-9_-]{6,}\b/', '<redacted>', $text);
@@ -38,10 +41,8 @@ final class LogRedactor
         );
     }
 
-    /**
-     * Format an exception message safely for single-line log output without CRLF or credentials
-     */
-    public static function safeExceptionMessage(\Throwable $e): string
+    /** Format an exception message safely for single-line log output. */
+    public static function safeExceptionMessage(Throwable $e): string
     {
         $message = str_replace(["\r", "\n"], ['\r', '\n'], $e->getMessage());
 
@@ -49,6 +50,8 @@ final class LogRedactor
     }
 
     /**
+     * Redact a log context recursively, up to eight levels deep.
+     *
      * @param array<array-key, mixed> $context
      * @return array<array-key, mixed>
      */
@@ -61,6 +64,7 @@ final class LogRedactor
         return $context;
     }
 
+    /** Redact one value, using its key to detect credentials. */
     private static function value(mixed $value, string $key, int $depth): mixed
     {
         if ($depth >= 8 || self::isSecretKey($key)) {
@@ -74,6 +78,7 @@ final class LogRedactor
         return is_string($value) ? self::text($value) : $value;
     }
 
+    /** Whether a field name holds a credential. */
     private static function isSecretKey(string $key): bool
     {
         return $key !== '' && preg_match(self::SECRET_KEY, $key) === 1;

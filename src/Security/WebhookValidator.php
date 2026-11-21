@@ -8,20 +8,21 @@ use LogicException;
 use SodiumException;
 
 /**
- * Webhook request validation helpers
+ * Webhook and Mini App request validation helpers.
  */
 class WebhookValidator
 {
+    /** Pattern of a lowercase or uppercase 64 character hex digest. */
     private const string HEX_64 = '/^[a-fA-F0-9]{64}\z/';
 
-    /** Ed25519 key Telegram signs Mini App data with (production) */
+    /** Ed25519 key Telegram signs Mini App data with (production). */
     public const string WEB_APP_PUBLIC_KEY = 'e7bf03a2fa4602af4580703d88dda5bb59f32ed8b02a56c187fe7d34caed242d';
 
-    /** Ed25519 key Telegram signs Mini App data with (test environment) */
+    /** Ed25519 key Telegram signs Mini App data with (test environment). */
     public const string WEB_APP_TEST_PUBLIC_KEY = '40055058a4ee38156a06562e52eece92a771bcd8346a8c4615cb7376eddf72ec';
 
     /**
-     * Check the X-Telegram-Bot-Api-Secret-Token header in constant time
+     * Check the X-Telegram-Bot-Api-Secret-Token header in constant time.
      *
      * An empty secret fails closed: the caller must refuse the request.
      * Config already rejects an empty secret; this method does too, so a
@@ -32,9 +33,7 @@ class WebhookValidator
         return $secretToken !== '' && $header !== null && hash_equals($secretToken, $header);
     }
 
-    /**
-     * Validate an HMAC-SHA256 signature of the body
-     */
+    /** Validate an HMAC-SHA256 signature of the request body. */
     public static function validateSignature(string $body, string $signature, string $secret): bool
     {
         if ($secret === '' || preg_match(self::HEX_64, $signature) !== 1) {
@@ -46,9 +45,7 @@ class WebhookValidator
         return hash_equals($expectedSignature, strtolower($signature));
     }
 
-    /**
-     * Read the secret token header of the current request
-     */
+    /** Read the secret token header of the current request, when present. */
     public static function getSecretToken(): ?string
     {
         $value = $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? null;
@@ -57,14 +54,14 @@ class WebhookValidator
     }
 
     /**
-     * Check whether an IPv4 address belongs to Telegram's webhook ranges
+     * Check whether an IPv4 address belongs to Telegram's webhook ranges.
      *
      * Telegram publishes IPv4 ranges only. IPv6 addresses return false.
      * A prefix that is not an integer from 0 to 32 is ignored: casting it
      * would build a mask that matches every address, or throw on the shift.
      * Only use REMOTE_ADDR (not X-Forwarded-For) unless your proxy is trusted.
      *
-     * @param string[] $ranges
+     * @param string[] $ranges Ranges in CIDR notation, or null for Telegram's published list
      */
     public static function isTelegramIp(string $ip, ?array $ranges = null): bool
     {
@@ -85,7 +82,7 @@ class WebhookValidator
     }
 
     /**
-     * IP ranges Telegram sends webhooks from, read from telegram-ip-ranges.json
+     * IP ranges Telegram sends webhooks from, read from telegram-ip-ranges.json.
      *
      * @see https://core.telegram.org/bots/webhooks#the-short-version
      * @return string[]
@@ -97,6 +94,7 @@ class WebhookValidator
         return array_values(array_filter((array) json_decode($json, true, 4, JSON_THROW_ON_ERROR), is_string(...)));
     }
 
+    /** Whether an address is inside a CIDR range with a valid prefix. */
     private static function inRange(int $address, string $range): bool
     {
         [$subnet, $bits] = explode('/', $range, 2) + [1 => '32'];
@@ -112,7 +110,7 @@ class WebhookValidator
     }
 
     /**
-     * Validate Telegram Web App (Mini App) init data with the bot token
+     * Validate Telegram Web App (Mini App) init data with the bot token.
      *
      * @param int $maxAge Maximum accepted age of auth_date in seconds (0 disables the check)
      * @return array<string, string>|null The parsed data (without hash and signature) when valid
@@ -155,7 +153,7 @@ class WebhookValidator
     }
 
     /**
-     * Validate Mini App init data without the bot token, with Telegram's Ed25519 signature
+     * Validate Mini App init data without the bot token, with Telegram's Ed25519 signature.
      *
      * For services that receive the data of a bot they do not own: they only
      * need the bot id. Requires the sodium extension.
@@ -213,11 +211,13 @@ class WebhookValidator
     }
 
     /**
+     * Parse init data without parse_str, which rewrites names and keeps only
+     * the last duplicate.
+     *
      * @return array<string, string>|null Every field, or null when the data is malformed
      */
     private static function parseInitData(string $initData): ?array
     {
-        // parse_str rewrites names, keeps the last duplicate and stops at max_input_vars.
         if ($initData === '' || strlen($initData) > 65536) {
             return null;
         }
@@ -234,7 +234,7 @@ class WebhookValidator
     }
 
     /**
-     * Parse one key=value pair, adding it to $fields; false when it is malformed
+     * Parse one key=value pair, adding it to $fields; false when it is malformed.
      *
      * @param array<string, string> $fields
      */
@@ -267,6 +267,7 @@ class WebhookValidator
         return self::isValidField($name, $value) ? [$name, $value] : null;
     }
 
+    /** Whether a decoded field name and value can be part of signed data. */
     private static function isValidField(string $name, string $value): bool
     {
         return preg_match('/^[A-Za-z_]\w*\z/', $name) === 1 && preg_match('/[\x00\r\n]/', $value) !== 1;
@@ -305,6 +306,7 @@ class WebhookValidator
         return $binary !== null && strlen($binary) === SODIUM_CRYPTO_SIGN_BYTES ? $binary : null;
     }
 
+    /** Decode an unpadded URL-safe base64 signature, or null when malformed. */
     private static function base64Url(string $signature): ?string
     {
         try {
@@ -315,7 +317,7 @@ class WebhookValidator
     }
 
     /**
-     * Fields sorted by key, one key=value per line
+     * Fields sorted by key, one key=value per line.
      *
      * @param array<string, string> $fields
      */
