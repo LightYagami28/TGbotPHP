@@ -7,7 +7,7 @@ namespace TGbotPHP\Methods;
 use TGbotPHP\Types\InputFile;
 
 /**
- * Chat methods from Telegram Bot API
+ * Chat methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#available-methods
  */
@@ -16,7 +16,7 @@ trait ChatMethods
     use CallsApi;
 
     /**
-     * Get chat information (ChatFullInfo)
+     * Get up to date information about a chat (ChatFullInfo).
      *
      * @return array<string, mixed>
      *
@@ -28,6 +28,8 @@ trait ChatMethods
     }
 
     /**
+     * Get information about a member of a chat.
+     *
      * @return array<string, mixed>
      *
      * @see https://core.telegram.org/bots/api#getchatmember
@@ -41,6 +43,8 @@ trait ChatMethods
     }
 
     /**
+     * Get the administrators of a chat.
+     *
      * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getchatadministrators
@@ -51,7 +55,7 @@ trait ChatMethods
     }
 
     /**
-     * Get the number of members in a chat
+     * Get the number of members in a chat.
      *
      * @see https://core.telegram.org/bots/api#getchatmembercount
      */
@@ -69,6 +73,8 @@ trait ChatMethods
     }
 
     /**
+     * Leave a chat.
+     *
      * @see https://core.telegram.org/bots/api#leavechat
      */
     public function leaveChat(int|string $chatId): bool
@@ -77,6 +83,8 @@ trait ChatMethods
     }
 
     /**
+     * Change the title of a chat.
+     *
      * @see https://core.telegram.org/bots/api#setchattitle
      */
     public function setChatTitle(int|string $chatId, string $title): bool
@@ -88,6 +96,8 @@ trait ChatMethods
     }
 
     /**
+     * Change the description of a chat.
+     *
      * @see https://core.telegram.org/bots/api#setchatdescription
      */
     public function setChatDescription(int|string $chatId, string $description): bool
@@ -99,6 +109,8 @@ trait ChatMethods
     }
 
     /**
+     * Set a new profile photo for a chat.
+     *
      * @see https://core.telegram.org/bots/api#setchatphoto
      */
     public function setChatPhoto(int|string $chatId, InputFile $photo): bool
@@ -110,6 +122,8 @@ trait ChatMethods
     }
 
     /**
+     * Delete the profile photo of a chat.
+     *
      * @see https://core.telegram.org/bots/api#deletechatphoto
      */
     public function deleteChatPhoto(int|string $chatId): bool
@@ -118,7 +132,7 @@ trait ChatMethods
     }
 
     /**
-     * Set default chat permissions for all members
+     * Set default chat permissions for all members.
      *
      * @param array<string, bool> $permissions ChatPermissions object
      *
@@ -137,7 +151,9 @@ trait ChatMethods
     }
 
     /**
-     * @param array<string, mixed> $options
+     * Pin a message in a chat.
+     *
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#pinchatmessage
      */
@@ -163,9 +179,9 @@ trait ChatMethods
     }
 
     /**
-     * Unpin a message (the most recent pinned one when $messageId is null)
+     * Unpin a message (the most recent pinned one when $messageId is null).
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#unpinchatmessage
      */
@@ -186,6 +202,8 @@ trait ChatMethods
     }
 
     /**
+     * Clear the list of pinned messages in a chat.
+     *
      * @see https://core.telegram.org/bots/api#unpinallchatmessages
      */
     public function unpinAllChatMessages(int|string $chatId): bool
@@ -194,7 +212,7 @@ trait ChatMethods
     }
 
     /**
-     * Generate a new primary invite link
+     * Generate a new primary invite link.
      *
      * @see https://core.telegram.org/bots/api#exportchatinvitelink
      */
@@ -204,9 +222,9 @@ trait ChatMethods
     }
 
     /**
-     * Create an additional invite link
+     * Create an additional invite link.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      * @return array<string, mixed> ChatInviteLink
      *
      * @see https://core.telegram.org/bots/api#createchatinvitelink
@@ -229,9 +247,9 @@ trait ChatMethods
     }
 
     /**
-     * Edit a non-primary invite link
+     * Edit a non-primary invite link.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      * @return array<string, mixed> ChatInviteLink
      *
      * @see https://core.telegram.org/bots/api#editchatinvitelink
@@ -245,6 +263,8 @@ trait ChatMethods
     }
 
     /**
+     * Revoke an invite link.
+     *
      * @return array<string, mixed> ChatInviteLink
      *
      * @see https://core.telegram.org/bots/api#revokechatinvitelink
@@ -258,6 +278,8 @@ trait ChatMethods
     }
 
     /**
+     * Approve a chat join request.
+     *
      * @see https://core.telegram.org/bots/api#approvechatjoinrequest
      */
     public function approveChatJoinRequest(int|string $chatId, int $userId): bool
@@ -269,6 +291,8 @@ trait ChatMethods
     }
 
     /**
+     * Decline a chat join request.
+     *
      * @see https://core.telegram.org/bots/api#declinechatjoinrequest
      */
     public function declineChatJoinRequest(int|string $chatId, int $userId): bool
@@ -280,6 +304,8 @@ trait ChatMethods
     }
 
     /**
+     * Set the sticker set of a chat.
+     *
      * @see https://core.telegram.org/bots/api#setchatstickerset
      */
     public function setChatStickerSet(int|string $chatId, string $stickerSetName): bool
@@ -291,6 +317,8 @@ trait ChatMethods
     }
 
     /**
+     * Delete the sticker set of a chat.
+     *
      * @see https://core.telegram.org/bots/api#deletechatstickerset
      */
     public function deleteChatStickerSet(int|string $chatId): bool
@@ -299,9 +327,9 @@ trait ChatMethods
     }
 
     /**
-     * Process a received chat join request query
+     * Process a received chat join request query.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#answerchatjoinrequestquery
      */
@@ -317,10 +345,10 @@ trait ChatMethods
     }
 
     /**
-     * Create a subscription invite link for a channel chat
+     * Create a subscription invite link for a channel chat.
      *
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> ChatInviteLink
      *
      * @see https://core.telegram.org/bots/api#createchatsubscriptioninvitelink
      */
@@ -340,10 +368,10 @@ trait ChatMethods
     }
 
     /**
-     * Edit a subscription invite link created by the bot
+     * Edit a subscription invite link created by the bot.
      *
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> ChatInviteLink
      *
      * @see https://core.telegram.org/bots/api#editchatsubscriptioninvitelink
      */
@@ -361,9 +389,9 @@ trait ChatMethods
     }
 
     /**
-     * Show a Mini App to the user of a chat join request query before deciding the outcome
+     * Show a Mini App to the user of a chat join request query before deciding.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#sendchatjoinrequestwebapp
      */
@@ -379,9 +407,9 @@ trait ChatMethods
     }
 
     /**
-     * Set a tag for a regular member in a group or a supergroup
+     * Set a tag for a regular member in a group or supergroup.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setchatmembertag
      */
@@ -399,9 +427,9 @@ trait ChatMethods
     }
 
     /**
-     * Get the list of backdrops that can be used as the background of a theme for sharing
+     * Get the backdrops usable as the background of a sharing theme.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      * @return list<array<string, mixed>>
      *
      * @see https://core.telegram.org/bots/api#getchatsharethemebackdrops

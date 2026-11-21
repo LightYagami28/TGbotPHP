@@ -7,7 +7,7 @@ namespace TGbotPHP\Methods;
 use TGbotPHP\Support\Value;
 
 /**
- * Bot profile and command methods from Telegram Bot API
+ * Bot profile and command methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#setmycommands
  */
@@ -16,13 +16,13 @@ trait CustomCommandMethods
     use CallsApi;
 
     /**
-     * Change the list of bot commands
+     * Change the list of bot commands.
      *
      * Commands may be given as a list of BotCommand objects
      * (`[['command' => 'start', 'description' => 'Start']]`) or as a
      * `['start' => 'Start the bot']` map.
      *
-     * @param array<int|string, mixed> $commands
+     * @param array<int|string, mixed> $commands Command objects or a name => description map
      * @param array<string, mixed>|string|null $scope BotCommandScope object or its type ("all_private_chats", ...)
      *
      * @see https://core.telegram.org/bots/api#setmycommands
@@ -48,10 +48,10 @@ trait CustomCommandMethods
     }
 
     /**
-     * Get the list of bot commands
+     * Get the list of bot commands.
      *
-     * @param array<string, mixed>|string|null $scope
-     * @return list<array<string, mixed>>
+     * @param array<string, mixed>|string|null $scope BotCommandScope object or its type
+     * @return list<array<string, mixed>> BotCommand objects
      *
      * @see https://core.telegram.org/bots/api#getmycommands
      */
@@ -66,9 +66,9 @@ trait CustomCommandMethods
     }
 
     /**
-     * Delete the list of bot commands
+     * Delete the list of bot commands.
      *
-     * @param array<string, mixed>|string|null $scope
+     * @param array<string, mixed>|string|null $scope BotCommandScope object or its type
      *
      * @see https://core.telegram.org/bots/api#deletemycommands
      */
@@ -83,6 +83,8 @@ trait CustomCommandMethods
     }
 
     /**
+     * Change the name of the bot.
+     *
      * @see https://core.telegram.org/bots/api#setmyname
      */
     public function setMyName(?string $name = null, ?string $languageCode = null): bool
@@ -94,6 +96,8 @@ trait CustomCommandMethods
     }
 
     /**
+     * Get the name of the bot.
+     *
      * @see https://core.telegram.org/bots/api#getmyname
      */
     public function getMyName(?string $languageCode = null): string
@@ -104,6 +108,8 @@ trait CustomCommandMethods
     }
 
     /**
+     * Change the description of the bot.
+     *
      * @see https://core.telegram.org/bots/api#setmydescription
      */
     public function setMyDescription(?string $description = null, ?string $languageCode = null): bool
@@ -115,6 +121,8 @@ trait CustomCommandMethods
     }
 
     /**
+     * Get the description of the bot.
+     *
      * @see https://core.telegram.org/bots/api#getmydescription
      */
     public function getMyDescription(?string $languageCode = null): string
@@ -125,6 +133,8 @@ trait CustomCommandMethods
     }
 
     /**
+     * Change the short description of the bot.
+     *
      * @see https://core.telegram.org/bots/api#setmyshortdescription
      */
     public function setMyShortDescription(?string $shortDescription = null, ?string $languageCode = null): bool
@@ -136,6 +146,8 @@ trait CustomCommandMethods
     }
 
     /**
+     * Get the short description of the bot.
+     *
      * @see https://core.telegram.org/bots/api#getmyshortdescription
      */
     public function getMyShortDescription(?string $languageCode = null): string
@@ -146,7 +158,7 @@ trait CustomCommandMethods
     }
 
     /**
-     * Change the bot's menu button in a private chat, or the default one
+     * Change the bot's menu button in a private chat, or the default one.
      *
      * @param array<string, mixed>|null $menuButton MenuButton object
      *
@@ -195,9 +207,7 @@ trait CustomCommandMethods
         ]);
     }
 
-    /**
-     * Telegram only accepts lowercase command names, without the slash
-     */
+    /** Telegram only accepts lowercase command names, without the slash. */
     private static function commandName(string $command): string
     {
         return strtolower(ltrim(trim($command), '/'));
@@ -217,9 +227,9 @@ trait CustomCommandMethods
     }
 
     /**
-     * Remove the profile photo of the bot
+     * Remove the profile photo of the bot.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#removemyprofilephoto
      */
@@ -229,10 +239,10 @@ trait CustomCommandMethods
     }
 
     /**
-     * Change the profile photo of the bot
+     * Change the profile photo of the bot.
      *
-     * @param array<string, mixed> $photo
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $photo InputChatPhoto object
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setmyprofilephoto
      */

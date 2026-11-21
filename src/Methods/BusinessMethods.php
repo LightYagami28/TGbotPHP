@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Business account methods from Telegram Bot API
+ * Business account methods from Telegram Bot API.
  *
  * Manage the accounts of users who connected the bot to their Telegram Business account.
  *
@@ -16,9 +16,9 @@ trait BusinessMethods
     use CallsApi;
 
     /**
-     * Convert a given regular gift to Telegram Stars
+     * Convert a given regular gift to Telegram Stars.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#convertgifttostars
      */
@@ -34,10 +34,10 @@ trait BusinessMethods
     }
 
     /**
-     * Delete messages on behalf of a business account
+     * Delete messages on behalf of a business account.
      *
-     * @param list<int> $messageIds
-     * @param array<string, mixed> $options
+     * @param list<int> $messageIds Identifiers of the messages to delete
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#deletebusinessmessages
      */
@@ -53,11 +53,11 @@ trait BusinessMethods
     }
 
     /**
-     * Get the gifts received and owned by a managed business account
+     * Get the gifts received and owned by a managed business account.
      *
      * @param array<string, mixed> $options exclude_unsaved, exclude_saved, exclude_unlimited,
      *     exclude_limited_upgradable, ...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Owned gifts
      *
      * @see https://core.telegram.org/bots/api#getbusinessaccountgifts
      */
@@ -69,10 +69,10 @@ trait BusinessMethods
     }
 
     /**
-     * Get the amount of Telegram Stars owned by a managed business account
+     * Get the amount of Telegram Stars owned by a managed business account.
      *
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Star balance
      *
      * @see https://core.telegram.org/bots/api#getbusinessaccountstarbalance
      */
@@ -84,10 +84,10 @@ trait BusinessMethods
     }
 
     /**
-     * Get information about the connection of the bot with a business account
+     * Get information about the connection of the bot with a business account.
      *
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> BusinessConnection
      *
      * @see https://core.telegram.org/bots/api#getbusinessconnection
      */
@@ -99,9 +99,9 @@ trait BusinessMethods
     }
 
     /**
-     * Mark an incoming message as read on behalf of a business account
+     * Mark an incoming message as read on behalf of a business account.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#readbusinessmessage
      */
@@ -119,9 +119,9 @@ trait BusinessMethods
     }
 
     /**
-     * Remove the current profile photo of a managed business account
+     * Remove the current profile photo of a managed business account.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#removebusinessaccountprofilephoto
      */
@@ -137,9 +137,9 @@ trait BusinessMethods
     }
 
     /**
-     * Change the bio of a managed business account
+     * Change the bio of a managed business account.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setbusinessaccountbio
      */
@@ -155,10 +155,10 @@ trait BusinessMethods
     }
 
     /**
-     * Change the privacy settings pertaining to incoming gifts in a managed business account
+     * Change the privacy settings pertaining to incoming gifts in a managed business account.
      *
-     * @param array<string, mixed> $acceptedGiftTypes
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $acceptedGiftTypes AcceptedGiftTypes object
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setbusinessaccountgiftsettings
      */
@@ -176,9 +176,9 @@ trait BusinessMethods
     }
 
     /**
-     * Change the first and last name of a managed business account
+     * Change the first and last name of a managed business account.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setbusinessaccountname
      */
@@ -196,10 +196,10 @@ trait BusinessMethods
     }
 
     /**
-     * Change the profile photo of a managed business account
+     * Change the profile photo of a managed business account.
      *
-     * @param array<string, mixed> $photo
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $photo InputChatPhoto object
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setbusinessaccountprofilephoto
      */
@@ -217,9 +217,9 @@ trait BusinessMethods
     }
 
     /**
-     * Change the username of a managed business account
+     * Change the username of a managed business account.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setbusinessaccountusername
      */
@@ -235,9 +235,9 @@ trait BusinessMethods
     }
 
     /**
-     * Transfer Telegram Stars from the business account balance to the bot's balance
+     * Transfer Telegram Stars from the business account balance to the bot's balance.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#transferbusinessaccountstars
      */
@@ -253,9 +253,9 @@ trait BusinessMethods
     }
 
     /**
-     * Transfer an owned unique gift to another user
+     * Transfer an owned unique gift to another user.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#transfergift
      */
@@ -275,9 +275,9 @@ trait BusinessMethods
     }
 
     /**
-     * Upgrade a given regular gift to a unique gift
+     * Upgrade a given regular gift to a unique gift.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#upgradegift
      */
