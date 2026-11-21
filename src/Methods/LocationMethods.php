@@ -7,7 +7,7 @@ namespace TGbotPHP\Methods;
 use JsonSerializable;
 
 /**
- * Location, venue, contact, poll and dice methods from Telegram Bot API
+ * Location, venue, contact, poll and dice methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#available-methods
  */
@@ -16,9 +16,11 @@ trait LocationMethods
     use CallsApi;
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * Send a point on the map.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options live_period, horizontal_accuracy, heading, proximity_alert_radius...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendlocation
      */
@@ -38,9 +40,11 @@ trait LocationMethods
     }
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * Edit the live location of a message.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options horizontal_accuracy, heading, proximity_alert_radius, inline_message_id...
-     * @return array<string, mixed>|bool
+     * @return array<string, mixed>|bool Edited Message or true for inline messages
      *
      * @see https://core.telegram.org/bots/api#editmessagelivelocation
      */
@@ -62,8 +66,10 @@ trait LocationMethods
     }
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * Stop a live location before its period expires.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#stopmessagelivelocation
      */
@@ -81,9 +87,11 @@ trait LocationMethods
     }
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * Send information about a venue.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options foursquare_id, google_place_id...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendvenue
      */
@@ -107,9 +115,11 @@ trait LocationMethods
     }
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * Send a phone contact.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendcontact
      */
@@ -133,11 +143,13 @@ trait LocationMethods
     }
 
     /**
+     * Send a native poll.
+     *
      * @param array<int, string|array<string, mixed>> $answers Answer texts or InputPollOption objects
      * @param string|null $type "regular" or "quiz"
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options allows_multiple_answers, correct_option_id, explanation, open_period...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendpoll
      */
@@ -162,8 +174,10 @@ trait LocationMethods
     }
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * Stop a poll sent by the bot.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      * @return array<string, mixed> The stopped Poll
      *
      * @see https://core.telegram.org/bots/api#stoppoll
@@ -182,9 +196,11 @@ trait LocationMethods
     }
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * Send a random dice, dart, bowling, basketball, football or slot machine animation.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#senddice
      */

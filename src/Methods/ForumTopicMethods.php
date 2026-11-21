@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Forum topic methods from Telegram Bot API
+ * Forum topic methods from Telegram Bot API.
  *
  * Manage topics in forum supergroups.
+ *
  * @see https://core.telegram.org/bots/api#createforumtopic
  */
 trait ForumTopicMethods
@@ -15,7 +16,7 @@ trait ForumTopicMethods
     use CallsApi;
 
     /**
-     * Get custom emoji stickers usable as forum topic icons
+     * Get custom emoji stickers usable as forum topic icons.
      *
      * @return list<array<string, mixed>>
      *
@@ -27,7 +28,7 @@ trait ForumTopicMethods
     }
 
     /**
-     * Create topic in forum supergroup
+     * Create a topic in a forum supergroup.
      *
      * @return array<string, mixed> ForumTopic
      *
@@ -48,6 +49,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Edit the name or icon of a forum topic.
+     *
      * @see https://core.telegram.org/bots/api#editforumtopic
      */
     public function editForumTopic(
@@ -65,6 +68,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Close a forum topic.
+     *
      * @see https://core.telegram.org/bots/api#closeforumtopic
      */
     public function closeForumTopic(int|string $chatId, int $messageThreadId): bool
@@ -73,6 +78,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Reopen a forum topic.
+     *
      * @see https://core.telegram.org/bots/api#reopenforumtopic
      */
     public function reopenForumTopic(int|string $chatId, int $messageThreadId): bool
@@ -81,6 +88,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Delete a forum topic.
+     *
      * @see https://core.telegram.org/bots/api#deleteforumtopic
      */
     public function deleteForumTopic(int|string $chatId, int $messageThreadId): bool
@@ -89,6 +98,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Unpin all messages of a forum topic.
+     *
      * @see https://core.telegram.org/bots/api#unpinallforumtopicmessages
      */
     public function unpinAllForumTopicMessages(int|string $chatId, int $messageThreadId): bool
@@ -97,6 +108,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Edit the name of the General forum topic.
+     *
      * @see https://core.telegram.org/bots/api#editgeneralforumtopic
      */
     public function editGeneralForumTopic(int|string $chatId, string $name): bool
@@ -108,6 +121,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Close the General forum topic.
+     *
      * @see https://core.telegram.org/bots/api#closegeneralforumtopic
      */
     public function closeGeneralForumTopic(int|string $chatId): bool
@@ -116,6 +131,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Reopen the General forum topic.
+     *
      * @see https://core.telegram.org/bots/api#reopengeneralforumtopic
      */
     public function reopenGeneralForumTopic(int|string $chatId): bool
@@ -124,6 +141,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Hide the General forum topic.
+     *
      * @see https://core.telegram.org/bots/api#hidegeneralforumtopic
      */
     public function hideGeneralForumTopic(int|string $chatId): bool
@@ -132,6 +151,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Unhide the General forum topic.
+     *
      * @see https://core.telegram.org/bots/api#unhidegeneralforumtopic
      */
     public function unhideGeneralForumTopic(int|string $chatId): bool
@@ -140,6 +161,8 @@ trait ForumTopicMethods
     }
 
     /**
+     * Unpin all messages of the General forum topic.
+     *
      * @see https://core.telegram.org/bots/api#unpinallgeneralforumtopicmessages
      */
     public function unpinAllGeneralForumTopicMessages(int|string $chatId): bool
@@ -147,6 +170,7 @@ trait ForumTopicMethods
         return $this->apiCallBool('unpinAllGeneralForumTopicMessages', ['chat_id' => $chatId]);
     }
 
+    /** Shared implementation of the topic actions taking a thread id. */
     private function forumTopicAction(string $method, int|string $chatId, int $messageThreadId): bool
     {
         return $this->apiCallBool($method, [

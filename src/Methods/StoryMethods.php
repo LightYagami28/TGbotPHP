@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Story methods from Telegram Bot API
+ * Story methods from Telegram Bot API.
  *
  * Post and manage stories on behalf of a connected business account.
  *
@@ -16,9 +16,9 @@ trait StoryMethods
     use CallsApi;
 
     /**
-     * Delete a story previously posted by the bot on behalf of a managed business account
+     * Delete a story previously posted by the bot on behalf of a managed business account.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#deletestory
      */
@@ -34,11 +34,11 @@ trait StoryMethods
     }
 
     /**
-     * Edit a story previously posted by the bot on behalf of a managed business account
+     * Edit a story previously posted by the bot on behalf of a managed business account.
      *
-     * @param array<string, mixed> $content
+     * @param array<string, mixed> $content InputStoryContent object
      * @param array<string, mixed> $options caption, parse_mode, caption_entities, areas
-     * @return array<string, mixed>
+     * @return array<string, mixed> Story
      *
      * @see https://core.telegram.org/bots/api#editstory
      */
@@ -56,11 +56,11 @@ trait StoryMethods
     }
 
     /**
-     * Post a story on behalf of a managed business account
+     * Post a story on behalf of a managed business account.
      *
-     * @param array<string, mixed> $content
+     * @param array<string, mixed> $content InputStoryContent object
      * @param array<string, mixed> $options parse_mode, caption_entities, areas, post_to_chat_page, ...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Story
      *
      * @see https://core.telegram.org/bots/api#poststory
      */
@@ -80,10 +80,10 @@ trait StoryMethods
     }
 
     /**
-     * Repost a story on behalf of a business account from another business account
+     * Repost a story on behalf of a business account from another business account.
      *
      * @param array<string, mixed> $options post_to_chat_page, protect_content
-     * @return array<string, mixed>
+     * @return array<string, mixed> Story
      *
      * @see https://core.telegram.org/bots/api#repoststory
      */

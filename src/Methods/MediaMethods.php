@@ -8,7 +8,7 @@ use JsonSerializable;
 use TGbotPHP\Types\InputFile;
 
 /**
- * Media methods from Telegram Bot API
+ * Media methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#available-methods
  */
@@ -17,11 +17,11 @@ trait MediaMethods
     use CallsApi;
 
     /**
-     * Send a GIF or an H.264/MPEG-4 AVC video without sound
+     * Send a GIF or an H.264/MPEG-4 AVC video without sound.
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options duration, width, height, thumbnail...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendanimation
      */
@@ -43,11 +43,11 @@ trait MediaMethods
     }
 
     /**
-     * Send voice message
+     * Send a voice message.
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendvoice
      */
@@ -71,11 +71,11 @@ trait MediaMethods
     }
 
     /**
-     * Send video note (rounded square video)
+     * Send a video note (rounded square video).
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendvideonote
      */
@@ -99,13 +99,13 @@ trait MediaMethods
     }
 
     /**
-     * Send a group of photos, videos, documents or audios as an album
+     * Send a group of photos, videos, documents or audios as an album.
      *
      * Each InputMedia "media" field may be a file_id, a URL or an InputFile.
      *
-     * @param array<int, array<string, mixed>> $media
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
+     * @param array<int, array<string, mixed>> $media InputMedia objects
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return list<array<string, mixed>> Sent Messages
      *
      * @see https://core.telegram.org/bots/api#sendmediagroup
      */
@@ -123,11 +123,11 @@ trait MediaMethods
     }
 
     /**
-     * Send a live photo
+     * Send a live photo.
      *
      * @param array<string, mixed> $options business_connection_id, message_thread_id,
      *     direct_messages_topic_id, ephemeral_message_parameters, ...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendlivephoto
      */
@@ -147,12 +147,12 @@ trait MediaMethods
     }
 
     /**
-     * Send paid media
+     * Send paid media.
      *
-     * @param list<array<string, mixed>> $media
+     * @param list<array<string, mixed>> $media InputPaidMedia objects
      * @param array<string, mixed> $options business_connection_id, message_thread_id,
      *     direct_messages_topic_id, payload, ...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendpaidmedia
      */

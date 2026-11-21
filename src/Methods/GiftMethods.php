@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Gift methods from Telegram Bot API
+ * Gift methods from Telegram Bot API.
  *
  * Send gifts and Telegram Premium subscriptions, and list owned gifts.
  *
@@ -16,10 +16,10 @@ trait GiftMethods
     use CallsApi;
 
     /**
-     * Get the gifts that can be sent by the bot to users and channel chats
+     * Get the gifts that can be sent by the bot to users and channel chats.
      *
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> AvailableGifts
      *
      * @see https://core.telegram.org/bots/api#getavailablegifts
      */
@@ -29,11 +29,11 @@ trait GiftMethods
     }
 
     /**
-     * Get the gifts owned by a chat
+     * Get the gifts owned by a chat.
      *
      * @param array<string, mixed> $options exclude_unsaved, exclude_saved, exclude_unlimited,
      *     exclude_limited_upgradable, ...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Gifts
      *
      * @see https://core.telegram.org/bots/api#getchatgifts
      */
@@ -45,11 +45,11 @@ trait GiftMethods
     }
 
     /**
-     * Get the gifts owned and hosted by a user
+     * Get the gifts owned and hosted by a user.
      *
      * @param array<string, mixed> $options exclude_unlimited, exclude_limited_upgradable,
      *     exclude_limited_non_upgradable, exclude_from_blockchain, ...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Gifts
      *
      * @see https://core.telegram.org/bots/api#getusergifts
      */
@@ -61,7 +61,7 @@ trait GiftMethods
     }
 
     /**
-     * Gift a Telegram Premium subscription to the given user
+     * Gift a Telegram Premium subscription to the given user.
      *
      * @param array<string, mixed> $options text, text_parse_mode, text_entities
      *
@@ -81,7 +81,7 @@ trait GiftMethods
     }
 
     /**
-     * Send a gift to the given user or channel chat
+     * Send a gift to the given user or channel chat.
      *
      * @param array<string, mixed> $options pay_for_upgrade, text_parse_mode, text_entities
      *
@@ -103,11 +103,11 @@ trait GiftMethods
     }
 
     /**
-     * Get information about a unique gift by its name
+     * Get information about a unique gift by its name.
      *
      * @param string $name Unique name of the gift
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> UniqueGift
      *
      * @see https://core.telegram.org/bots/api#getuniquegift
      */
@@ -119,12 +119,11 @@ trait GiftMethods
     }
 
     /**
-     * Delete a regular gift owned by a managed business account
+     * Delete a regular gift owned by a managed business account.
      *
      * @param string $businessConnectionId Unique identifier of the business connection
      * @param string $ownedGiftId Identifier of the owned gift to delete
-     * @param array<string, mixed> $options
-     * @return bool
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#deletebusinessaccountgift
      */

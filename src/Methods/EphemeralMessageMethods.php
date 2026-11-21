@@ -7,7 +7,7 @@ namespace TGbotPHP\Methods;
 use JsonSerializable;
 
 /**
- * Ephemeral message methods from Telegram Bot API
+ * Ephemeral message methods from Telegram Bot API.
  *
  * Edit and delete messages shown to a single user in a group.
  *
@@ -18,9 +18,9 @@ trait EphemeralMessageMethods
     use CallsApi;
 
     /**
-     * Delete an ephemeral message
+     * Delete an ephemeral message.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#deleteephemeralmessage
      */
@@ -38,9 +38,9 @@ trait EphemeralMessageMethods
     }
 
     /**
-     * Edit the caption of an ephemeral message
+     * Edit the caption of an ephemeral message.
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options parse_mode, caption_entities, show_caption_above_media
      *
      * @see https://core.telegram.org/bots/api#editephemeralmessagecaption
@@ -63,11 +63,11 @@ trait EphemeralMessageMethods
     }
 
     /**
-     * Edit the media of an ephemeral message
+     * Edit the media of an ephemeral message.
      *
-     * @param array<string, mixed> $media
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $media InputMedia object
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#editephemeralmessagemedia
      */
@@ -89,10 +89,10 @@ trait EphemeralMessageMethods
     }
 
     /**
-     * Edit only the reply markup of an ephemeral message
+     * Edit only the reply markup of an ephemeral message.
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#editephemeralmessagereplymarkup
      */
@@ -112,9 +112,9 @@ trait EphemeralMessageMethods
     }
 
     /**
-     * Edit an ephemeral text or rich message
+     * Edit an ephemeral text or rich message.
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options parse_mode, entities, rich_message, link_preview_options
      *
      * @see https://core.telegram.org/bots/api#editephemeralmessagetext

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Inline mode and callback query methods from Telegram Bot API
+ * Inline mode and callback query methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#inline-mode
  */
@@ -14,12 +14,12 @@ trait InlineMethods
     use CallsApi;
 
     /**
-     * Answer a callback query sent from an inline keyboard button
+     * Answer a callback query sent from an inline keyboard button.
      *
      * Must be called for every callback query, otherwise the client keeps
      * showing a progress indicator.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#answercallbackquery
      */
@@ -41,7 +41,9 @@ trait InlineMethods
     }
 
     /**
-     * @param list<array<string, mixed>> $results
+     * Answer an inline query with a list of results.
+     *
+     * @param list<array<string, mixed>> $results InlineQueryResult objects
      * @param array<string, mixed> $options button (InlineQueryResultsButton)...
      *
      * @see https://core.telegram.org/bots/api#answerinlinequery
@@ -64,6 +66,8 @@ trait InlineMethods
     }
 
     /**
+     * Answer a query sent by a Mini App.
+     *
      * @param array<string, mixed> $result InlineQueryResult
      * @return array<string, mixed> SentWebAppMessage
      *
@@ -78,11 +82,11 @@ trait InlineMethods
     }
 
     /**
-     * Reply to a received guest message
+     * Reply to a received guest message.
      *
-     * @param array<string, mixed> $result
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $result InlineQueryResult
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> SentWebAppMessage
      *
      * @see https://core.telegram.org/bots/api#answerguestquery
      */
@@ -98,11 +102,11 @@ trait InlineMethods
     }
 
     /**
-     * Store a message that can be sent by a user of a Mini App
+     * Store a message that can be sent by a user of a Mini App.
      *
-     * @param array<string, mixed> $result
+     * @param array<string, mixed> $result InlineQueryResult
      * @param array<string, mixed> $options allow_user_chats, allow_bot_chats, allow_group_chats, allow_channel_chats
-     * @return array<string, mixed>
+     * @return array<string, mixed> PreparedInlineMessage
      *
      * @see https://core.telegram.org/bots/api#savepreparedinlinemessage
      */
@@ -118,11 +122,11 @@ trait InlineMethods
     }
 
     /**
-     * Store a keyboard button that can be used by a user within a Mini App
+     * Store a keyboard button that can be used by a user within a Mini App.
      *
-     * @param array<string, mixed> $button
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $button KeyboardButton
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> PreparedKeyboardButton
      *
      * @see https://core.telegram.org/bots/api#savepreparedkeyboardbutton
      */
