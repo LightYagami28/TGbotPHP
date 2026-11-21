@@ -9,7 +9,7 @@ use CURLStringFile;
 use InvalidArgumentException;
 
 /**
- * A file to upload to Telegram
+ * A file to upload to Telegram.
  *
  * Plain strings passed to media methods are sent as-is (file_id or HTTP URL).
  * Wrap local files or in-memory contents in an InputFile to upload them:
@@ -19,6 +19,14 @@ use InvalidArgumentException;
  */
 final class InputFile
 {
+    /**
+     * @param string|null $path Absolute path of a local file, when uploading from disk
+     * @param string|null $contents Raw bytes, when uploading from memory
+     * @param string $filename Name reported to Telegram
+     * @param string $mimeType MIME type, empty to let cURL guess it
+     *
+     * @throws InvalidArgumentException When the filename or MIME type is unsafe
+     */
     private function __construct(
         private readonly ?string $path,
         private readonly ?string $contents,
@@ -30,6 +38,7 @@ final class InputFile
         }
     }
 
+    /** Reject path separators and control characters in an upload filename. */
     private static function isSafeFilename(string $filename): bool
     {
         return $filename !== '' && preg_match('/[\x00-\x1f\x7f\/\\\\]/', $filename) !== 1;
@@ -40,13 +49,16 @@ final class InputFile
         return preg_match('/[\x00-\x1f\x7f]/', $text) === 1;
     }
 
+    /** Only local, readable files are accepted; stream wrappers are not. */
     private static function isReadableLocalFile(string $path): bool
     {
         return !str_contains($path, '://') && !str_contains($path, "\0") && is_file($path) && is_readable($path);
     }
 
     /**
-     * Upload a file from the local filesystem
+     * Upload a file from the local filesystem.
+     *
+     * @throws InvalidArgumentException When the file is missing or unreadable
      */
     public static function fromPath(string $path, ?string $filename = null, ?string $mimeType = null): self
     {
@@ -58,7 +70,9 @@ final class InputFile
     }
 
     /**
-     * Upload in-memory contents
+     * Upload in-memory contents.
+     *
+     * @throws InvalidArgumentException When the filename is empty or unsafe
      */
     public static function fromContents(
         string $contents,
@@ -72,11 +86,13 @@ final class InputFile
         return new self(null, $contents, $filename, $mimeType);
     }
 
+    /** Name reported to Telegram for this upload. */
     public function getFilename(): string
     {
         return $this->filename;
     }
 
+    /** Build the cURL object carrying the file contents. */
     public function toCurlFile(): CURLFile|CURLStringFile
     {
         if ($this->path !== null) {
