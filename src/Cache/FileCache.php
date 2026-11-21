@@ -9,19 +9,21 @@ use TGbotPHP\Support\Platform\PlatformGuard;
 use TGbotPHP\Support\Value;
 
 /**
- * Filesystem cache that persists between requests
+ * Filesystem cache that persists between requests.
  *
  * Values are serialized without allowing objects to be restored, so only
  * scalars and arrays round-trip. Keep the directory outside the web root.
  *
- * put, forget, the removal of an expired entry and prune all take the same
- * per-key lock that update() holds. Otherwise a read could unlink a file
+ * put(), forget(), the removal of an expired entry and prune() all take the
+ * same per-key lock that update() holds. Otherwise a read could unlink a file
  * that a concurrent update has just replaced.
  */
 class FileCache implements CacheInterface
 {
+    /** Suffix of the files holding serialized entries. */
     private const string ENTRY_SUFFIX = '.cache';
 
+    /** Absolute path of the cache directory. */
     private string $directory;
 
     /**
@@ -32,6 +34,11 @@ class FileCache implements CacheInterface
      */
     private array $locks = [];
 
+    /**
+     * @param string $directory Directory to create and use for cache files
+     *
+     * @throws StorageException When the directory cannot be created or written
+     */
     public function __construct(string $directory)
     {
         if (!is_dir($directory) && !@mkdir($directory, 0700, true) && !is_dir($directory)) {
@@ -66,8 +73,8 @@ class FileCache implements CacheInterface
     }
 
     /**
-     * Holds an exclusive lock while the callback runs, so concurrent processes
-     * updating the same key wait for each other
+     * Hold an exclusive lock while the callback runs, so concurrent processes
+     * updating the same key wait for each other.
      */
     #[\Override]
     public function update(string $key, callable $callback, ?int $ttl = null): mixed
@@ -122,7 +129,9 @@ class FileCache implements CacheInterface
     }
 
     /**
-     * Remove expired entries
+     * Remove expired entries and entries that cannot be decoded.
+     *
+     * @return int Number of removed entries
      */
     public function prune(): int
     {
@@ -157,7 +166,7 @@ class FileCache implements CacheInterface
     }
 
     /**
-     * @return array{expires: ?int, value: mixed}|null
+     * @return array{expires: ?int, value: mixed}|null Decoded entry or null when missing/expired
      */
     private function read(string $key): ?array
     {
@@ -177,7 +186,7 @@ class FileCache implements CacheInterface
     }
 
     /**
-     * Re-read under the lock: the file may have been replaced since the unlocked check
+     * Re-read under the lock: the file may have been replaced since the unlocked check.
      *
      * @return array{expires: ?int, value: mixed}|null
      */
@@ -206,6 +215,11 @@ class FileCache implements CacheInterface
         }
     }
 
+    /**
+     * Write the entry through a temporary file and an atomic rename.
+     *
+     * @throws StorageException When the entry cannot be written
+     */
     private function store(string $key, mixed $value, ?int $ttl): void
     {
         $payload = serialize([
@@ -217,13 +231,18 @@ class FileCache implements CacheInterface
         $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
 
         // Owner-only on every platform (POSIX 0600 / Windows NTFS ACL)
-        if (@file_put_contents($tmp, $payload, LOCK_EX) === false || !PlatformGuard::current()->restrict($tmp) || !@rename($tmp, $path)) {
+        if (@file_put_contents($tmp, $payload, LOCK_EX) === false
+            || !PlatformGuard::current()->restrict($tmp)
+            || !@rename($tmp, $path)
+        ) {
             @unlink($tmp);
             throw new StorageException("Unable to write cache entry: $key");
         }
     }
 
     /**
+     * Decode an entry without allowing object instantiation.
+     *
      * @return array{expires: ?int, value: mixed}|null
      */
     private function decode(string $contents): ?array
@@ -253,7 +272,7 @@ class FileCache implements CacheInterface
     }
 
     /**
-     * @return list<string>
+     * @return list<string> Absolute paths of files ending with the given suffix
      */
     private function files(string $suffix): array
     {
@@ -274,9 +293,7 @@ class FileCache implements CacheInterface
         return $files;
     }
 
-    /**
-     * Lock the stripe a key belongs to: 256 lock files at most, whatever the number of keys
-     */
+    /** Lock the stripe a key belongs to: 256 lock files at most, whatever the number of keys. */
     private function lock(string $key): void
     {
         $this->lockStripe(substr(hash('sha256', $key), 0, 2));
@@ -287,6 +304,9 @@ class FileCache implements CacheInterface
         $this->unlockStripe(substr(hash('sha256', $key), 0, 2));
     }
 
+    /**
+     * @throws StorageException When the lock file cannot be opened or locked
+     */
     private function lockStripe(string $stripe): void
     {
         if (isset($this->locks[$stripe])) {
@@ -330,6 +350,7 @@ class FileCache implements CacheInterface
         fclose($handle);
     }
 
+    /** Extract the stripe from a cache file name, or null for unrelated files. */
     private static function stripeOf(string $basename): ?string
     {
         $hash = substr($basename, 0, -strlen(self::ENTRY_SUFFIX));

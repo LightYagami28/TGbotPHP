@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace TGbotPHP\Cache;
 
 /**
- * In-memory cache, lost at the end of the PHP process
+ * In-memory cache, lost at the end of the PHP process.
  *
- * Suitable for long polling bots and tests. Use FileCache (or your own
- * CacheInterface implementation) for webhooks.
+ * Suitable for long polling bots and tests. Use FileCache, or another
+ * CacheInterface implementation, when requests can run concurrently.
  */
 class ArrayCache implements CacheInterface
 {
-    /** @var array<string, mixed> */
+    /** @var array<string, mixed> Stored values indexed by key */
     private array $store = [];
 
-    /** @var array<string, int> */
+    /** @var array<string, int> Absolute expiration timestamps indexed by key */
     private array $expiration = [];
 
     #[\Override]
@@ -80,6 +80,7 @@ class ArrayCache implements CacheInterface
 
         if (isset($this->expiration[$key]) && time() >= $this->expiration[$key]) {
             $this->forget($key);
+
             return false;
         }
 
