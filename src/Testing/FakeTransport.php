@@ -10,7 +10,7 @@ use TGbotPHP\Http\TransportInterface;
 use Throwable;
 
 /**
- * In-memory transport: records requests and answers with queued responses
+ * In-memory transport: records requests and answers with queued responses.
  *
  * Lets you test a bot without network access:
  *
@@ -27,24 +27,28 @@ use Throwable;
 final class FakeTransport implements TransportInterface
 {
     /**
+     * Every request, oldest first.
+     *
      * @var list<array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}>
-     * Every request, oldest first
      */
     private array $requests = [];
 
-    /** @var list<HttpResponse|\Throwable> */
+    /** @var list<HttpResponse|Throwable> Queued responses or exceptions */
     private array $queue = [];
 
-    /** Result returned when the queue is empty (null: guessed from the method name) */
+    /** Result returned when the queue is empty (null: guessed from the method name). */
     public mixed $defaultResult = null;
 
+    /** Queue a successful API response carrying a result. */
     public function queueResult(mixed $result): self
     {
         return $this->queueJson(['ok' => true, 'result' => $result]);
     }
 
     /**
-     * @param array<string, mixed> $parameters
+     * Queue an API error response.
+     *
+     * @param array<string, mixed> $parameters Additional ResponseParameters fields
      */
     public function queueError(int $code, string $description, array $parameters = []): self
     {
@@ -57,28 +61,32 @@ final class FakeTransport implements TransportInterface
     }
 
     /**
-     * @param array<string, mixed> $body
+     * Queue an arbitrary JSON body.
+     *
+     * @param array<string, mixed> $body Decoded response body
      */
     public function queueJson(array $body, int $status = 200): self
     {
         return $this->queueRaw(json_encode($body, JSON_THROW_ON_ERROR), $status);
     }
 
+    /** Queue a raw response body. */
     public function queueRaw(string $body, int $status = 200): self
     {
         $this->queue[] = new HttpResponse($status, $body);
+
         return $this;
     }
 
-    /**
-     * Throw instead of answering, like a transport that cannot reach Telegram
-     */
-    public function queueException(\Throwable $exception): self
+    /** Throw instead of answering, like a transport that cannot reach Telegram. */
+    public function queueException(Throwable $exception): self
     {
         $this->queue[] = $exception;
+
         return $this;
     }
 
+    /** Pop the next queued response, or null when the queue is empty. */
     private function next(): ?HttpResponse
     {
         $next = array_shift($this->queue);
@@ -109,7 +117,7 @@ final class FakeTransport implements TransportInterface
     }
 
     /**
-     * Methods that send, edit or read something return an object, the others return true
+     * Methods that send, edit or read something return an object, the others return true.
      */
     private function defaultResultFor(string $url): mixed
     {
@@ -149,6 +157,8 @@ final class FakeTransport implements TransportInterface
 
     /**
      * @return array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}
+     *
+     * @throws LogicException When no request was sent
      */
     public function lastRequest(): array
     {
@@ -160,7 +170,7 @@ final class FakeTransport implements TransportInterface
     }
 
     /**
-     * Every request, oldest first
+     * Every request, oldest first.
      *
      * @return list<array{url: string, method: string, fields: array<string, mixed>, multipart: bool, timeout: int}>
      */
@@ -169,9 +179,7 @@ final class FakeTransport implements TransportInterface
         return $this->requests;
     }
 
-    /**
-     * Forget the recorded requests and the queued responses
-     */
+    /** Forget the recorded requests and the queued responses. */
     public function reset(): void
     {
         $this->requests = [];
@@ -179,7 +187,7 @@ final class FakeTransport implements TransportInterface
     }
 
     /**
-     * @return string[]
+     * @return string[] Names of the methods called, in order
      */
     public function methods(): array
     {

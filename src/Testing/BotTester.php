@@ -9,7 +9,7 @@ use TGbotPHP\Core\Config;
 use TGbotPHP\Framework\Bot;
 
 /**
- * A bot wired to a FakeTransport, to test handlers without network access
+ * A bot wired to a FakeTransport, to test handlers without network access.
  *
  *     $tester = new BotTester();
  *     $tester->bot->command('start', fn($message, Bot $bot) => $bot->reply($message, 'Hello'));
@@ -22,13 +22,19 @@ use TGbotPHP\Framework\Bot;
  */
 final class BotTester
 {
-    /** Well-formed token that is not a real bot's */
+    /** Well-formed token that is not a real bot's. */
     public const string TOKEN = '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw';
 
+    /** Bot under test. */
     public readonly Bot $bot;
 
+    /** Transport recording every outgoing request. */
     public readonly FakeTransport $transport;
 
+    /**
+     * @param Config|null $config Configuration to use, or a valid default
+     * @param string $username Username reported for the bot
+     */
     public function __construct(?Config $config = null, string $username = 'test_bot')
     {
         $this->transport = new FakeTransport();
@@ -37,7 +43,7 @@ final class BotTester
     }
 
     /**
-     * Process an update, as if Telegram had sent it
+     * Process an update, as if Telegram had sent it.
      *
      * @param array<string, mixed>|stdClass|string $update An array from FakeUpdate, a decoded update or JSON
      */
@@ -49,7 +55,7 @@ final class BotTester
     }
 
     /**
-     * Parameters of every request sent, or of the requests to one method
+     * Parameters of every request sent, or of the requests to one method.
      *
      * Values are encoded as Telegram receives them: numbers and booleans are
      * strings, arrays are JSON.
@@ -67,7 +73,7 @@ final class BotTester
     }
 
     /**
-     * Parameters of the last request sent (to a method), or null
+     * Parameters of the last request sent (to a method), or null.
      *
      * @return array<string, mixed>|null
      */
@@ -79,7 +85,7 @@ final class BotTester
     }
 
     /**
-     * Names of the methods called, in order
+     * Names of the methods called, in order.
      *
      * @return list<string>
      */
@@ -88,9 +94,7 @@ final class BotTester
         return array_column($this->transport->requests(), 'method');
     }
 
-    /**
-     * Forget the requests sent so far
-     */
+    /** Forget the requests sent so far. */
     public function reset(): self
     {
         $this->transport->reset();

@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace TGbotPHP\Testing;
 
 /**
- * Builds updates as Telegram sends them, to feed a bot in tests
+ * Build updates as Telegram sends them, to feed a bot in tests.
  *
  *     $bot->handleUpdate(FakeUpdate::message('/start'));
  *     $bot->handleUpdate(FakeUpdate::callbackQuery('page:2', chatId: -100123));
  */
 final class FakeUpdate
 {
+    /** Monotonically increasing identifier used for updates and their payloads. */
     private static int $nextId = 1;
 
     private function __construct()
@@ -35,7 +36,7 @@ final class FakeUpdate
     }
 
     /**
-     * A button press on a message sent by the bot
+     * A button press on a message sent by the bot.
      *
      * @return array<string, mixed>
      */
@@ -68,7 +69,7 @@ final class FakeUpdate
     }
 
     /**
-     * Any other update type
+     * Any other update type.
      *
      *     FakeUpdate::of('pre_checkout_query', ['id' => 'pcq', 'from' => [...], 'currency' => 'XTR', ...]);
      *
@@ -89,7 +90,7 @@ final class FakeUpdate
     }
 
     /**
-     * A supergroup for negative ids, a private chat otherwise
+     * A supergroup for negative ids, a private chat otherwise.
      *
      * @return array<string, mixed>
      */
