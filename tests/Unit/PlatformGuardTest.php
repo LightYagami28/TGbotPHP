@@ -173,7 +173,7 @@ final class PlatformGuardTest extends TestCase
         if (is_string($path)) {
             putenv('PATH=' . implode(PATH_SEPARATOR, array_values(array_filter(
                 explode(PATH_SEPARATOR, $path),
-                static fn (string $part): bool => $part !== $directory,
+                static fn(string $part): bool => $part !== $directory,
             ))));
         }
 
