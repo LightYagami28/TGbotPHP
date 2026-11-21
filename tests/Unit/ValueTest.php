@@ -127,6 +127,34 @@ final class ValueTest extends TestCase
         }
     }
 
+    public function testEnvRejectsInvalidNamesAndUnreadableFiles(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-secrets-' . bin2hex(random_bytes(4));
+        mkdir($directory);
+        file_put_contents($directory . '/lowercase', "ignored\n");
+        $unreadable = $directory . '/TGBOTPHP_UNREADABLE';
+        file_put_contents($unreadable, "secret\n");
+        chmod($unreadable, 0000);
+
+        putenv('TGBOTPHP_SECRETS_DIR=' . $directory);
+        putenv('lowercase');
+        putenv('TGBOTPHP_UNREADABLE');
+
+        try {
+            self::assertNull(Value::env('lowercase'));
+
+            if (PHP_OS_FAMILY !== 'Windows') {
+                self::assertNull(Value::env('TGBOTPHP_UNREADABLE'));
+            }
+        } finally {
+            chmod($unreadable, 0600);
+            putenv('TGBOTPHP_SECRETS_DIR');
+            @unlink($unreadable);
+            @unlink($directory . '/lowercase');
+            rmdir($directory);
+        }
+    }
+
     public function testEnvFallsBackToAMountedSecretFile(): void
     {
         $directory = sys_get_temp_dir() . '/tgbotphp-secrets-' . bin2hex(random_bytes(4));

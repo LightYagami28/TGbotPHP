@@ -29,15 +29,15 @@ final class SafeFileRemover
         $safe = [];
 
         foreach ($paths as $path) {
-            $real = realpath($path);
-
-            if ($real === false || !str_starts_with($real, $prefix) || is_dir($real)) {
-                continue;
-            }
-
             $name = basename($path);
 
             if ($name === '' || $name === '.' || $name === '..' || preg_match('/[\\\\\/]/', $name) === 1) {
+                continue;
+            }
+
+            $real = realpath($path);
+
+            if ($real === false || !str_starts_with($real, $prefix) || is_dir($real)) {
                 continue;
             }
 

@@ -265,7 +265,7 @@ class FileCache implements CacheInterface
         try {
             $entry = json_decode($contents, true, 32, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            return null;
+            $entry = null;
         }
 
         if (!is_array($entry)

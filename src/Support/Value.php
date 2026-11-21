@@ -121,17 +121,8 @@ final class Value
         $directory = is_string($directory) && $directory !== '' ? $directory : '/run/secrets';
         $file = rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . $name;
 
-        if (!is_file($file) || !is_readable($file)) {
-            return null;
-        }
-
-        $contents = @file_get_contents($file);
-
-        if (!is_string($contents)) {
-            return null;
-        }
-
-        $contents = rtrim($contents, "\r\n");
+        $contents = is_file($file) && is_readable($file) ? @file_get_contents($file) : false;
+        $contents = is_string($contents) ? rtrim($contents, "\r\n") : '';
 
         return $contents !== '' ? $contents : null;
     }

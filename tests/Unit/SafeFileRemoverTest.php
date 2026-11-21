@@ -70,4 +70,15 @@ final class SafeFileRemoverTest extends TestCase
 
         self::assertFileExists($inside);
     }
+
+    public function testIgnoresDotEntries(): void
+    {
+        $inside = $this->root . '/entry.cache';
+        file_put_contents($inside, 'inside');
+
+        SafeFileRemover::remove([$this->root . '/.', $this->root . '/..'], $this->root);
+
+        self::assertDirectoryExists($this->root);
+        self::assertFileExists($inside);
+    }
 }

@@ -136,6 +136,39 @@ final class PlatformGuardTest extends TestCase
         }
     }
 
+    public function testWindowsCommandSyntaxIsCoveredOnAnyOs(): void
+    {
+        $directory = $this->createFakeIcacls(true);
+        $path = $directory . '/sample.txt';
+        file_put_contents($path, 'sample');
+
+        putenv('USERDOMAIN=TESTDOMAIN');
+        putenv('USERNAME=tester');
+
+        try {
+            $guard = new WindowsPrivateFileGuard(true);
+
+            self::assertTrue($guard->restrict($path));
+            self::assertTrue($guard->isRestricted($path));
+            self::assertTrue($guard->makeReadOnly($directory));
+            self::assertTrue($guard->restoreWritable($directory));
+        } finally {
+            $this->removeFakeIcacls($directory);
+            @unlink($path);
+            rmdir($directory);
+        }
+    }
+
+    public function testWindowsGuardRejectsShellMetacharactersInPath(): void
+    {
+        putenv('USERDOMAIN=TESTDOMAIN');
+        putenv('USERNAME=tester');
+
+        $guard = new WindowsPrivateFileGuard(true);
+
+        self::assertFalse($guard->restrict(sys_get_temp_dir() . '/bad"path'));
+    }
+
     /**
      * Put a deterministic icacls shim first in PATH.
      *

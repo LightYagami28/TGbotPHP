@@ -16,9 +16,10 @@ $file = isset($arguments[1]) && is_string($arguments[1]) ? $arguments[1] : 'cove
 $minimum = isset($arguments[2]) && is_string($arguments[2]) ? $arguments[2] : '90';
 
 $xml = @simplexml_load_file($file);
-$metrics = $xml !== false ? $xml->project?->metrics : null;
+$project = $xml === false ? null : $xml->project;
+$metrics = $project?->metrics;
 
-if ($metrics === null) {
+if ($project === null || $metrics === null) {
     fwrite(STDERR, "No Clover report in $file\n");
     exit(1);
 }
@@ -35,10 +36,14 @@ if ($coverage >= (float) $minimum) {
 
 fwrite(STDERR, "Uncovered executable lines:\n");
 
-foreach ($xml->project->file ?? [] as $sourceFile) {
+$files = $project->xpath('.//file');
+
+foreach ($files === null ? [] : $files as $sourceFile) {
     $name = (string) $sourceFile['name'];
 
-    foreach ($sourceFile->line as $line) {
+    $lines = $sourceFile->line;
+
+    foreach ($lines === null ? [] : $lines as $line) {
         if ((int) $line['count'] === 0 && (string) $line['type'] === 'stmt') {
             fwrite(STDERR, "  $name:" . (string) $line['num'] . "\n");
         }

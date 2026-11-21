@@ -22,14 +22,20 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
     private const string USER_ENV = 'TGBOTPHP_ACL_USER';
 
     private string $user;
+    private bool $windows;
     private string|false $previousFile = false;
     private string|false $previousUser = false;
 
-    public function __construct()
+    /**
+     * @param bool|null $windows Command syntax to use; null detects the host OS.
+     *                           Injectable so both syntaxes are testable on any CI runner.
+     */
+    public function __construct(?bool $windows = null)
     {
         $domain = getenv('USERDOMAIN');
         $name = getenv('USERNAME');
         $this->user = ($domain !== false && $domain !== '' ? $domain . '\\' : '') . ($name !== false ? $name : '');
+        $this->windows = $windows ?? (PHP_OS_FAMILY === 'Windows');
     }
 
     #[Override]
@@ -43,7 +49,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
         $code = 0;
 
         try {
-            if (PHP_OS_FAMILY === 'Windows') {
+            if ($this->windows) {
                 exec('icacls "%TGBOTPHP_ACL_FILE%" /inheritance:r /grant:r "%TGBOTPHP_ACL_USER%:(F)"', $out, $code);
             } else {
                 exec('icacls "$TGBOTPHP_ACL_FILE" /inheritance:r /grant:r "$TGBOTPHP_ACL_USER:(F)"', $out, $code);
@@ -66,7 +72,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
         $code = 0;
 
         try {
-            if (PHP_OS_FAMILY === 'Windows') {
+            if ($this->windows) {
                 exec('icacls "%TGBOTPHP_ACL_FILE%"', $out, $code);
             } else {
                 exec('icacls "$TGBOTPHP_ACL_FILE"', $out, $code);
@@ -98,7 +104,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
 
         try {
             // Deny write/delete to the current user; keep read+execute.
-            if (PHP_OS_FAMILY === 'Windows') {
+            if ($this->windows) {
                 exec('icacls "%TGBOTPHP_ACL_FILE%" /deny "%TGBOTPHP_ACL_USER%:(W,D)"', $out, $code);
             } else {
                 exec('icacls "$TGBOTPHP_ACL_FILE" /deny "$TGBOTPHP_ACL_USER:(W,D)"', $out, $code);
@@ -121,7 +127,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
         $code = 0;
 
         try {
-            if (PHP_OS_FAMILY === 'Windows') {
+            if ($this->windows) {
                 exec('icacls "%TGBOTPHP_ACL_FILE%" /remove:d "%TGBOTPHP_ACL_USER%"', $out, $code);
             } else {
                 exec('icacls "$TGBOTPHP_ACL_FILE" /remove:d "$TGBOTPHP_ACL_USER"', $out, $code);

@@ -224,6 +224,16 @@ final class CacheTest extends TestCase
         self::assertSame([1], $value);
     }
 
+    public function testPutReportsValuesThatCannotBeEncoded(): void
+    {
+        $cyclic = new \stdClass();
+        $cyclic->self = $cyclic;
+        $cache = new FileCache(self::$directory);
+
+        $this->expectException(StorageException::class);
+        $cache->put('cyclic', $cyclic);
+    }
+
     public function testRateLimiterUsesFixedWindow(): void
     {
         $limiter = new RateLimiter(new ArrayCache());
