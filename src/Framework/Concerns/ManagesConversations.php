@@ -11,21 +11,25 @@ use TGbotPHP\Framework\Kernel;
 use TGbotPHP\Session\ConversationManager;
 
 /**
- * Conversation state shortcuts for the Bot
+ * Conversation state shortcuts for the Bot.
  */
 trait ManagesConversations
 {
     abstract protected function kernel(): Kernel;
 
     /**
-     * Enable state() handlers, storing the states in $cache
+     * Enable state() handlers, storing the states in $cache.
      */
     public function useConversations(CacheInterface $cache, int $ttl = 3600): static
     {
         $this->kernel()->useConversations(new ConversationManager($cache, $ttl));
+
         return $this;
     }
 
+    /**
+     * @throws LogicException When conversations have not been enabled
+     */
     public function conversations(): ConversationManager
     {
         return $this->kernel()->conversations()
@@ -33,9 +37,9 @@ trait ManagesConversations
     }
 
     /**
-     * Move the sender of a message or callback query into a conversation state
+     * Move the sender of a message or callback query into a conversation state.
      *
-     * @param array<string, mixed> $data
+     * @param array<string, mixed> $data Initial state data
      */
     public function setState(stdClass $payload, string $state, array $data = []): void
     {
@@ -43,7 +47,7 @@ trait ManagesConversations
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<string, mixed> $data Data to merge into the current state
      */
     public function updateStateData(stdClass $payload, array $data): void
     {

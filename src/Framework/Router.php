@@ -12,7 +12,7 @@ use TGbotPHP\Framework\Routing\Route;
 use TGbotPHP\Support\Value;
 
 /**
- * Routes updates to handlers
+ * Routes updates to handlers.
  *
  * Handlers receive the payload, the Bot (when a Bot drives the router), then
  * route data:
@@ -33,7 +33,7 @@ final class Router
     private readonly PatternTable $callbacks;
     private readonly PatternTable $inlineQueries;
 
-    /** @var array<string, list<callable>> */
+    /** @var array<string, list<callable>> Handlers for arbitrary update types */
     private array $updateHandlers = [];
 
     private ?string $botUsername = null;
@@ -47,16 +47,14 @@ final class Router
         $this->inlineQueries = new PatternTable();
     }
 
-    /**
-     * Bot passed to every handler as second argument
-     */
+    /** Bot passed to every handler as second argument. */
     public function setBot(?Bot $bot): void
     {
         $this->bot = $bot;
     }
 
     /**
-     * Bot username, used to ignore commands addressed to other bots (/start@other_bot)
+     * Bot username, used to ignore commands addressed to other bots (/start@other_bot).
      */
     public function setBotUsername(?string $username): void
     {
@@ -69,7 +67,7 @@ final class Router
     }
 
     /**
-     * "start", "/start" and "START" are the same command
+     * "start", "/start" and "START" are the same command.
      */
     public function registerCommand(string $command, callable $handler): void
     {
@@ -86,33 +84,27 @@ final class Router
         $this->inlineQueries->add($pattern, $handler);
     }
 
-    /**
-     * Handler for text messages, or media captions, matching a pattern
-     */
+    /** Handler for text messages, or media captions, matching a pattern. */
     public function registerText(string $pattern, callable $handler): void
     {
         $this->messages->addText($pattern, $handler);
     }
 
-    /**
-     * Handler for messages received while a conversation is in the given state
-     */
+    /** Handler for messages received while a conversation is in the given state. */
     public function registerState(string $state, callable $handler): void
     {
         $this->messages->addState($state, $handler);
     }
 
     /**
-     * Handler for an update type ("chat_member", "pre_checkout_query", ...), run when no other route matched
+     * Handler for an update type ("chat_member", "pre_checkout_query", ...), run when no other route matched.
      */
     public function registerUpdate(string $type, callable $handler): void
     {
         $this->updateHandlers[$type][] = $handler;
     }
 
-    /**
-     * Handler for text messages that match no other route
-     */
+    /** Handler for text messages that match no other route. */
     public function setDefaultHandler(callable $handler): void
     {
         $this->messages->setFallback($handler);
@@ -132,7 +124,7 @@ final class Router
     }
 
     /**
-     * @param array<string, mixed> $stateData
+     * @param array<string, mixed> $stateData Data collected in the current conversation
      * @return bool Whether a handler ran
      */
     public function dispatch(stdClass $update, ?string $state = null, array $stateData = []): bool

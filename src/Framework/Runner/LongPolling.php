@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Framework\Runner;
 
+use Closure;
 use stdClass;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\NetworkException;
@@ -14,27 +15,27 @@ use TGbotPHP\Support\Value;
 use Throwable;
 
 /**
- * Receives updates with getUpdates until stopped
+ * Receives updates with getUpdates until stopped.
  *
  * Network and server errors are retried with exponential backoff; 429 errors
  * wait for retry_after. 401, 404 and 409 (webhook still set) stop the loop.
  */
 final class LongPolling
 {
-    /** Errors that retrying cannot fix */
+    /** Errors that retrying cannot fix. */
     private const array FATAL_ERRORS = [401, 404, 409];
 
     private const int MAX_BACKOFF = 30;
 
     private bool $running = false;
 
-    /** Next update_id to request */
+    /** Next update_id to request. */
     private ?int $offset = null;
 
     private int $failures = 0;
 
-    /** @var \Closure(int): void */
-    private readonly \Closure $sleep;
+    /** @var Closure(int): void Wait between retries */
+    private readonly Closure $sleep;
 
     /**
      * @param (\Closure(int): void)|null $sleep Waits between retries (sleep() by default)
@@ -47,7 +48,7 @@ final class LongPolling
     }
 
     /**
-     * @param string[]|null $allowedUpdates
+     * @param string[]|null $allowedUpdates Types of updates to request
      * @param int $maxIterations Stop after this many getUpdates calls (0: run until stop())
      */
     public function run(
@@ -80,9 +81,7 @@ final class LongPolling
         return $this->running;
     }
 
-    /**
-     * Stop after the update being processed
-     */
+    /** Stop after the update being processed. */
     public function stop(): void
     {
         $this->running = false;
@@ -90,7 +89,7 @@ final class LongPolling
 
     /**
      * @param string[]|null $allowedUpdates
-     * @return list<stdClass>
+     * @return list<stdClass> Updates to process, empty on recoverable failure
      */
     private function fetch(int $timeout, ?array $allowedUpdates, ?int $limit): array
     {
@@ -157,7 +156,7 @@ final class LongPolling
     }
 
     /**
-     * Confirm the processed updates, so they are not delivered again
+     * Confirm the processed updates, so they are not delivered again.
      *
      * @param string[]|null $allowedUpdates
      */

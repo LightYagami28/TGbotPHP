@@ -8,7 +8,7 @@ use stdClass;
 use TGbotPHP\Support\Value;
 
 /**
- * Routes for messages, tried in order: commands, conversation state, text patterns, fallback
+ * Routes for messages, tried in order: commands, conversation state, text patterns, fallback.
  */
 final class MessageRoutes
 {
@@ -57,7 +57,7 @@ final class MessageRoutes
     }
 
     /**
-     * @return list<string>
+     * @return list<string> Registered command names
      */
     public function commandNames(): array
     {
@@ -65,7 +65,7 @@ final class MessageRoutes
     }
 
     /**
-     * @param array<string, mixed> $stateData
+     * @param array<string, mixed> $stateData Data collected in the current conversation
      * @return Route|false|null The route, false for a command addressed to another bot, null when nothing matched
      */
     public function resolve(stdClass $message, ?string $state, array $stateData, ?string $botUsername): Route|false|null

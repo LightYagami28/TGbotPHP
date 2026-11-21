@@ -9,7 +9,7 @@ use ReflectionFunction;
 use stdClass;
 
 /**
- * Middleware pipeline for processing updates
+ * Middleware pipeline for processing updates.
  *
  * Two middleware styles are supported:
  *
@@ -27,15 +27,13 @@ use stdClass;
  */
 final class MiddlewarePipeline
 {
-    /** @var list<Closure> */
+    /** @var list<Closure> Registered middleware */
     private array $middleware = [];
 
     /** @var list<int|null> Parameter count of each middleware, null when variadic */
     private array $parameterCounts = [];
 
-    /**
-     * Add middleware to pipeline
-     */
+    /** Add middleware to the pipeline. */
     public function add(callable $middleware): void
     {
         $closure = Closure::fromCallable($middleware);
@@ -47,9 +45,9 @@ final class MiddlewarePipeline
     }
 
     /**
-     * Run the pipeline and, unless a middleware stops it, the final handler
+     * Run the pipeline and, unless a middleware stops it, the final handler.
      *
-     * @param callable(): void $core
+     * @param callable(): void $core Final handler
      * @param array<int, mixed> $arguments Extra arguments passed after the update (e.g. the Bot)
      * @return bool Whether the final handler was reached
      */
@@ -63,6 +61,7 @@ final class MiddlewarePipeline
             if (!isset($this->middleware[$index])) {
                 $reached = true;
                 $core();
+
                 return;
             }
 
@@ -74,6 +73,7 @@ final class MiddlewarePipeline
             // A required parameter after the update and the arguments receives $next
             if (($this->parameterCounts[$index] ?? 0) > count($arguments) + 1) {
                 $middleware($update, ...[...$arguments, $proceed]);
+
                 return;
             }
 
@@ -93,7 +93,7 @@ final class MiddlewarePipeline
     }
 
     /**
-     * Execute middleware without a final handler
+     * Execute middleware without a final handler.
      *
      * @return bool false when a middleware stopped the pipeline
      */
@@ -105,7 +105,7 @@ final class MiddlewarePipeline
     }
 
     /**
-     * @return list<Closure>
+     * @return list<Closure> Registered middleware, in execution order
      */
     public function getMiddleware(): array
     {

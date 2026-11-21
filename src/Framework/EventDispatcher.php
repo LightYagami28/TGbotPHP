@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Framework;
 
 /**
- * Event dispatcher for custom events
+ * Event dispatcher for custom events.
  *
  * Allows plugins and handlers to hook into bot lifecycle.
  *
@@ -14,20 +14,16 @@ namespace TGbotPHP\Framework;
  */
 final class EventDispatcher
 {
-    /** @var array<string, callable[]> */
+    /** @var array<string, callable[]> Listeners grouped by event name */
     private array $listeners = [];
 
-    /**
-     * Listen to event
-     */
+    /** Listen to an event. */
     public function listen(string $event, callable $handler): void
     {
         $this->listeners[$event][] = $handler;
     }
 
-    /**
-     * Dispatch event
-     */
+    /** Dispatch an event with its data to every listener. */
     public function dispatch(string $event, mixed ...$data): void
     {
         foreach ($this->listeners[$event] ?? [] as $handler) {
@@ -35,16 +31,14 @@ final class EventDispatcher
         }
     }
 
-    /**
-     * Check whether an event has listeners
-     */
+    /** Check whether an event has listeners. */
     public function hasListeners(string $event): bool
     {
         return ($this->listeners[$event] ?? []) !== [];
     }
 
     /**
-     * Get listeners for event
+     * Get listeners for an event.
      *
      * @return callable[]
      */
@@ -53,9 +47,7 @@ final class EventDispatcher
         return $this->listeners[$event] ?? [];
     }
 
-    /**
-     * Remove listeners of one event, or all listeners
-     */
+    /** Remove listeners of one event, or all listeners. */
     public function clear(?string $event = null): void
     {
         if ($event === null) {

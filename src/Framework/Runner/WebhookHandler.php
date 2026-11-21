@@ -15,7 +15,7 @@ use TGbotPHP\Support\Value;
 use Throwable;
 
 /**
- * Handles one webhook request
+ * Handles one webhook request.
  *
  * Answers 403 when no secret token is configured (unless
  * allowUnauthenticatedWebhook is set) or the presented secret does not match,
@@ -54,7 +54,7 @@ final readonly class WebhookHandler
     }
 
     /**
-     * Check the request and parse its body
+     * Check the request and parse its body.
      *
      * @return stdClass|int The update, or the HTTP status to answer with
      */
@@ -195,17 +195,13 @@ final readonly class WebhookHandler
         }
     }
 
-    /**
-     * True when the update id was already claimed by an earlier delivery
-     */
+    /** True when the update id was already claimed by an earlier delivery. */
     private function isDuplicate(?CacheInterface $dedup, ?int $updateId): bool
     {
         return $dedup !== null && $updateId !== null && !$this->claim($dedup, $updateId);
     }
 
-    /**
-     * Forget the update id so Telegram's retry is processed
-     */
+    /** Forget the update id so Telegram's retry is processed. */
     private function release(?CacheInterface $dedup, ?int $updateId): void
     {
         if ($dedup !== null && $updateId !== null) {
@@ -213,9 +209,7 @@ final readonly class WebhookHandler
         }
     }
 
-    /**
-     * Send the response now and keep running
-     */
+    /** Send the response now and keep running. */
     private static function finishRequest(): void
     {
         if (function_exists('fastcgi_finish_request')) {

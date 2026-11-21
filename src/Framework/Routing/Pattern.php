@@ -7,7 +7,7 @@ namespace TGbotPHP\Framework\Routing;
 use InvalidArgumentException;
 
 /**
- * A route pattern, compiled once
+ * A route pattern, compiled once.
  *
  * - exact:    'menu'
  * - wildcard: 'page:*'           the part matched by "*" is captured
@@ -15,9 +15,14 @@ use InvalidArgumentException;
  */
 final readonly class Pattern
 {
-    /** Regular expression, or null for an exact match */
+    /** Regular expression, or null for an exact match. */
     private ?string $regex;
 
+    /**
+     * @param string $source Pattern source as registered by the caller
+     *
+     * @throws InvalidArgumentException When a regex pattern does not compile
+     */
     public function __construct(public string $source)
     {
         $this->regex = match (true) {
@@ -44,6 +49,7 @@ final readonly class Pattern
         return preg_match($this->regex, $value, $matches) === 1 ? $matches : null;
     }
 
+    /** Whether the source uses regex delimiters and compiles. */
     private static function isRegex(string $pattern): bool
     {
         if (strlen($pattern) < 3 || !in_array($pattern[0], ['/', '#', '~'], true)) {

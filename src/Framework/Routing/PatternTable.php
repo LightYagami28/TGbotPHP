@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace TGbotPHP\Framework\Routing;
 
 /**
- * Handlers indexed by pattern
+ * Handlers indexed by pattern.
  *
  * Exact patterns are looked up first, then wildcard and regex patterns in
  * registration order.
  */
 final class PatternTable
 {
-    /** @var array<string, callable> */
+    /** @var array<string, callable> Handlers for exact patterns */
     private array $exact = [];
 
-    /** @var list<array{Pattern, callable}> */
+    /** @var list<array{Pattern, callable}> Compiled patterns in registration order */
     private array $patterns = [];
 
     public function add(string $pattern, callable $handler): void
@@ -25,15 +25,14 @@ final class PatternTable
         if ($compiled->isExact()) {
             // A string key: PHP would turn a numeric key such as "123" into an integer
             $this->exact["=$pattern"] = $handler;
+
             return;
         }
 
         $this->patterns[] = [$compiled, $handler];
     }
 
-    /**
-     * The handler of the first matching pattern, with the captured groups as argument
-     */
+    /** The handler of the first matching pattern, with the captured groups as argument. */
     public function find(string $value): ?Route
     {
         $handler = $this->exact["=$value"] ?? null;

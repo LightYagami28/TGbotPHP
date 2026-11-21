@@ -11,20 +11,20 @@ use TGbotPHP\Support\Payload;
 use TGbotPHP\Support\Value;
 
 /**
- * Shortcuts to answer the update being handled
+ * Shortcuts to answer the update being handled.
  *
  * Used by Bot, which provides the API methods.
  */
 trait RespondsToUpdates
 {
     /**
-     * Send a message where a message or callback query came from
+     * Send a message where a message or callback query came from.
      *
      * The reply goes to the same chat and, when there is one, the same forum
      * topic, business connection or direct messages topic.
      *
      * @param array<string, mixed> $options sendMessage parameters; they override the defaults (parse_mode HTML)
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      */
     public function reply(stdClass $payload, string $text, array $options = []): array
     {
@@ -36,10 +36,12 @@ trait RespondsToUpdates
     }
 
     /**
-     * Edit the text of the message a callback query button belongs to, including inline messages
+     * Edit the text of the message a callback query button belongs to, including inline messages.
      *
      * @param array<string, mixed> $options editMessageText parameters (reply_markup, parse_mode...)
      * @return array<string, mixed>|bool The edited message, true for inline messages, false when nothing changed
+     *
+     * @throws InvalidArgumentException When the callback query has no message to edit
      */
     public function edit(stdClass $callbackQuery, string $text, array $options = []): array|bool
     {
@@ -65,6 +67,9 @@ trait RespondsToUpdates
         }
     }
 
+    /**
+     * @throws InvalidArgumentException When the payload is not a callback query
+     */
     public function answer(stdClass $callbackQuery, ?string $text = null, bool $showAlert = false): bool
     {
         $id = Value::nullableString(Value::path($callbackQuery, 'id'))
@@ -73,9 +78,7 @@ trait RespondsToUpdates
         return $this->answerCallbackQuery($id, $text, $showAlert);
     }
 
-    /**
-     * Chat id of a message, a callback query or any payload carrying a chat
-     */
+    /** Chat id of a message, a callback query or any payload carrying a chat. */
     public function chatId(stdClass $payload): int|string
     {
         return Payload::requireChatId($payload);

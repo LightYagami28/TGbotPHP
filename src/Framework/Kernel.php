@@ -11,7 +11,7 @@ use TGbotPHP\Support\Payload;
 use Throwable;
 
 /**
- * Processes one update: events, middleware, conversation state and routing
+ * Process one update: events, middleware, conversation state and routing.
  */
 final class Kernel
 {
@@ -21,7 +21,7 @@ final class Kernel
 
     private ?ConversationManager $conversations = null;
 
-    /** The update being processed, or the last one */
+    /** The update being processed, or the last one. */
     private ?stdClass $update = null;
 
     public function __construct()
@@ -41,16 +41,14 @@ final class Kernel
         return $this->conversations;
     }
 
-    /**
-     * The update being processed, or the last one
-     */
+    /** The update being processed, or the last one. */
     public function currentUpdate(): ?stdClass
     {
         return $this->update;
     }
 
     /**
-     * Exceptions go to "error" listeners when there are any, and are re-thrown otherwise
+     * Exceptions go to "error" listeners when there are any, and are re-thrown otherwise.
      */
     public function process(stdClass $update, Bot $bot): void
     {

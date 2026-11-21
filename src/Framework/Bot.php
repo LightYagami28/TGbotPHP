@@ -24,7 +24,7 @@ use TGbotPHP\Plugin\PluginManager;
 use TGbotPHP\Support\Value;
 
 /**
- * Telegram bot: the API client plus routing, middleware, events and runners
+ * Telegram bot: the API client plus routing, middleware, events and runners.
  *
  *     $bot = new Bot(getenv('TELEGRAM_BOT_TOKEN'));
  *     $bot->command('start', fn(stdClass $message, Bot $bot) => $bot->reply($message, 'Hi!'));
@@ -41,6 +41,12 @@ final class Bot extends ApiClient
     private ?LongPolling $polling = null;
     private ?CacheInterface $updateDedup = null;
 
+    /**
+     * @param string|Config $token Bot token or a prepared configuration
+     * @param TransportInterface|null $transport Transport to use
+     *
+     * @throws InvalidTokenException When the token is malformed
+     */
     public function __construct(string|Config $token, ?TransportInterface $transport = null)
     {
         try {
@@ -57,7 +63,7 @@ final class Bot extends ApiClient
     }
 
     /**
-     * Webhook entry point: see WebhookHandler
+     * Webhook entry point: see WebhookHandler.
      *
      * @param bool $respondFirst Answer Telegram before running the handlers (PHP-FPM, LiteSpeed)
      * @return bool Whether the update was accepted
@@ -68,7 +74,7 @@ final class Bot extends ApiClient
     }
 
     /**
-     * Ignore a repeated webhook delivery of an update_id already accepted
+     * Ignore a repeated webhook delivery of an update_id already accepted.
      *
      * The cache entry lives for one day. A handler that fails with HTTP 500
      * (acknowledgeHandlerErrors disabled) drops the entry so Telegram can retry.
@@ -86,7 +92,7 @@ final class Bot extends ApiClient
     }
 
     /**
-     * Process one update given as JSON, a decoded array or an object
+     * Process one update given as JSON, a decoded array or an object.
      *
      * @param string|array<string, mixed>|stdClass $update
      *
@@ -101,18 +107,16 @@ final class Bot extends ApiClient
         });
     }
 
-    /**
-     * Run middleware and routing; exceptions go to onError() handlers, or are re-thrown
-     */
+    /** Run middleware and routing; exceptions go to onError() handlers, or are re-thrown. */
     public function processUpdate(stdClass $update): void
     {
         $this->kernel->process($update, $this);
     }
 
     /**
-     * Long polling until stop() is called: see LongPolling
+     * Long polling until stop() is called: see LongPolling.
      *
-     * @param string[]|null $allowedUpdates
+     * @param string[]|null $allowedUpdates Types of updates to request
      * @param int $maxIterations Stop after this many getUpdates calls (0: run until stop())
      */
     public function poll(
@@ -129,9 +133,7 @@ final class Bot extends ApiClient
         $this->polling->run($timeout, $allowedUpdates, $limit, $maxIterations);
     }
 
-    /**
-     * Stop polling after the update being processed
-     */
+    /** Stop polling after the update being processed. */
     public function stop(): void
     {
         $this->polling?->stop();
@@ -143,11 +145,12 @@ final class Bot extends ApiClient
     }
 
     /**
-     * Commands addressed to other bots (/start@other_bot) are ignored once the username is set
+     * Commands addressed to other bots (/start@other_bot) are ignored once the username is set.
      */
     public function setUsername(?string $username): static
     {
         $this->kernel->router->setBotUsername($username);
+
         return $this;
     }
 
@@ -156,9 +159,7 @@ final class Bot extends ApiClient
         return $this->kernel->router->getBotUsername();
     }
 
-    /**
-     * Plugins implementing BotPluginInterface are booted with this bot
-     */
+    /** Plugins implementing BotPluginInterface are booted with this bot. */
     public function plugin(PluginInterface $plugin): static
     {
         $this->plugins->register($plugin->getName(), $plugin);
@@ -175,9 +176,7 @@ final class Bot extends ApiClient
         return $this->plugins;
     }
 
-    /**
-     * The update being processed, or the last one
-     */
+    /** The update being processed, or the last one. */
     public function getUpdate(): ?stdClass
     {
         return $this->kernel->currentUpdate();
