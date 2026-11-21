@@ -134,7 +134,7 @@ final class PlatformGuardTest extends TestCase
         $body = $success
             ? ($windows
                 ? "@echo off\r\necho \"C:\\fake\" TESTDOMAIN\\tester:(F)\r\nexit /b 0\r\n"
-                : "#!/bin/sh\necho '\"C:\\fake\" TESTDOMAIN\\tester:(F)'\nexit 0\n")
+                : "#!/bin/sh\nprintf '%s\\n' '\"C:\\fake\" TESTDOMAIN\\tester:(F)'\nexit 0\n")
             : ($windows
                 ? "@echo off\r\nexit /b 1\r\n"
                 : "#!/bin/sh\nexit 1\n");
