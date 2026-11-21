@@ -12,10 +12,31 @@ $arguments = $_SERVER['argv'] ?? [];
 if (!is_array($arguments)) {
     $arguments = [];
 }
-$file = isset($arguments[1]) && is_string($arguments[1]) ? $arguments[1] : 'coverage.xml';
+$rawFile = isset($arguments[1]) && is_string($arguments[1]) ? $arguments[1] : 'coverage.xml';
 $minimum = isset($arguments[2]) && is_string($arguments[2]) ? $arguments[2] : '90';
 
-$xml = @simplexml_load_file($file);
+// Accetta solo un file locale dentro la directory di lavoro: un URL verrebbe
+// risolto da simplexml_load_file come richiesta di rete (SSRF).
+$cwd = getcwd();
+$root = __DIR__;
+if (is_string($cwd)) {
+    $resolvedRoot = realpath($cwd);
+    if ($resolvedRoot !== false) {
+        $root = $resolvedRoot;
+    }
+}
+$file = realpath($rawFile);
+if ($file === false || !is_file($file) || !str_starts_with($file, $root . DIRECTORY_SEPARATOR)) {
+    fwrite(STDERR, "No local Clover report in $rawFile\n");
+    exit(1);
+}
+$contents = file_get_contents($file);
+if ($contents === false) {
+    fwrite(STDERR, "Unable to read Clover report in $file\n");
+    exit(1);
+}
+
+$xml = @simplexml_load_string($contents);
 $project = $xml === false ? null : $xml->project;
 $metrics = $project?->metrics;
 
