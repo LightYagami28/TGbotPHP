@@ -8,7 +8,7 @@ use stdClass;
 use Stringable;
 
 /**
- * Type-safe readers for untyped data (decoded JSON, update payloads, cache entries)
+ * Type-safe readers for untyped data (decoded JSON, update payloads, cache entries).
  *
  * Telegram payloads are decoded JSON: every field is `mixed` until checked.
  * These helpers never cast arrays or objects, so malformed input can never
@@ -21,6 +21,7 @@ final class Value
         // Static helpers only
     }
 
+    /** Read an integer, returning the default when the value is not integral. */
     public static function int(mixed $value, int $default = 0): int
     {
         return self::nullableInt($value) ?? $default;
@@ -28,7 +29,7 @@ final class Value
 
     /**
      * Integers, integral floats and decimal strings; null for anything that
-     * does not fit an int exactly (1.5, "9999999999999999999", "12abc")
+     * does not fit an int exactly (1.5, "9999999999999999999", "12abc").
      */
     public static function nullableInt(mixed $value): ?int
     {
@@ -40,6 +41,7 @@ final class Value
         };
     }
 
+    /** Convert a float only when it has no fractional part and fits an int. */
     private static function integralFloat(float $value): ?int
     {
         // 2^63 is the first float outside the int range
@@ -48,6 +50,7 @@ final class Value
             : null;
     }
 
+    /** Convert a decimal string without letting (int) saturate on overflow. */
     private static function decimalString(string $value): ?int
     {
         if (preg_match('/^(-?)0*(\d+)\z/', $value, $match) !== 1) {
@@ -65,11 +68,13 @@ final class Value
         return (int) $value;
     }
 
+    /** Read a string, returning the default when the value is not scalar. */
     public static function string(mixed $value, string $default = ''): string
     {
         return self::nullableString($value) ?? $default;
     }
 
+    /** Convert scalars and Stringable objects to strings; null for arrays and objects. */
     public static function nullableString(mixed $value): ?string
     {
         return match (true) {
@@ -81,7 +86,7 @@ final class Value
     }
 
     /**
-     * Chat or user identifier (Telegram ids are integers, usernames like "@channel" are strings)
+     * Chat or user identifier (Telegram ids are integers, usernames like "@channel" are strings).
      */
     public static function id(mixed $value): int|string|null
     {
@@ -92,9 +97,7 @@ final class Value
         };
     }
 
-    /**
-     * Read an environment variable; null when it is missing or empty
-     */
+    /** Read an environment variable; null when it is missing or empty. */
     public static function env(string $name): ?string
     {
         $value = getenv($name);
@@ -102,13 +105,17 @@ final class Value
         return is_string($value) && $value !== '' ? $value : null;
     }
 
+    /** Return the value only when it is a decoded JSON object. */
     public static function object(mixed $value): ?stdClass
     {
         return $value instanceof stdClass ? $value : null;
     }
 
     /**
-     * Read a nested property: Value::path($update, 'message', 'chat', 'id')
+     * Read a nested property: Value::path($update, 'message', 'chat', 'id').
+     *
+     * Works on both stdClass objects and arrays, returning null as soon as a
+     * segment is missing.
      */
     public static function path(mixed $value, string ...$keys): mixed
     {
@@ -130,7 +137,7 @@ final class Value
     }
 
     /**
-     * Keep the string keys of an array (JSON objects decoded as arrays)
+     * Keep the string keys of an array (JSON objects decoded as arrays).
      *
      * @return array<string, mixed>
      */
@@ -151,7 +158,7 @@ final class Value
     }
 
     /**
-     * Check a value is a JSON object decoded as an associative array
+     * Check a value is a JSON object decoded as an associative array.
      *
      * @phpstan-assert-if-true array<string, mixed> $value
      */
@@ -171,7 +178,7 @@ final class Value
     }
 
     /**
-     * Check a value is a list of JSON objects
+     * Check a value is a list of JSON objects.
      *
      * @phpstan-assert-if-true list<array<string, mixed>> $value
      */
