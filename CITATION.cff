@@ -1,7 +1,19 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it."
 title: "TGbotPHP"
-date-released: 2026-10-05
+abstract: "Libreria PHP per la Telegram Bot API con routing, middleware, conversazioni, webhook e long polling."
+type: software
+version: 2.0.0
+date-released: "2026-11-21"
+license: "Apache-2.0"
+repository-code: "https://github.com/LightYagami28/TGbotPHP"
 authors:
   - family-names: Maule
     given-names: Alessandro
+    alias: "Light Yagami"
+keywords:
+  - "PHP"
+  - "Telegram"
+  - "bot API"
+  - "webhook"
+  - "middleware"
