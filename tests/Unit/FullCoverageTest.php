@@ -453,8 +453,7 @@ final class FullCoverageTest extends TestCase
         $localTransport = new FakeTransport();
         $local = new ApiClient(new Config(
             Updates::TOKEN,
-            apiBaseUrl: 'http://127.0.0.1:9',
-            enforceHttps: false,
+            apiBaseUrl: 'https://127.0.0.1:9',
             retry: RetryPolicy::none(),
         )->withLocalFileRoot($root), $localTransport);
         $localTransport->queueResult(['file_id' => 'f', 'file_path' => $missing]);

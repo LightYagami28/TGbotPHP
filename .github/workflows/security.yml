@@ -33,6 +33,47 @@ jobs:
     # administrator enables under Settings > Code security > Dependabot.
     - run: composer audit --locked --abandoned=report
 
+  sbom:
+    name: SBOM e provenance SLSA
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: SBOM SPDX delle dipendenze bloccate
+      uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+      with:
+        path: .
+        format: spdx-json
+        output-file: tgbotphp.spdx.json
+        artifact-name: tgbotphp.spdx.json
+        upload-release-assets: false
+    - name: SBOM CycloneDX delle dipendenze bloccate
+      uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+      with:
+        path: .
+        format: cyclonedx-json
+        output-file: tgbotphp.cyclonedx.json
+        artifact-name: tgbotphp.cyclonedx.json
+        upload-release-assets: false
+    - name: Archivio sorgente e checksum
+      run: |
+        id="${GITHUB_SHA:0:12}"
+        git archive --format=tar.gz --prefix="tgbotphp-$id/" -o "tgbotphp-$id.tar.gz" HEAD
+        sha256sum "tgbotphp-$id.tar.gz" > "tgbotphp-$id.checksums.txt"
+    - name: Attestazione SLSA firmata (Sigstore)
+      # Le PR dei fork non ricevono il token OIDC: la firma va sui push.
+      if: github.event_name == 'push'
+      uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+      with:
+        subject-path: tgbotphp-*.tar.gz
+        sbom-path: tgbotphp.spdx.json
+
   # CodeQL is not run here. codeql-action 4.39.1 (bundle 2.27.3) rejects
   # `languages: php` at init: "Did not recognize the following languages: php".
   # The supported set is C/C++, C#, Go, Java/Kotlin, JavaScript/TypeScript,

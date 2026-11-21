@@ -1,7 +1,12 @@
 # syntax=docker/dockerfile:1
 
+# Base images pinned by digest (tag resolved 2026-11-21 from Docker Hub):
+# php:8.5-cli    -> sha256:f324fcb4dc009ac0470a7d614cd122499dcee3ca47a9bab620fc14c0eb759ba2
+# composer:2     -> sha256:50ea4d33fdcde1adb0f045547295faa1548b33872e5f789dae5b02ce2fb5de93
+# Refresh both together with `docker buildx imagetools inspect <image>:<tag>`.
+
 # Build stage: compilers, git/unzip and composer live here only.
-FROM php:8.5-cli AS build
+FROM php:8.5-cli@sha256:f324fcb4dc009ac0470a7d614cd122499dcee3ca47a9bab620fc14c0eb759ba2 AS build
 
 WORKDIR /app
 
@@ -11,7 +16,7 @@ RUN apt-get update \
     && docker-php-ext-install pcntl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer:2@sha256:50ea4d33fdcde1adb0f045547295faa1548b33872e5f789dae5b02ce2fb5de93 /usr/bin/composer /usr/local/bin/composer
 
 COPY composer.json composer.lock ./
 RUN --mount=type=cache,target=/root/.cache/composer \
@@ -23,8 +28,8 @@ COPY src/ src/
 COPY examples/ examples/
 RUN composer dump-autoload --no-dev --optimize
 
-# Runtime stage: same PHP base, but without git, unzip or composer.
-FROM php:8.5-cli
+# Runtime stage: same pinned PHP base, but without git, unzip or composer.
+FROM php:8.5-cli@sha256:f324fcb4dc009ac0470a7d614cd122499dcee3ca47a9bab620fc14c0eb759ba2
 
 WORKDIR /app
 

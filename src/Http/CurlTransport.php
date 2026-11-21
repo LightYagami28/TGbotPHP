@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use TGbotPHP\Core\ApiClient;
 use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Security\LogRedactor;
+use TGbotPHP\Support\GuardedCall;
 
 /**
  * cURL based HTTP transport.
@@ -93,9 +94,9 @@ final class CurlTransport implements TransportInterface
     #[\Override]
     public function download(string $url, string $destination, int $timeout): int
     {
-        $file = @fopen($destination, 'wb');
+        $file = GuardedCall::run(static fn() => fopen($destination, 'wb'));
 
-        if ($file === false) {
+        if (!is_resource($file)) {
             throw new NetworkException("Unable to open $destination for writing");
         }
 
@@ -155,8 +156,9 @@ final class CurlTransport implements TransportInterface
     /**
      * Reset and configure the shared handle with safe defaults.
      *
-     * Redirects are disabled and protocols restricted to HTTP(S) so a server
-     * response cannot make the transport read a local file.
+     * Redirects are disabled and the protocol restricted to HTTPS (plain HTTP
+     * only for the documented loopback test server) so a server response cannot
+     * make the transport read a local file.
      *
      * @param array<int, mixed> $options cURL options for this request
      *
@@ -185,29 +187,100 @@ final class CurlTransport implements TransportInterface
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
+            // HTTPS is mandatory in production; plain HTTP is accepted only for
+            // the loopback test server documented in CurlTransportTest.
+            CURLOPT_PROTOCOLS => self::isLoopbackTestUrl($url) ? CURLPROTO_HTTPS | CURLPROTO_HTTP : CURLPROTO_HTTPS,
             CURLOPT_USERAGENT => 'TGbotPHP/' . ApiClient::VERSION,
         ]);
 
         return $this->handle;
     }
 
-    /** Only plain http(s) URLs, without credentials or control characters. */
+    /**
+     * HTTPS URLs, plus plain HTTP only for a loopback test server.
+     *
+     * Credentials and control characters are always rejected: they could forge
+     * a header or hide the real destination from the logs.
+     */
     private static function isValidUrl(string $url): bool
     {
         $parts = parse_url($url);
 
-        return $parts !== false && self::isPlainHttpHost($parts) && preg_match('/[\x00-\x20\x7f]/', $url) !== 1;
+        return $parts !== false && self::isAllowedHost($parts) && preg_match('/[\x00-\x20\x7f]/', $url) !== 1;
     }
 
     /**
      * @param array<string, mixed> $parts Components returned by parse_url()
      */
-    private static function isPlainHttpHost(array $parts): bool
+    private static function isAllowedHost(array $parts): bool
     {
-        return ($parts['host'] ?? '') !== ''
-            && in_array($parts['scheme'] ?? '', ['http', 'https'], true)
-            && !isset($parts['user']) && !isset($parts['pass']);
+        if (!self::hasUsableHost($parts)) {
+            return false;
+        }
+
+        return self::isAllowedScheme($parts);
+    }
+
+    /**
+     * A string host is required, with no embedded credentials.
+     *
+     * @param array<string, mixed> $parts Components returned by parse_url()
+     */
+    private static function hasUsableHost(array $parts): bool
+    {
+        $host = $parts['host'] ?? '';
+
+        return is_string($host) && $host !== '' && !isset($parts['user']) && !isset($parts['pass']);
+    }
+
+    /**
+     * HTTPS anywhere; plain HTTP only for a loopback test server.
+     *
+     * @param array<string, mixed> $parts Components returned by parse_url()
+     */
+    private static function isAllowedScheme(array $parts): bool
+    {
+        $scheme = $parts['scheme'] ?? '';
+
+        if ($scheme === 'https') {
+            return true;
+        }
+
+        $host = $parts['host'] ?? '';
+
+        return $scheme === 'http' && is_string($host) && self::isLoopbackHost($host);
+    }
+
+    /** Whether the URL is the plain-HTTP loopback server used by the tests. */
+    private static function isLoopbackTestUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+
+        return $parts !== false
+            && ($parts['scheme'] ?? '') === 'http'
+            && isset($parts['host'])
+            && self::isLoopbackHost($parts['host']);
+    }
+
+    /** Only localhost, 127.0.0.0/8 and ::1 count as loopback. */
+    private static function isLoopbackHost(string $host): bool
+    {
+        if (strcasecmp($host, 'localhost') === 0) {
+            return true;
+        }
+
+        // parse_url() keeps IPv6 brackets in the host component.
+        $address = trim($host, '[]');
+
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+            return str_starts_with($address, '127.');
+        }
+
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
+            return strcasecmp($address, '::1') === 0;
+        }
+
+        return false;
     }
 
     /** Build a safe error message from the last cURL error. */

@@ -171,11 +171,15 @@ or disable it with `RetryPolicy::none()`. Webhook handlers do not wait:
 ```php
 $bot = new Bot(new Config(
     token: $token,
-    apiBaseUrl: 'http://localhost:8081',
+    apiBaseUrl: 'https://localhost:8081',
     enforceHttps: false,
     timeout: 120,
 )->withLocalFileRoot('/var/lib/telegram-bot-api'));
 ```
+
+HTTPS is required for every API base URL. `enforceHttps: false` is kept for a
+local server with a private certificate: plain `http://` is accepted by the
+transport only for loopback addresses (`localhost`, `127.0.0.0/8`, `::1`).
 
 ## Custom HTTP transport
 

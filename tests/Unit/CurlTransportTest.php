@@ -13,7 +13,11 @@ use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\RuntimeControls;
 
 /**
- * Runs against PHP's built-in server, started for this test class
+ * Runs against PHP's built-in server, started for this test class.
+ *
+ * The plain http:// URLs below are the documented exception to the HTTPS-only
+ * transport: the server binds to 127.0.0.1 only, so traffic never leaves the
+ * loopback interface.
  */
 final class CurlTransportTest extends TestCase
 {
@@ -135,6 +139,38 @@ final class CurlTransportTest extends TestCase
         $this->expectException(NetworkException::class);
 
         new CurlTransport()->get('file:///etc/passwd', 1);
+    }
+
+    public function testLoopbackHostsAreAllowedOverPlainHttp(): void
+    {
+        foreach (['http://localhost:1/', 'http://[::1]:1/'] as $url) {
+            try {
+                new CurlTransport()->get($url, 1);
+                self::fail("Expected a connection error for $url");
+            } catch (NetworkException $exception) {
+                self::assertStringNotContainsString('Invalid HTTP transport URL', $exception->getMessage());
+            }
+        }
+    }
+
+    public function testPlainHttpIsRejectedForNonLoopbackHost(): void
+    {
+        foreach (['http://192.0.2.1/', 'http://example.com/'] as $url) {
+            try {
+                new CurlTransport()->get($url, 1);
+                self::fail("Expected an invalid URL error for $url");
+            } catch (NetworkException $exception) {
+                self::assertSame('Invalid HTTP transport URL', $exception->getMessage());
+            }
+        }
+    }
+
+    public function testHttpsUrlIsAccepted(): void
+    {
+        $this->expectException(NetworkException::class);
+        $this->expectExceptionMessage('cURL error');
+
+        new CurlTransport()->get('https://127.0.0.1:1/', 1);
     }
 
     public function testQuerySeparatorDoesNotDependOnIni(): void
