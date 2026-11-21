@@ -13,7 +13,11 @@ use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\RuntimeControls;
 
 /**
- * Runs against PHP's built-in server, started for this test class
+ * Runs against PHP's built-in server, started for this test class.
+ *
+ * The plain http:// URLs below are the documented exception to the HTTPS-only
+ * transport: the server binds to 127.0.0.1 only, so traffic never leaves the
+ * loopback interface.
  */
 final class CurlTransportTest extends TestCase
 {

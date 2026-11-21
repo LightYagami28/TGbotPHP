@@ -74,7 +74,7 @@ file size limits (uploads up to 2 GB) and lets you use your own infrastructure:
 ```php
 $bot = new Bot(new Config(
     token: $token,
-    apiBaseUrl: 'http://127.0.0.1:8081',
+    apiBaseUrl: 'https://127.0.0.1:8081',
     enforceHttps: false,
     timeout: 120,
 ));
@@ -87,7 +87,7 @@ server in `--local` mode, `downloadFile()` copies files from its disk.
 
 Requests go through `Http\TransportInterface`. The default `CurlTransport`:
 
-- verifies TLS certificates and allows only HTTP and HTTPS;
+- verifies TLS certificates and requires HTTPS (plain HTTP only for loopback test servers);
 - never follows redirects;
 - reuses its connection between requests, which saves a TLS handshake per API
   call;

@@ -6,6 +6,7 @@ namespace TGbotPHP\Cache;
 
 use JsonException;
 use TGbotPHP\Exceptions\StorageException;
+use TGbotPHP\Support\GuardedCall;
 use TGbotPHP\Support\Platform\PlatformGuard;
 use TGbotPHP\Support\SafeFileRemover;
 use TGbotPHP\Support\Value;
@@ -47,7 +48,10 @@ class FileCache implements CacheInterface
      */
     public function __construct(string $directory)
     {
-        if (!is_dir($directory) && !@mkdir($directory, 0700, true) && !is_dir($directory)) {
+        if (!is_dir($directory)
+            && GuardedCall::run(static fn(): bool => mkdir($directory, 0700, true)) !== true
+            && !is_dir($directory)
+        ) {
             throw new StorageException("Unable to create cache directory: $directory");
         }
 
@@ -154,7 +158,8 @@ class FileCache implements CacheInterface
                     continue;
                 }
 
-                $entry = $this->decode((string) @file_get_contents($file));
+                $contents = GuardedCall::run(static fn(): string|false => file_get_contents($file));
+                $entry = $this->decode(is_string($contents) ? $contents : '');
 
                 if ($entry === null || self::isExpired($entry)) {
                     SafeFileRemover::remove([$file], $this->directory);
@@ -179,7 +184,8 @@ class FileCache implements CacheInterface
             return null;
         }
 
-        $entry = $this->decode((string) @file_get_contents($path));
+        $contents = GuardedCall::run(static fn(): string|false => file_get_contents($path));
+        $entry = $this->decode(is_string($contents) ? $contents : '');
 
         if ($entry !== null && !self::isExpired($entry)) {
             return $entry;
@@ -198,7 +204,7 @@ class FileCache implements CacheInterface
         $this->lock($key);
 
         try {
-            $fresh = @file_get_contents($path);
+            $fresh = GuardedCall::run(static fn(): string|false => file_get_contents($path));
 
             if (!is_string($fresh)) {
                 return null;
@@ -239,9 +245,9 @@ class FileCache implements CacheInterface
         $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
 
         // Owner-only on every platform (POSIX 0600 / Windows NTFS ACL)
-        if (@file_put_contents($tmp, $payload, LOCK_EX) === false
+        if (GuardedCall::run(static fn(): int|false => file_put_contents($tmp, $payload, LOCK_EX)) === false
             || !PlatformGuard::current()->restrict($tmp)
-            || !@rename($tmp, $path)
+            || GuardedCall::run(static fn(): bool => rename($tmp, $path)) !== true
         ) {
             SafeFileRemover::remove([$tmp], $this->directory);
             throw new StorageException("Unable to write cache entry: $key");
@@ -295,18 +301,21 @@ class FileCache implements CacheInterface
      */
     private function files(string $suffix): array
     {
-        $entries = @scandir($this->directory);
+        $directory = $this->directory;
+        $entries = GuardedCall::run(static fn(): array|false => scandir($directory));
 
-        if ($entries === false) {
+        if (!is_array($entries)) {
             return [];
         }
 
         $files = [];
 
         foreach ($entries as $name) {
-            if ($name !== '.' && $name !== '..' && str_ends_with($name, $suffix)) {
-                $files[] = $this->directory . DIRECTORY_SEPARATOR . $name;
+            if (!is_string($name) || $name === '.' || $name === '..' || !str_ends_with($name, $suffix)) {
+                continue;
             }
+
+            $files[] = $this->directory . DIRECTORY_SEPARATOR . $name;
         }
 
         return $files;
@@ -335,9 +344,9 @@ class FileCache implements CacheInterface
         }
 
         $path = $this->directory . '/' . $stripe . '.lock';
-        $handle = @fopen($path, 'c');
+        $handle = GuardedCall::run(static fn() => fopen($path, 'c'));
 
-        if ($handle === false) {
+        if (!is_resource($handle)) {
             throw new StorageException("Unable to open cache lock: $path");
         }
 

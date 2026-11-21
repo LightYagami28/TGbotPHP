@@ -31,12 +31,12 @@ final class PrivateFile
         $umask = umask(0077);
 
         try {
-            $handle = @fopen($path, 'xb');
+            $handle = GuardedCall::run(static fn() => fopen($path, 'xb'));
         } finally {
             umask($umask);
         }
 
-        if ($handle !== false) {
+        if (is_resource($handle)) {
             fclose($handle);
             PlatformGuard::current()->restrict($path);
         }

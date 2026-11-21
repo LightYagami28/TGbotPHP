@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Support\Platform\MacOS;
 
 use Override;
+use TGbotPHP\Support\GuardedCall;
 use TGbotPHP\Support\Platform\PrivateFileGuard;
 
 /**
@@ -16,15 +17,15 @@ final class MacOSPrivateFileGuard implements PrivateFileGuard
     #[Override]
     public function restrict(string $path): bool
     {
-        return @chmod($path, 0600);
+        return GuardedCall::run(static fn(): bool => chmod($path, 0600)) === true;
     }
 
     #[Override]
     public function isRestricted(string $path): bool
     {
-        $perms = @fileperms($path);
+        $perms = GuardedCall::run(static fn(): int|false => fileperms($path));
 
-        return $perms !== false && substr(sprintf('%o', $perms), -4) === '0600';
+        return is_int($perms) && substr(sprintf('%o', $perms), -4) === '0600';
     }
 
     /**
@@ -38,13 +39,13 @@ final class MacOSPrivateFileGuard implements PrivateFileGuard
     #[Override]
     public function makeReadOnly(string $directory): bool
     {
-        return is_dir($directory) && @chmod($directory, 0500);
+        return is_dir($directory) && GuardedCall::run(static fn(): bool => chmod($directory, 0500)) === true;
     }
 
     #[Override]
     public function restoreWritable(string $directory): bool
     {
-        return @chmod($directory, 0700);
+        return GuardedCall::run(static fn(): bool => chmod($directory, 0700)) === true;
     }
 
     #[Override]

@@ -94,6 +94,8 @@ final class ApiClientTest extends TestCase
 
     public function testCustomApiServer(): void
     {
+        // Plain HTTP is accepted here only because the base URL is a loopback
+        // test server; production base URLs must use HTTPS.
         $client = new ApiClient(
             new Config(Updates::TOKEN, enforceHttps: false, apiBaseUrl: 'http://localhost:8081/'),
             $this->transport,
@@ -473,8 +475,7 @@ final class ApiClientTest extends TestCase
         $transport = new FakeTransport();
         $client = new ApiClient(new Config(
             Updates::TOKEN,
-            apiBaseUrl: 'http://127.0.0.1:8081',
-            enforceHttps: false,
+            apiBaseUrl: 'https://127.0.0.1:8081',
         )->withLocalFileRoot(dirname($source)), $transport);
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
@@ -687,7 +688,7 @@ final class ApiClientTest extends TestCase
 
         $transport = new FakeTransport();
         $client = new ApiClient(
-            new Config(Updates::TOKEN, apiBaseUrl: 'http://127.0.0.1:8081', enforceHttps: false),
+            new Config(Updates::TOKEN, apiBaseUrl: 'https://127.0.0.1:8081'),
             $transport,
         );
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
@@ -714,8 +715,7 @@ final class ApiClientTest extends TestCase
         $transport = new FakeTransport();
         $client = new ApiClient(new Config(
             Updates::TOKEN,
-            apiBaseUrl: 'http://127.0.0.1:8081',
-            enforceHttps: false,
+            apiBaseUrl: 'https://127.0.0.1:8081',
         )->withLocalFileRoot($root), $transport);
         $transport->queueResult(['file_id' => 'f', 'file_path' => $source]);
 

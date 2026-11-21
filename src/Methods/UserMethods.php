@@ -9,6 +9,7 @@ use TGbotPHP\Core\Config;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Http\TransportInterface;
+use TGbotPHP\Support\GuardedCall;
 use TGbotPHP\Support\SafeFileRemover;
 use TGbotPHP\Support\Value;
 
@@ -213,7 +214,7 @@ trait UserMethods
         try {
             self::checkDownloadStatus($this->getTransport()->download($url, $tmp, $timeout));
 
-            if (!@rename($tmp, $destination)) {
+            if (GuardedCall::run(static fn(): bool => rename($tmp, $destination)) !== true) {
                 throw new StorageException("Unable to write file: $destination");
             }
         } finally {
@@ -270,7 +271,7 @@ trait UserMethods
             return self::readLocalFile($real);
         }
 
-        if (!@copy($real, $destination)) {
+        if (GuardedCall::run(static fn(): bool => copy($real, $destination)) !== true) {
             throw new StorageException("Unable to write file: $destination");
         }
 
@@ -288,9 +289,9 @@ trait UserMethods
             throw new StorageException('File exceeds the in-memory download limit');
         }
 
-        $contents = @file_get_contents($real);
+        $contents = GuardedCall::run(static fn(): string|false => file_get_contents($real));
 
-        if ($contents === false) {
+        if (!is_string($contents)) {
             throw new StorageException("Unable to read file: $real");
         }
 

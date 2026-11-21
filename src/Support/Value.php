@@ -121,7 +121,9 @@ final class Value
         $directory = is_string($directory) && $directory !== '' ? $directory : '/run/secrets';
         $file = rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . $name;
 
-        $contents = is_file($file) && is_readable($file) ? @file_get_contents($file) : false;
+        $contents = is_file($file) && is_readable($file)
+            ? GuardedCall::run(static fn(): string|false => file_get_contents($file))
+            : false;
         $contents = is_string($contents) ? rtrim($contents, "\r\n") : '';
 
         return $contents !== '' ? $contents : null;

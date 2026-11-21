@@ -124,7 +124,7 @@ new Config(
     token: '123456:ABC...',
     secretToken: false,           // required for webhooks (1-256 chars: A-Z a-z 0-9 _ -)
     apiBaseUrl: Config::DEFAULT_API_URL, // or a local Bot API server
-    enforceHttps: true,           // set to false only for a local server over plain HTTP
+    enforceHttps: true,           // false only for a loopback server with a private certificate
     timeout: 10,                  // seconds; long polling adds its own timeout on top
     retry: new RetryPolicy(maxRetries: 1, maxDelay: 30, transientRetries: 1), // 429, and network/5xx
     debug: false,                 // true: PHP error log; a string: log file path
