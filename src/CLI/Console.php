@@ -12,20 +12,20 @@ use TGbotPHP\Support\Value;
 use Throwable;
 
 /**
- * Command line tool
+ * Command line tool.
  *
  * The token is read from --token or the TELEGRAM_BOT_TOKEN environment
  * variable (preferred: command line arguments end up in shell history).
  */
 class Console
 {
-    /** @var callable(string): Bot */
+    /** @var callable(string): Bot Factory creating a bot from a token */
     private $botFactory;
 
-    /** @var resource */
+    /** @var resource Stream for normal output */
     private $output;
 
-    /** @var resource */
+    /** @var resource Stream for error messages (STDERR by default) */
     private $errors;
 
     /**
@@ -41,7 +41,7 @@ class Console
     }
 
     /**
-     * @param string[] $argv
+     * @param string[] $argv Command line arguments
      * @return int Exit code
      */
     public function run(array $argv): int
@@ -62,6 +62,7 @@ class Console
             };
         } catch (Throwable $e) {
             $this->error($e->getMessage());
+
             return 1;
         }
     }
@@ -101,6 +102,7 @@ EOF);
     private function showVersion(): int
     {
         $this->write('TGbotPHP v' . ApiClient::VERSION);
+
         return 0;
     }
 
@@ -126,7 +128,7 @@ EOF);
     }
 
     /**
-     * @param array<string, mixed> $info
+     * @param array<string, mixed> $info WebhookInfo
      */
     private function writeLastError(array $info): void
     {
@@ -149,6 +151,7 @@ EOF);
 
         if ($url === null || $url === '') {
             $this->error('--url is required');
+
             return 1;
         }
 
@@ -162,6 +165,7 @@ EOF);
         if ($secret === null) {
             $this->error('webhook:set requires --secret or TELEGRAM_SECRET_TOKEN. '
                 . 'handle() answers 403 without a secret');
+
             return 1;
         }
 
@@ -172,6 +176,7 @@ EOF);
         );
 
         $this->write('Webhook set');
+
         return 0;
     }
 
@@ -183,6 +188,7 @@ EOF);
         $this->bot($argv)->deleteWebhook($this->hasFlag($argv, 'drop-pending'));
 
         $this->write('Webhook deleted');
+
         return 0;
     }
 
@@ -206,8 +212,8 @@ EOF);
     }
 
     /**
-     * @param array<string, mixed> $meInfo
-     * @return array<string, bool>
+     * @param array<string, mixed> $meInfo User object returned by getMe
+     * @return array<string, bool> Human readable label => enabled
      */
     private static function privilegeFlags(array $meInfo): array
     {
@@ -227,6 +233,7 @@ EOF);
 
         if ($commands === []) {
             $this->write('No commands set');
+
             return 0;
         }
 
@@ -249,17 +256,21 @@ EOF);
         $this->bot($argv)->deleteMyCommands($this->getOption($argv, 'scope'), $this->getOption($argv, 'lang'));
 
         $this->write('Commands deleted');
+
         return 0;
     }
 
     private function unknown(string $command): int
     {
         $this->error("Unknown command: $command. Run tgbot help to list the commands.");
+
         return 1;
     }
 
     /**
      * @param string[] $argv
+     *
+     * @throws InvalidArgumentException When no token is available
      */
     private function bot(array $argv): Bot
     {
@@ -283,6 +294,7 @@ EOF);
                 return substr($arg, strlen($prefix));
             }
         }
+
         return null;
     }
 
