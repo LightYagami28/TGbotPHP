@@ -7,6 +7,7 @@ namespace TGbotPHP\Tests\Unit;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use TGbotPHP\Support\SafeFileRemover;
 use TGbotPHP\Support\Value;
 
 final class ValueTest extends TestCase
@@ -149,8 +150,7 @@ final class ValueTest extends TestCase
         } finally {
             chmod($unreadable, 0600);
             putenv('TGBOTPHP_SECRETS_DIR');
-            @unlink($unreadable);
-            @unlink($directory . '/lowercase');
+            SafeFileRemover::remove([$unreadable, $directory . '/lowercase'], $directory);
             rmdir($directory);
         }
     }
@@ -171,7 +171,7 @@ final class ValueTest extends TestCase
         } finally {
             putenv('TGBOTPHP_SECRET_FROM_FILE');
             putenv('TGBOTPHP_SECRETS_DIR');
-            @unlink($directory . '/TGBOTPHP_SECRET_FROM_FILE');
+            SafeFileRemover::remove([$directory . '/TGBOTPHP_SECRET_FROM_FILE'], $directory);
             rmdir($directory);
         }
     }

@@ -26,12 +26,17 @@ final class SafeFileRemoverTest extends TestCase
     {
         $inside = glob($this->root . '/*');
         $outside = glob($this->base . '/*');
+        $inside = $inside === false ? [] : $inside;
+        $outside = $outside === false ? [] : $outside;
 
-        foreach ([...($inside === false ? [] : $inside), ...($outside === false ? [] : $outside)] as $file) {
-            if (is_dir($file)) {
-                @rmdir($file);
-            } else {
-                @unlink($file);
+        // La pulizia passa dallo stesso helper canonicalizzato usato in produzione:
+        // nessun percorso derivato dall'ambiente raggiunge direttamente unlink().
+        SafeFileRemover::remove($inside, $this->root);
+        SafeFileRemover::remove($outside, $this->base);
+
+        foreach ([...$inside, ...$outside] as $entry) {
+            if (is_dir($entry)) {
+                @rmdir($entry);
             }
         }
         @rmdir($this->root);
