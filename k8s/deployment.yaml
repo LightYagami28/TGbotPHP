@@ -31,7 +31,7 @@ spec:
         - name: bot
           # Digest da aggiornare con quello rilasciato dalla pipeline: il tag
           # da solo non è immutabile (vedere k8s/README.md).
-          image: ghcr.io/lightyagami28/tgbotphp:2.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          image: ghcr.io/lightyagami28/tgbotphp:2.0.0@sha256:519f4d3632e5ddc14ee8fe3ab1d787a0e19ac3410323fde57c88772a918f6206
           imagePullPolicy: Always
           command: ["php", "examples/polling.php"]
           envFrom:
@@ -111,7 +111,7 @@ spec:
         - name: webhook
           # Digest da aggiornare con quello rilasciato dalla pipeline: il tag
           # da solo non è immutabile (vedere k8s/README.md).
-          image: ghcr.io/lightyagami28/tgbotphp:2.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          image: ghcr.io/lightyagami28/tgbotphp:2.0.0@sha256:519f4d3632e5ddc14ee8fe3ab1d787a0e19ac3410323fde57c88772a918f6206
           imagePullPolicy: Always
           command: ["php", "-S", "0.0.0.0:8000", "examples/webhook.php"]
           ports:
