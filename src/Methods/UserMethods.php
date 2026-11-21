@@ -12,7 +12,7 @@ use TGbotPHP\Http\TransportInterface;
 use TGbotPHP\Support\Value;
 
 /**
- * User, file and bot session methods from Telegram Bot API
+ * User, file and bot session methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#available-methods
  */
@@ -20,13 +20,14 @@ trait UserMethods
 {
     use CallsApi;
 
-    /** Largest file downloadFile() loads in memory: the Bot API download limit */
+    /** Largest file downloadFile() loads in memory: the Bot API download limit. */
     public const int MAX_MEMORY_DOWNLOAD = 20 * 1024 * 1024;
 
+    /** Transport used to download files; implemented by HttpClientTrait. */
     abstract public function getTransport(): TransportInterface;
 
     /**
-     * Get bot info
+     * Get basic information about the bot.
      *
      * @return array<string, mixed> User
      *
@@ -38,7 +39,7 @@ trait UserMethods
     }
 
     /**
-     * Log out from the cloud Bot API server before moving to a local one
+     * Log out from the cloud Bot API server before moving to a local one.
      *
      * @see https://core.telegram.org/bots/api#logout
      */
@@ -48,7 +49,7 @@ trait UserMethods
     }
 
     /**
-     * Close the bot instance before moving it from one local server to another
+     * Close the bot instance before moving it from one local server to another.
      *
      * @see https://core.telegram.org/bots/api#close
      */
@@ -75,7 +76,7 @@ trait UserMethods
     }
 
     /**
-     * Get the boosts added by a user to a chat
+     * Get the boosts added by a user to a chat.
      *
      * @return array<string, mixed> UserChatBoosts
      *
@@ -90,7 +91,7 @@ trait UserMethods
     }
 
     /**
-     * Get file info
+     * Get file info.
      *
      * @return array<string, mixed> File
      *
@@ -102,13 +103,13 @@ trait UserMethods
     }
 
     /**
-     * Build the download URL for a file_path returned by getFile()
+     * Build the download URL for a file_path returned by getFile().
      *
      * The path must be relative. `..`, empty segments and control characters
      * are rejected, and each segment is encoded. The URL contains the bot
      * token: never expose it to users.
      *
-     * @throws \InvalidArgumentException When the path is absolute or contains an unsafe segment
+     * @throws InvalidArgumentException When the path is absolute or contains an unsafe segment
      */
     public function getFileUrl(string $filePath): string
     {
@@ -119,7 +120,7 @@ trait UserMethods
     }
 
     /**
-     * Download a file by file_id
+     * Download a file by file_id.
      *
      * Without $destination the contents are returned, for files up to
      * MAX_MEMORY_DOWNLOAD bytes. With $destination the file is streamed to
@@ -131,7 +132,7 @@ trait UserMethods
      *
      * @throws ApiException
      * @throws StorageException
-     * @throws \InvalidArgumentException When file_path cannot be turned into a safe URL
+     * @throws InvalidArgumentException When file_path cannot be turned into a safe URL
      */
     public function downloadFile(string $fileId, ?string $destination = null): string
     {
@@ -153,7 +154,9 @@ trait UserMethods
     }
 
     /**
-     * @param array<string, mixed> $file
+     * @param array<string, mixed> $file File object returned by getFile
+     *
+     * @throws ApiException When the file is not available for download
      */
     private static function availableFilePath(array $file): string
     {
@@ -166,6 +169,9 @@ trait UserMethods
         return $filePath;
     }
 
+    /**
+     * @throws StorageException When an in-memory download would exceed the cap
+     */
     private static function assertFitsInMemory(?string $destination, ?int $size): void
     {
         if ($destination !== null) {
@@ -179,6 +185,8 @@ trait UserMethods
 
     /**
      * @return string The file contents
+     *
+     * @throws StorageException When the response exceeds the in-memory cap
      */
     private function downloadToMemory(string $url, int $timeout): string
     {
@@ -192,6 +200,11 @@ trait UserMethods
         return $response->body;
     }
 
+    /**
+     * Stream a download to a temporary file and rename it on success.
+     *
+     * @throws StorageException When the download fails or the rename fails
+     */
     private function downloadToDisk(string $url, string $destination, int $timeout): string
     {
         $tmp = $destination . '.' . bin2hex(random_bytes(4)) . '.part';
@@ -234,6 +247,7 @@ trait UserMethods
         return self::isInsideRoot($real, $rootReal);
     }
 
+    /** Compare two canonical paths with normalized separators. */
     private static function isInsideRoot(string $real, string $root): bool
     {
         $realNorm = str_replace('\\', '/', $real);
@@ -242,6 +256,9 @@ trait UserMethods
         return $realNorm === $rootNorm || str_starts_with($realNorm, rtrim($rootNorm, '/') . '/');
     }
 
+    /**
+     * @throws StorageException When the path is outside the trusted root or cannot be read
+     */
     private function copyLocalFile(string $filePath, ?string $destination): string
     {
         $real = realpath($filePath);
@@ -261,6 +278,9 @@ trait UserMethods
         return $destination;
     }
 
+    /**
+     * @throws StorageException When the file is too large or cannot be read
+     */
     private static function readLocalFile(string $real): string
     {
         $size = filesize($real);
@@ -279,7 +299,9 @@ trait UserMethods
     }
 
     /**
-     * @return list<string>
+     * @return list<string> Safe path segments, each one URL encoded by the caller
+     *
+     * @throws InvalidArgumentException When the path is absolute or contains an unsafe segment
      */
     private static function filePathSegments(string $filePath): array
     {
@@ -302,6 +324,9 @@ trait UserMethods
             && preg_match('/[\x00-\x1f\x7f]/', $filePath) !== 1;
     }
 
+    /**
+     * @throws ApiException When the server did not answer with HTTP 200
+     */
     private static function checkDownloadStatus(int $statusCode): void
     {
         if ($statusCode !== 200) {
@@ -310,10 +335,10 @@ trait UserMethods
     }
 
     /**
-     * Get a list of profile audios for a user
+     * Get a list of profile audios for a user.
      *
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> UserProfileAudios
      *
      * @see https://core.telegram.org/bots/api#getuserprofileaudios
      */
@@ -331,10 +356,10 @@ trait UserMethods
     }
 
     /**
-     * Tell a user that some of the Telegram Passport elements they provided contain errors
+     * Tell a user that some of the Telegram Passport elements they provided contain errors.
      *
-     * @param list<array<string, mixed>> $errors
-     * @param array<string, mixed> $options
+     * @param list<array<string, mixed>> $errors PassportElementError objects
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setpassportdataerrors
      */
@@ -350,9 +375,9 @@ trait UserMethods
     }
 
     /**
-     * Change the emoji status of a user who allowed the bot to manage it (requestEmojiStatusAccess in Mini Apps)
+     * Change the emoji status of a user who allowed the bot to manage it.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setuseremojistatus
      */

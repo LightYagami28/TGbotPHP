@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Payment methods from Telegram Bot API
+ * Payment methods from Telegram Bot API.
  *
  * For payments in Telegram Stars use currency "XTR" and omit the provider token.
  *
@@ -16,11 +16,13 @@ trait PaymentMethods
     use CallsApi;
 
     /**
-     * For payments in Telegram Stars use the "XTR" currency and no provider token
+     * Send an invoice.
      *
-     * @param list<array{label: string, amount: int}> $prices
+     * For payments in Telegram Stars use the "XTR" currency and no provider token.
+     *
+     * @param list<array{label: string, amount: int}> $prices Labeled prices
      * @param array<string, mixed> $options provider_token, max_tip_amount, suggested_tip_amounts, photo_url...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendinvoice
      */
@@ -44,8 +46,10 @@ trait PaymentMethods
     }
 
     /**
-     * @param array<int, array{label: string, amount: int}> $prices
-     * @param array<string, mixed> $options
+     * Create a link for an invoice with no chat attached.
+     *
+     * @param array<int, array{label: string, amount: int}> $prices Labeled prices
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#createinvoicelink
      */
@@ -69,7 +73,9 @@ trait PaymentMethods
     }
 
     /**
-     * @param array<int, array<string, mixed>>|null $shippingOptions
+     * Answer a shipping query.
+     *
+     * @param array<int, array<string, mixed>>|null $shippingOptions ShippingOption objects
      *
      * @see https://core.telegram.org/bots/api#answershippingquery
      */
@@ -88,7 +94,7 @@ trait PaymentMethods
     }
 
     /**
-     * Answer pre-checkout query (must be answered within 10 seconds)
+     * Answer pre-checkout query (must be answered within 10 seconds).
      *
      * @see https://core.telegram.org/bots/api#answerprecheckoutquery
      */
@@ -105,7 +111,7 @@ trait PaymentMethods
     }
 
     /**
-     * Refund a successful payment in Telegram Stars
+     * Refund a successful payment in Telegram Stars.
      *
      * @see https://core.telegram.org/bots/api#refundstarpayment
      */
@@ -118,7 +124,7 @@ trait PaymentMethods
     }
 
     /**
-     * Get the bot's Telegram Star transactions
+     * Get the bot's Telegram Star transactions.
      *
      * @return array<string, mixed> StarTransactions
      *
@@ -133,9 +139,9 @@ trait PaymentMethods
     }
 
     /**
-     * Cancel or re-enable extension of a subscription paid in Telegram Stars
+     * Cancel or re-enable extension of a subscription paid in Telegram Stars.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#edituserstarsubscription
      */
@@ -153,10 +159,10 @@ trait PaymentMethods
     }
 
     /**
-     * Get the current Telegram Stars balance of the bot
+     * Get the current Telegram Stars balance of the bot.
      *
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> StarBalance
      *
      * @see https://core.telegram.org/bots/api#getmystarbalance
      */

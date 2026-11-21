@@ -8,7 +8,7 @@ use JsonSerializable;
 use TGbotPHP\Types\InputFile;
 
 /**
- * Sticker methods from Telegram Bot API
+ * Sticker methods from Telegram Bot API.
  *
  * InputSticker objects may contain an InputFile in their "sticker" field;
  * it is uploaded automatically.
@@ -20,9 +20,11 @@ trait StickerMethods
     use CallsApi;
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * Send a sticker.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendsticker
      */
@@ -50,8 +52,8 @@ trait StickerMethods
     }
 
     /**
-     * @param string[] $customEmojiIds
-     * @return list<array<string, mixed>>
+     * @param string[] $customEmojiIds Custom emoji identifiers
+     * @return list<array<string, mixed>> Sticker objects
      *
      * @see https://core.telegram.org/bots/api#getcustomemojistickers
      */
@@ -63,7 +65,7 @@ trait StickerMethods
     }
 
     /**
-     * Upload a sticker file for later use
+     * Upload a sticker file for later use.
      *
      * @param string $stickerFormat "static", "animated" or "video"
      * @return array<string, mixed> File
@@ -80,7 +82,7 @@ trait StickerMethods
     }
 
     /**
-     * Create a new sticker set owned by a user
+     * Create a new sticker set owned by a user.
      *
      * @param array<int, array<string, mixed>> $stickers InputSticker objects (1-50)
      * @param string|null $stickerType "regular", "mask" or "custom_emoji"
@@ -139,7 +141,7 @@ trait StickerMethods
     }
 
     /**
-     * @param string[] $emojiList
+     * @param string[] $emojiList Emojis representing the sticker
      *
      * @see https://core.telegram.org/bots/api#setstickeremojilist
      */
@@ -152,7 +154,7 @@ trait StickerMethods
     }
 
     /**
-     * @param string[] $keywords
+     * @param string[] $keywords Search keywords
      *
      * @see https://core.telegram.org/bots/api#setstickerkeywords
      */
@@ -184,10 +186,10 @@ trait StickerMethods
     }
 
     /**
-     * Replace an existing sticker in a sticker set with a new one
+     * Replace an existing sticker in a sticker set with a new one.
      *
-     * @param array<string, mixed> $sticker
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $sticker InputSticker object
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#replacestickerinset
      */
@@ -207,9 +209,9 @@ trait StickerMethods
     }
 
     /**
-     * Set the thumbnail of a custom emoji sticker set
+     * Set the thumbnail of a custom emoji sticker set.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setcustomemojistickersetthumbnail
      */
@@ -225,10 +227,10 @@ trait StickerMethods
     }
 
     /**
-     * Change the mask position of a mask sticker
+     * Change the mask position of a mask sticker.
      *
-     * @param array<string, mixed>|null $maskPosition
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>|null $maskPosition MaskPosition object
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setstickermaskposition
      */
@@ -244,9 +246,9 @@ trait StickerMethods
     }
 
     /**
-     * Set the thumbnail of a regular or mask sticker set
+     * Set the thumbnail of a regular or mask sticker set.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setstickersetthumbnail
      */

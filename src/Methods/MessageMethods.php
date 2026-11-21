@@ -8,7 +8,7 @@ use JsonSerializable;
 use TGbotPHP\Types\InputFile;
 
 /**
- * Message methods from Telegram Bot API
+ * Message methods from Telegram Bot API.
  *
  * Every method accepts a trailing `$options` array that is merged into the
  * request, so any optional parameter (message_thread_id, reply_parameters,
@@ -21,11 +21,11 @@ trait MessageMethods
     use CallsApi;
 
     /**
-     * Send text message
+     * Send a text message.
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendmessage
      */
@@ -49,8 +49,10 @@ trait MessageMethods
     }
 
     /**
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * Forward a message.
+     *
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#forwardmessage
      */
@@ -70,10 +72,10 @@ trait MessageMethods
     }
 
     /**
-     * Forward multiple messages
+     * Forward multiple messages.
      *
-     * @param int[] $messageIds
-     * @param array<string, mixed> $options
+     * @param int[] $messageIds Identifiers of the messages to forward
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      * @return list<array<string, mixed>> MessageId objects
      *
      * @see https://core.telegram.org/bots/api#forwardmessages
@@ -92,8 +94,10 @@ trait MessageMethods
     }
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * Copy a message without a link to the original.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      * @return array<string, mixed> MessageId object
      *
      * @see https://core.telegram.org/bots/api#copymessage
@@ -118,10 +122,10 @@ trait MessageMethods
     }
 
     /**
-     * Copy multiple messages
+     * Copy multiple messages.
      *
-     * @param int[] $messageIds
-     * @param array<string, mixed> $options
+     * @param int[] $messageIds Identifiers of the messages to copy
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      * @return list<array<string, mixed>> MessageId objects
      *
      * @see https://core.telegram.org/bots/api#copymessages
@@ -140,10 +144,12 @@ trait MessageMethods
     }
 
     /**
+     * Send a photo.
+     *
      * @param string|InputFile $photo file_id, HTTP URL or InputFile to upload
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendphoto
      */
@@ -165,9 +171,11 @@ trait MessageMethods
     }
 
     /**
+     * Send an audio file.
+     *
      * @param string|InputFile $audio file_id, HTTP URL or InputFile to upload
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendaudio
      */
@@ -191,9 +199,11 @@ trait MessageMethods
     }
 
     /**
+     * Send a general document.
+     *
      * @param string|InputFile $document file_id, HTTP URL or InputFile to upload
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#senddocument
      */
@@ -213,10 +223,12 @@ trait MessageMethods
     }
 
     /**
+     * Send a video.
+     *
      * @param string|InputFile $video file_id, HTTP URL or InputFile to upload
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options duration, width, height, supports_streaming, thumbnail...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendvideo
      */
@@ -238,14 +250,16 @@ trait MessageMethods
     }
 
     /**
+     * Edit the text of a message.
+     *
      * Pass `$chatId = null`, `$messageId = null` and `['inline_message_id' => ...]`
      * in `$options` to edit an inline message.
      *
      * Telegram removes the inline keyboard when $replyMarkup is omitted: pass
      * it again to keep the buttons.
      *
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      * @return array<string, mixed>|bool Edited message, or true for inline messages
      *
      * @see https://core.telegram.org/bots/api#editmessagetext
@@ -268,9 +282,11 @@ trait MessageMethods
     }
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
+     * Edit the caption of a message.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed>|bool Edited message, or true for inline messages
      *
      * @see https://core.telegram.org/bots/api#editmessagecaption
      */
@@ -292,10 +308,12 @@ trait MessageMethods
     }
 
     /**
+     * Edit the media of a message.
+     *
      * @param array<string, mixed> $media InputMedia object; "media" may be an InputFile
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed>|bool Edited message, or true for inline messages
      *
      * @see https://core.telegram.org/bots/api#editmessagemedia
      */
@@ -315,9 +333,11 @@ trait MessageMethods
     }
 
     /**
+     * Edit only the reply markup of a message.
+     *
      * @param array<string, mixed>|JsonSerializable|null $replyMarkup New inline keyboard; null removes it
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>|bool
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed>|bool Edited message, or true for inline messages
      *
      * @see https://core.telegram.org/bots/api#editmessagereplymarkup
      */
@@ -336,6 +356,8 @@ trait MessageMethods
     }
 
     /**
+     * Delete a message.
+     *
      * @see https://core.telegram.org/bots/api#deletemessage
      */
     public function deleteMessage(int|string $chatId, int $messageId): bool
@@ -347,9 +369,9 @@ trait MessageMethods
     }
 
     /**
-     * Delete multiple messages (1-100)
+     * Delete multiple messages (1-100).
      *
-     * @param int[] $messageIds
+     * @param int[] $messageIds Identifiers of the messages to delete
      *
      * @see https://core.telegram.org/bots/api#deletemessages
      */
@@ -362,9 +384,9 @@ trait MessageMethods
     }
 
     /**
-     * Send chat action (typing, upload_photo, record_video, ...)
+     * Send a chat action (typing, upload_photo, record_video, ...).
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#sendchataction
      */
@@ -377,9 +399,9 @@ trait MessageMethods
     }
 
     /**
-     * Approve a suggested post in a direct messages chat
+     * Approve a suggested post in a direct messages chat.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#approvesuggestedpost
      */
@@ -397,9 +419,9 @@ trait MessageMethods
     }
 
     /**
-     * Decline a suggested post in a direct messages chat
+     * Decline a suggested post in a direct messages chat.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#declinesuggestedpost
      */
@@ -417,12 +439,12 @@ trait MessageMethods
     }
 
     /**
-     * Edit a checklist on behalf of a connected business account
+     * Edit a checklist on behalf of a connected business account.
      *
-     * @param array<string, mixed> $checklist
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $checklist InputChecklistEdit object
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Message
      *
      * @see https://core.telegram.org/bots/api#editmessagechecklist
      */
@@ -444,10 +466,10 @@ trait MessageMethods
     }
 
     /**
-     * Get the last messages from the personal chat a user added to their profile
+     * Get the last messages from the personal chat a user added to their profile.
      *
-     * @param array<string, mixed> $options
-     * @return list<array<string, mixed>>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return list<array<string, mixed>> Messages
      *
      * @see https://core.telegram.org/bots/api#getuserpersonalchatmessages
      */
@@ -463,12 +485,12 @@ trait MessageMethods
     }
 
     /**
-     * Send a checklist on behalf of a connected business account
+     * Send a checklist on behalf of a connected business account.
      *
-     * @param array<string, mixed> $checklist
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed> $checklist InputChecklist object
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options disable_notification, protect_content, message_effect_id, reply_parameters
-     * @return array<string, mixed>
+     * @return array<string, mixed> Message
      *
      * @see https://core.telegram.org/bots/api#sendchecklist
      */
@@ -488,7 +510,7 @@ trait MessageMethods
     }
 
     /**
-     * Stream a partial message to a user while the message is being generated
+     * Stream a partial message to a user while the message is being generated.
      *
      * @param array<string, mixed> $options message_thread_id, parse_mode, entities, can_stop, ...
      *
@@ -508,13 +530,13 @@ trait MessageMethods
     }
 
     /**
-     * Send a rich message
+     * Send a rich message.
      *
-     * @param array<string, mixed> $richMessage
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
+     * @param array<string, mixed> $richMessage InputRichMessage object
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
      * @param array<string, mixed> $options business_connection_id, message_thread_id,
      *     direct_messages_topic_id, ephemeral_message_parameters, ...
-     * @return array<string, mixed>
+     * @return array<string, mixed> Message
      *
      * @see https://core.telegram.org/bots/api#sendrichmessage
      */
@@ -532,9 +554,9 @@ trait MessageMethods
     }
 
     /**
-     * Stream a partial rich message to a user while the message is being generated
+     * Stream a partial rich message to a user while the message is being generated.
      *
-     * @param array<string, mixed> $richMessage
+     * @param array<string, mixed> $richMessage InputRichMessage object
      * @param array<string, mixed> $options message_thread_id, can_stop, keep_on_stop
      *
      * @see https://core.telegram.org/bots/api#sendrichmessagedraft
