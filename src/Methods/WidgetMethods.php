@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Interactive HTML Widget methods from Telegram Bot API 10.4
+ * Interactive HTML Widget methods from Telegram Bot API 10.4.
  *
  * Send interactive widgets, update widget state, and answer widget queries.
  *
@@ -16,12 +16,12 @@ trait WidgetMethods
     use CallsApi;
 
     /**
-     * Send an interactive HTML widget
+     * Send an interactive HTML widget.
      *
      * @param int|string $chatId Unique identifier for the target chat
      * @param string $html The HTML content of the widget
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent message
      *
      * @see https://core.telegram.org/bots/api#sendwidget
      */
@@ -34,12 +34,12 @@ trait WidgetMethods
     }
 
     /**
-     * Send a shared widget created by the bot
+     * Send a shared widget created by the bot.
      *
      * @param int|string $chatId Unique identifier for the target chat
      * @param string $widgetId Unique identifier of the shared widget
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent message
      *
      * @see https://core.telegram.org/bots/api#sendsharedwidget
      */
@@ -52,11 +52,10 @@ trait WidgetMethods
     }
 
     /**
-     * Send an answer to a query sent by an interactive widget
+     * Send an answer to a query sent by an interactive widget.
      *
      * @param string $widgetQueryId Unique identifier for the query to be answered
-     * @param array<string, mixed> $options data
-     * @return bool
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#answerwidgetquery
      */
@@ -68,10 +67,9 @@ trait WidgetMethods
     }
 
     /**
-     * Edit the data of a widget in a message
+     * Edit the data of a widget in a message.
      *
      * @param array<string, mixed> $options chat_id, message_id, inline_message_id, public_data, chat_data
-     * @return bool
      *
      * @see https://core.telegram.org/bots/api#editmessagewidgetdata
      */
@@ -81,12 +79,11 @@ trait WidgetMethods
     }
 
     /**
-     * Edit the public data of a shared widget
+     * Edit the public data of a shared widget.
      *
      * @param string $widgetId Unique identifier of the shared widget
      * @param string $publicData New public data for the widget
-     * @param array<string, mixed> $options cache_time
-     * @return bool
+     * @param array<string, mixed> $options Extra parameters such as cache_time
      *
      * @see https://core.telegram.org/bots/api#editsharedwidgetdata
      */

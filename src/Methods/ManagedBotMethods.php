@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Managed bot methods from Telegram Bot API
+ * Managed bot methods from Telegram Bot API.
  *
  * Tokens and access settings of the bots managed by this bot.
  *
@@ -16,10 +16,10 @@ trait ManagedBotMethods
     use CallsApi;
 
     /**
-     * Get the access settings of a managed bot
+     * Get the access settings of a managed bot.
      *
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Bot access settings
      *
      * @see https://core.telegram.org/bots/api#getmanagedbotaccesssettings
      */
@@ -31,9 +31,9 @@ trait ManagedBotMethods
     }
 
     /**
-     * Get the token of a managed bot
+     * Get the token of a managed bot.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#getmanagedbottoken
      */
@@ -45,9 +45,9 @@ trait ManagedBotMethods
     }
 
     /**
-     * Revoke the current token of a managed bot and generate a new one
+     * Revoke the current token of a managed bot and generate a new one.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#replacemanagedbottoken
      */
@@ -59,10 +59,10 @@ trait ManagedBotMethods
     }
 
     /**
-     * Change the access settings of a managed bot
+     * Change the access settings of a managed bot.
      *
-     * @param list<int>|null $addedUserIds
-     * @param array<string, mixed> $options
+     * @param list<int>|null $addedUserIds User ids to add to the allowlist
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#setmanagedbotaccesssettings
      */

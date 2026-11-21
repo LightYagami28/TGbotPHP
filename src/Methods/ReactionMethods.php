@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Reaction methods from Telegram Bot API
+ * Reaction methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#setmessagereaction
  */
@@ -14,12 +14,12 @@ trait ReactionMethods
     use CallsApi;
 
     /**
-     * Change the bot's reactions on a message
+     * Change the bot's reactions on a message.
      *
      * Reactions may be ReactionType objects or plain emoji strings
      * (`['👍']`). Pass null or an empty array to remove reactions.
      *
-     * @param array<int, string|array<string, mixed>>|null $reaction
+     * @param array<int, string|array<string, mixed>>|null $reaction Reaction types or emoji strings
      *
      * @see https://core.telegram.org/bots/api#setmessagereaction
      */
@@ -43,9 +43,9 @@ trait ReactionMethods
     }
 
     /**
-     * Remove up to 10000 recent reactions in a group or a supergroup chat added by a given user or chat
+     * Remove up to 10000 recent reactions in a group or supergroup chat.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#deleteallmessagereactions
      */
@@ -63,9 +63,9 @@ trait ReactionMethods
     }
 
     /**
-     * Remove a reaction from a message in a group or a supergroup chat
+     * Remove a reaction from a message in a group or supergroup chat.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#deletemessagereaction
      */

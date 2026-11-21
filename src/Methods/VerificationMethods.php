@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Verification methods from Telegram Bot API
+ * Verification methods from Telegram Bot API.
  *
  * For bots of organizations that verify users and chats on behalf of Telegram.
  *
@@ -16,9 +16,9 @@ trait VerificationMethods
     use CallsApi;
 
     /**
-     * Remove verification from a chat that is currently verified on behalf of the organization represented by the bot
+     * Remove verification from a chat verified on behalf of the organization.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#removechatverification
      */
@@ -30,9 +30,9 @@ trait VerificationMethods
     }
 
     /**
-     * Remove verification from a user who is currently verified on behalf of the organization represented by the bot
+     * Remove verification from a user verified on behalf of the organization.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#removeuserverification
      */
@@ -44,9 +44,9 @@ trait VerificationMethods
     }
 
     /**
-     * Verify a chat on behalf of the organization which is represented by the bot
+     * Verify a chat on behalf of the organization represented by the bot.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#verifychat
      */
@@ -62,9 +62,9 @@ trait VerificationMethods
     }
 
     /**
-     * Verify a user on behalf of the organization which is represented by the bot
+     * Verify a user on behalf of the organization represented by the bot.
      *
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#verifyuser
      */

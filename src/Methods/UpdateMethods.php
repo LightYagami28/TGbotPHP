@@ -8,9 +8,10 @@ use InvalidArgumentException;
 use TGbotPHP\Types\InputFile;
 
 /**
- * Update handling methods from Telegram Bot API
+ * Update handling methods from Telegram Bot API.
  *
  * Supports both webhook and long polling modes.
+ *
  * @see https://core.telegram.org/bots/api#getting-updates
  */
 trait UpdateMethods
@@ -18,10 +19,10 @@ trait UpdateMethods
     use CallsApi;
 
     /**
-     * Receive incoming updates using long polling
+     * Receive incoming updates using long polling.
      *
-     * @param string[]|null $allowedUpdates
-     * @return list<array<string, mixed>>
+     * @param string[]|null $allowedUpdates Types of updates to request
+     * @return list<array<string, mixed>> Updates decoded as associative arrays
      *
      * @see https://core.telegram.org/bots/api#getupdates
      */
@@ -40,12 +41,12 @@ trait UpdateMethods
     }
 
     /**
-     * getUpdates, with the updates decoded as objects, exactly as a webhook receives them
+     * getUpdates, with the updates decoded as objects, exactly as a webhook receives them.
      *
      * Bot::handleUpdate() and processUpdate() accept these updates as they are.
      *
-     * @param string[]|null $allowedUpdates
-     * @return list<\stdClass>
+     * @param string[]|null $allowedUpdates Types of updates to request
+     * @return list<\stdClass> Updates decoded as objects
      */
     public function fetchUpdates(
         ?int $offset = null,
@@ -62,9 +63,9 @@ trait UpdateMethods
     }
 
     /**
-     * Set webhook URL for receiving updates
+     * Set webhook URL for receiving updates.
      *
-     * @param string[]|null $allowedUpdates
+     * @param string[]|null $allowedUpdates Types of updates to request
      *
      * @see https://core.telegram.org/bots/api#setwebhook
      */
@@ -93,7 +94,7 @@ trait UpdateMethods
     }
 
     /**
-     * Remove webhook integration; switch back to getUpdates
+     * Remove webhook integration; switch back to getUpdates.
      *
      * @see https://core.telegram.org/bots/api#deletewebhook
      */
@@ -105,7 +106,7 @@ trait UpdateMethods
     }
 
     /**
-     * Get current webhook status and information
+     * Get current webhook status and information.
      *
      * @return array<string, mixed> WebhookInfo
      *
@@ -125,6 +126,7 @@ trait UpdateMethods
         return $updateTypes === null ? null : array_values($updateTypes);
     }
 
+    /** Send a boolean flag only when it is true. */
     private static function flag(bool $enabled): ?bool
     {
         return $enabled ? true : null;

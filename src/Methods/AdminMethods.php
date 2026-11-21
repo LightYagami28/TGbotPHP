@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Methods;
 
 /**
- * Chat administration methods from Telegram Bot API
+ * Chat administration methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#available-methods
  */
@@ -25,6 +25,8 @@ trait AdminMethods
     }
 
     /**
+     * Ban a user from a chat.
+     *
      * @see https://core.telegram.org/bots/api#banchatmember
      */
     public function banChatMember(
@@ -42,6 +44,8 @@ trait AdminMethods
     }
 
     /**
+     * Unban a previously banned user.
+     *
      * @see https://core.telegram.org/bots/api#unbanchatmember
      */
     public function unbanChatMember(
@@ -57,8 +61,10 @@ trait AdminMethods
     }
 
     /**
+     * Restrict a user in a chat.
+     *
      * @param array<string, bool> $permissions ChatPermissions object
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#restrictchatmember
      */
@@ -78,8 +84,10 @@ trait AdminMethods
     }
 
     /**
+     * Promote a user to administrator.
+     *
      * @param array<string, bool> $rights ChatAdministratorRights, e.g. ['can_delete_messages' => true]
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
      *
      * @see https://core.telegram.org/bots/api#promotechatmember
      */
@@ -93,6 +101,8 @@ trait AdminMethods
     }
 
     /**
+     * Set a custom title for an administrator.
+     *
      * @see https://core.telegram.org/bots/api#setchatadministratorcustomtitle
      */
     public function setChatAdministratorCustomTitle(
@@ -108,7 +118,7 @@ trait AdminMethods
     }
 
     /**
-     * Ban a channel chat in a supergroup or channel
+     * Ban a channel chat in a supergroup or channel.
      *
      * @see https://core.telegram.org/bots/api#banchatsenderchat
      */
@@ -121,6 +131,8 @@ trait AdminMethods
     }
 
     /**
+     * Unban a channel chat in a supergroup or channel.
+     *
      * @see https://core.telegram.org/bots/api#unbanchatsenderchat
      */
     public function unbanChatSenderChat(int|string $chatId, int $senderChatId): bool

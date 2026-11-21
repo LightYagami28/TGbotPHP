@@ -7,7 +7,7 @@ namespace TGbotPHP\Methods;
 use JsonSerializable;
 
 /**
- * Game methods from Telegram Bot API
+ * Game methods from Telegram Bot API.
  *
  * @see https://core.telegram.org/bots/api#games
  */
@@ -16,9 +16,11 @@ trait GameMethods
     use CallsApi;
 
     /**
-     * @param array<string, mixed>|JsonSerializable|null $replyMarkup
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * Send a game.
+     *
+     * @param array<string, mixed>|JsonSerializable|null $replyMarkup InlineKeyboardMarkup
+     * @param array<string, mixed> $options Extra parameters overriding the named ones
+     * @return array<string, mixed> Sent Message
      *
      * @see https://core.telegram.org/bots/api#sendgame
      */
@@ -38,6 +40,8 @@ trait GameMethods
     }
 
     /**
+     * Set the score of a user in a game.
+     *
      * @return array<string, mixed>|bool Edited message, or true for inline messages
      *
      * @see https://core.telegram.org/bots/api#setgamescore
@@ -63,6 +67,8 @@ trait GameMethods
     }
 
     /**
+     * Get the highest scores of a game.
+     *
      * @return list<array<string, mixed>> GameHighScore objects
      *
      * @see https://core.telegram.org/bots/api#getgamehighscores
