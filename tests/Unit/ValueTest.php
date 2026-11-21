@@ -126,4 +126,25 @@ final class ValueTest extends TestCase
             putenv('TGBOTPHP_EMPTY_VAR');
         }
     }
+
+    public function testEnvFallsBackToAMountedSecretFile(): void
+    {
+        $directory = sys_get_temp_dir() . '/tgbotphp-secrets-' . bin2hex(random_bytes(4));
+        mkdir($directory);
+        file_put_contents($directory . '/TGBOTPHP_SECRET_FROM_FILE', "from-file\n");
+
+        putenv('TGBOTPHP_SECRETS_DIR=' . $directory);
+        putenv('TGBOTPHP_SECRET_FROM_FILE');
+
+        try {
+            self::assertSame('from-file', Value::env('TGBOTPHP_SECRET_FROM_FILE'));
+            putenv('TGBOTPHP_SECRET_FROM_FILE=from-env');
+            self::assertSame('from-env', Value::env('TGBOTPHP_SECRET_FROM_FILE'));
+        } finally {
+            putenv('TGBOTPHP_SECRET_FROM_FILE');
+            putenv('TGBOTPHP_SECRETS_DIR');
+            @unlink($directory . '/TGBOTPHP_SECRET_FROM_FILE');
+            rmdir($directory);
+        }
+    }
 }

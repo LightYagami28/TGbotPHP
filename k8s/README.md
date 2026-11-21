@@ -9,7 +9,7 @@ Manifests in this directory deploy two modes of the bot:
 
 - `namespace.yaml` — dedicated namespace `tgbotphp` with Pod Security Standards `restricted`
 - `configmap.yaml` — non-sensitive configuration
-- `secret.yaml` — **template** with placeholders; never commit real values
+- `secret.yaml` — **template** with empty values; never commit real values
 - `deployment.yaml` — Deployments for polling and webhook modes
 - `service.yaml` — ClusterIP Service for the webhook (port 80 -> 8000)
 - `ingress.yaml` — Ingress with mandatory HTTPS/TLS via cert-manager (webhook mode)
@@ -18,9 +18,11 @@ Manifests in this directory deploy two modes of the bot:
 
 - Kubernetes cluster with an Ingress controller (e.g. `ingress-nginx`)
 - cert-manager installed with a `ClusterIssuer` named `letsencrypt-prod`
-- Container image `ghcr.io/lightyagami28/tgbotphp:2.0.0` available to the cluster
-  (build and push your own pinned tag or digest, then update `image:` in
-  `deployment.yaml`; never use `latest`)
+- Container image `ghcr.io/lightyagami28/tgbotphp:2.0.0` available to the cluster.
+  `deployment.yaml` pins an immutable digest placeholder: replace the
+  `sha256:...` value with the digest printed by your registry after the push
+  (`docker buildx imagetools inspect <image>:<tag>`), in both Deployments.
+  `imagePullPolicy: Always` keeps the digest fresh on every rollout.
 
 ## Hardening applied
 
@@ -32,6 +34,9 @@ Manifests in this directory deploy two modes of the bot:
 - The namespace enforces the `restricted` Pod Security Standard (audit + warn).
 - The Ingress redirects all traffic to HTTPS and terminates TLS with cert-manager.
 - The Service is `ClusterIP`: the webhook is reachable only through the Ingress.
+- The Secret is mounted read-only at `/run/secrets` instead of being copied
+  into environment variables; `Value::env()` falls back to those files only
+  when the matching environment variable is absent.
 
 ## Deploy
 

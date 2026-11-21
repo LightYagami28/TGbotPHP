@@ -29,14 +29,14 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: bot
-          image: ghcr.io/lightyagami28/tgbotphp:2.0.0
-          imagePullPolicy: IfNotPresent
+          # Digest da aggiornare con quello rilasciato dalla pipeline: il tag
+          # da solo non è immutabile (vedere k8s/README.md).
+          image: ghcr.io/lightyagami28/tgbotphp:2.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          imagePullPolicy: Always
           command: ["php", "examples/polling.php"]
           envFrom:
             - configMapRef:
                 name: tgbotphp-config
-            - secretRef:
-                name: tgbotphp-secrets
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
@@ -53,6 +53,9 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: secrets
+              mountPath: /run/secrets
+              readOnly: true
           livenessProbe:
             exec:
               command: ["sh", "-c", "kill -0 1"]
@@ -70,6 +73,10 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: secrets
+          secret:
+            secretName: tgbotphp-secrets
+            defaultMode: 0400
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -102,8 +109,10 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: webhook
-          image: ghcr.io/lightyagami28/tgbotphp:2.0.0
-          imagePullPolicy: IfNotPresent
+          # Digest da aggiornare con quello rilasciato dalla pipeline: il tag
+          # da solo non è immutabile (vedere k8s/README.md).
+          image: ghcr.io/lightyagami28/tgbotphp:2.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          imagePullPolicy: Always
           command: ["php", "-S", "0.0.0.0:8000", "examples/webhook.php"]
           ports:
             - name: http
@@ -112,8 +121,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: tgbotphp-config
-            - secretRef:
-                name: tgbotphp-secrets
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
@@ -130,6 +137,9 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: secrets
+              mountPath: /run/secrets
+              readOnly: true
           livenessProbe:
             tcpSocket:
               port: http
@@ -152,3 +162,7 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: secrets
+          secret:
+            secretName: tgbotphp-secrets
+            defaultMode: 0400

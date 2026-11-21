@@ -97,12 +97,43 @@ final class Value
         };
     }
 
-    /** Read an environment variable; null when it is missing or empty. */
+    /**
+     * Read an environment variable, falling back to a mounted secret file.
+     *
+     * Kubernetes secrets mounted as files are exposed under /run/secrets by
+     * default; TGBOTPHP_SECRETS_DIR overrides that directory. The environment
+     * variable always wins, so local development and Docker Compose keep
+     * working unchanged.
+     */
     public static function env(string $name): ?string
     {
         $value = getenv($name);
 
-        return is_string($value) && $value !== '' ? $value : null;
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        if (preg_match('/\A[A-Z][A-Z0-9_]*\z/', $name) !== 1) {
+            return null;
+        }
+
+        $directory = getenv('TGBOTPHP_SECRETS_DIR');
+        $directory = is_string($directory) && $directory !== '' ? $directory : '/run/secrets';
+        $file = rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . $name;
+
+        if (!is_file($file) || !is_readable($file)) {
+            return null;
+        }
+
+        $contents = @file_get_contents($file);
+
+        if (!is_string($contents)) {
+            return null;
+        }
+
+        $contents = rtrim($contents, "\r\n");
+
+        return $contents !== '' ? $contents : null;
     }
 
     /** Return the value only when it is a decoded JSON object. */
