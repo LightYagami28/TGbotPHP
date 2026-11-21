@@ -1,54 +1,34 @@
 ---
 title: "Roadmap"
-description: "Completed milestones and future plans for TGbotPHP, aligned with SPEC.md."
+description: "Stato attuale, obiettivi e prossimi passi del progetto."
 ---
 
 # Roadmap
 
-Stato al 2026-11-17.
+## Stato attuale
 
-This document records proposals and completed milestones aligned with [SPEC.md](https://github.com/LightYagami28/TGbotPHP/blob/main/SPEC.md).
+TGbotPHP copre la Telegram Bot API 10.4 con 193 metodi e wrapper dedicati, con test di conformità. La suite PHPUnit esegue 543 test con 1822 asserzioni, tutti superati (4 test saltati in ambienti senza estensioni opzionali). PHPStan livello 10 con `phpstan-strict-rules` e `phpstan-phpunit` termina a zero errori; `composer audit` non segnala vulnerabilità.
 
-## Obiettivi Completati
+Le protezioni già presenti e verificabili nel codice sono:
 
-1. **Copertura Telegram Bot API 10.4 al 100%**:
-   - 193 metodi API coperti con wrapper dedicati e test di conformità per parametri e tipi di ritorno (`BotApiCoverageTest`).
-   - Supporto HTML Widgets (`sendWidget`, `sendSharedWidget`, `answerWidgetQuery`, `editMessageWidgetData`, `editSharedWidgetData`).
-   - Supporto chat share backdrops (`getChatShareThemeBackdrops`).
-   - Supporto regali unici e business account (`getUniqueGift`, `deleteBusinessAccountGift`).
-   - 29 update types verificati e gestiti in `UpdateParser` (inclusi `widget_query` e `shared_widget_query`).
-2. **Hardening di Sicurezza**:
-   - Validazione secret token anti-spoofing obbligatoria su webhook (`403 Forbidden` per default se non configurato o errato).
-   - Mitigazione CRLF log injection (CWE-117) e redazione automatica dei token sensibili (`LogRedactor::safeExceptionMessage`).
-   - Zero vulnerabilità note nelle dipendenze (`composer audit` pulito).
-3. **Analisi Statica e Tipizzazione**:
-   - PHPStan livello 10 con `phpstan-strict-rules` e `phpstan-phpunit` a 0 errori.
-   - Piena compatibilità con PHP 8.5.12+ (tipi stretti `declare(strict_types=1)` su tutti i file).
-4. **Portabilità e Suite di Test**:
-   - PHPUnit 13.4: 541 test, 1818 asserzioni, 0 errori, 0 fallimenti.
-   - Risolto bug risoluzione percorsi Windows NTFS (`UserMethods::isLocalServerFile` e `isInsideRoot`).
-   - Gestione differenziata permessi POSIX (`chmod 0555`, `0600`) su Windows NTFS.
+- secret token webhook obbligatorio e confrontato a tempo costante;
+- validazione del formato del token e limitazione degli URL API a HTTPS;
+- verifica TLS e disattivazione dei redirect in `CurlTransport`;
+- caricamento di file locali solo tramite `InputFile` esplicito;
+- controllo degli IP dei webhook e verifica HMAC/Ed25519 dei Mini App;
+- redazione dei segreti nei log e prevenzione del log injection;
+- rate limiting per utente e configurazione immutabile.
 
-## Milestone Future
+## Obiettivi
 
-1. **PHP 8.6 GA**:
-   - Aggiornamento target CI obbligatorio non appena PHP 8.6 raggiungerà il rilascio stabile ufficiale (attualmente in sviluppo non bloccante).
-2. **Estensioni di Cache Pluggabili**:
-   - Mantenimento dell'architettura zero-dependency per il core (`ext-curl` e `ext-json` uniche dipendenze runtime) con adapter comunitari separati per Redis/Memcached/DB tramite `CacheInterface`.
+- Mantenere 0 errori e 0 warning in PHPUnit, PHPStan e nelle analisi di sicurezza.
+- Mantenere `composer.lock` con checksum e zero dipendenze vulnerabili o deprecate.
+- Mantenere tutte le GitHub Action pinnate a SHA-256, aggiornate tramite Dependabot.
+- Tenere la documentazione (`docs/` e `wiki/`) allineata alle API effettive, verificata da `DocumentationTest`.
 
-## Fuori ambito
+## Prossimi passi
 
-- Dipendenze pesanti a runtime o framework monolitici.
-- Imposizione di rate-limiting Telegram lato client al di fuori del `RateLimiter` per-user.
-
-## Proposals from SPEC
-
-This document records proposals already identified in [SPEC.md](https://github.com/LightYagami28/TGbotPHP/blob/main/SPEC.md); it does not promise delivery dates or releases. Revalidate each item against current maintainers' priorities before implementation.
-
-### Existing project scope
-
-TGbotPHP is a PHP library for Telegram Bot API routing, middleware, and conversations. See the [README](https://github.com/LightYagami28/TGbotPHP/blob/main/README.md) and [architecture](docs/architecture.md) for the current documented scope.
-
-### Review
-
-Update this page when maintainers approve or close an item. The testing snapshot in project documents is time-bound and should be checked against current CI before being treated as current.
+1. Completare la riscrittura dei sorgenti PHP con validazione esplicita degli input, errori tipizzati e nessuna soppressione.
+2. Aggiungere header HTTP sicuri (CSP, HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`) negli esempi di deployment e nel manifest Kubernetes.
+3. Eliminare i 4 test saltati rendendo disponibili le estensioni opzionali nell'ambiente CI.
+4. Documentare le migrazioni alle nuove major delle dipendenze di sviluppo nel `CHANGELOG.md`.

@@ -1,54 +1,26 @@
 # Contributing
 
-1. Fork the repository and create a branch.
-2. Make your change, with tests.
-3. Run the checks:
+1. Fai un fork del repository e crea un branch dedicato.
+2. Applica **una sola modifica coerente** per pull request: un fix, una funzione, una checklist o una configurazione collegata. Non mescolare riscritture, fix CI, aggiornamenti di dipendenze e documentazione non correlata.
+3. Aggiungi i test per ogni modifica comportamentale.
+4. Esegui le verifiche:
 
    ```bash
    composer install
-   composer check                # PHPUnit + PHPStan level 10
-   php-cs-fixer check --diff     # code style (PER-CS 2.0)
+   composer check                   # PHPUnit + PHPStan livello 10
+   php-cs-fixer check --diff        # stile PER-CS 2.0
+   composer audit                   # vulnerabilità delle dipendenze
    ```
 
-4. Open a pull request describing what changed and why.
+5. Apri una pull request con titolo breve e concreto e una descrizione che indichi cosa cambia e come è stato verificato.
 
-## Guidelines
+## Linee guida
 
-- PHP 8.5 or later. PER-CS 2.0 code style (`php-cs-fixer fix`),
-  `declare(strict_types=1)` in every file.
-- PHPStan must pass at level 10 without baseline entries or `@phpstan-ignore`.
-- New API methods follow
-  [docs/development.md](docs/development.md#adding-an-api-method).
-- User-facing changes go in [CHANGELOG.md](CHANGELOG.md), and in the guide when
-  they change how the library is used.
-- The wiki is edited in [`wiki/`](wiki), not on GitHub: the `Wiki` workflow
-  publishes it when it reaches `main`, replacing edits made on GitHub.
-  `DocumentationTest` checks that its PHP examples use existing methods and
-  parameters, and that its links work.
-
-## Documentation
-
-The documentation is published in three places, from the same Markdown:
-
-| Place | Source | Notes |
-| --- | --- | --- |
-| [GitHub Wiki](https://github.com/LightYagami28/TGbotPHP/wiki) | `wiki/` | Published by the `Wiki` workflow, without the front matter |
-| Documentation site | `docs.json` | The navigation lists every page of `docs/` and `wiki/` |
-| Context7 library | `context7.json` | The library indexed for the coding agents, with the rules of `context7.json` |
-
-The pages of `docs/` and `wiki/` start with a front matter that titles and
-describes them:
-
-```yaml
----
-title: "Getting started"
-description: "Create a bot, install the library and run your first bot."
-icon: rocket
----
-```
-
-The title replaces the level 1 heading of the page, so the body starts at the
-level 2 headings. GitHub shows the front matter as a plain block, so the root
-files of the repository keep their first heading and no front matter.
-
-Report security problems privately, as described in [SECURITY.md](SECURITY.md).
+- PHP 8.5 o successivo, stile PER-CS 2.0, `declare(strict_types=1)` in ogni file.
+- PHPStan deve passare al livello 10 senza baseline né `@phpstan-ignore`.
+- Zero errori, zero warning, zero soppressioni: correggi sempre la causa.
+- Non usare catch vuoti, fallback silenziosi o valori predefiniti che mascherino errori.
+- Nessun segreto nei file o nei log; nessuna traccia di generazione automatica e nessun `Co-authored-by`.
+- I nuovi metodi API seguono [docs/development.md](docs/development.md#adding-an-api-method).
+- Le modifiche visibili all'utente vanno in [CHANGELOG.md](CHANGELOG.md) e nella guida quando cambiano l'uso della libreria.
+- Il wiki si modifica in [`wiki/`](wiki), non su GitHub: il workflow `Wiki` lo pubblica quando arriva su `main`. `DocumentationTest` verifica che gli esempi usino metodi e parametri esistenti.

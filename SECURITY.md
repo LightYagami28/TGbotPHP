@@ -1,87 +1,38 @@
 # Security Policy
 
-## Reporting Vulnerabilities
+## Segnalare una vulnerabilità
 
-Please do not open public issues for security problems. Report them privately
-with [GitHub Security
-Advisories](https://github.com/LightYagami28/TGbotPHP/security/advisories/new)
-or by email to ceo&#64;retechrevive.it.
+Non aprire una issue pubblica. Usa [GitHub Security Advisories](https://github.com/LightYagami28/TGbotPHP/security/advisories/new) oppure scrivi a **ceo@retechrevive.it**. Non includere token, segreti o dati personali nella segnalazione.
 
-## Built-in protections
+## Versioni supportate
 
-| Protection | Where |
+Solo l'ultima versione pubblicata riceve correzioni di sicurezza. La dipendenza minima è PHP 8.5.
+
+## Protezioni integrate
+
+| Protezione | Dove |
 |---|---|
-| Webhook requests without a secret are refused (403) unless `allowUnauthenticatedWebhook` is set | `Bot::handle()` |
-| Webhook secret token checked in constant time | `Bot::handle()`, `WebhookValidator::validate()` |
-| Token format validation (no path injection in API URLs) | `Config` |
-| HTTPS-only API server and webhook URLs | `Config`, `setWebhook()` |
-| TLS certificate and host verification | `CurlTransport` |
-| Uploads only through explicit `InputFile` objects: a string from a user is never read as a local path | media methods |
-| Telegram IP range check | `WebhookValidator::isTelegramIp()` |
-| Mini App `initData` HMAC and expiry check | `WebhookValidator::validateWebAppData()` |
-| HTML / MarkdownV2 escaping | `Formatter` |
-| No object deserialization from the cache | `FileCache` |
-| Log injection prevention | `Logger` |
-| Per-user rate limiting | `RateLimiter::middleware()` |
-| Secrets redacted from the debug log | `HttpClientTrait` |
-| Immutable configuration | `Config` (readonly properties) |
-| No redirects, HTTP(S) only | `CurlTransport` |
-| API results validated against the declared type | `apiCall*()` wrappers |
+| Webhook senza secret rifiutati (403) per impostazione predefinita | `Bot::handle()` |
+| Secret token confrontato a tempo costante | `WebhookValidator::validate()` |
+| Validazione del formato del token (no path injection negli URL) | `Config` |
+| Solo URL API e webhook HTTPS | `Config`, `setWebhook()` |
+| Verifica TLS di certificato e host | `CurlTransport` |
+| Upload solo tramite `InputFile` esplicito | metodi media |
+| Controllo degli IP dei webhook | `WebhookValidator::isTelegramIp()` |
+| Verifica HMAC e scadenza dei Mini App | `WebhookValidator::validateWebAppData()` |
+| Verifica Ed25519 dei Mini App di terze parti | `WebhookValidator::validateWebAppSignature()` |
+| Escape HTML e MarkdownV2 | `Formatter` |
+| Nessuna deserializzazione di oggetti dalla cache | `FileCache` |
+| Prevenzione del log injection e redazione dei segreti | `Logger`, `LogRedactor` |
+| Rate limiting per utente | `RateLimiter::middleware()` |
+| Configurazione immutabile | `Config` (readonly) |
+| Nessun redirect, solo HTTP(S) | `CurlTransport` |
 
-## Best Practices
+## Modello di sicurezza
 
-### 1. Webhook secret token
-
-A webhook with no secret is refused. Generate the secret with
-`openssl rand -hex 32` (1–256 characters: `A-Z a-z 0-9 _ -`) and put it in
-`TELEGRAM_SECRET_TOKEN`.
-
-```php
-$bot = new Bot(new Config(getenv('TELEGRAM_BOT_TOKEN'), secretToken: getenv('TELEGRAM_SECRET_TOKEN')));
-$bot->handle(); // 403 when the secret is missing, or the header does not match
-```
-
-Register the same secret with
-`vendor/bin/tgbot webhook:set --url=... --secret=...`.
-
-Call `Config::withUnauthenticatedWebhook()` only when you intentionally accept
-requests that have no secret. If `secretToken` is also set, the header must
-still match.
-
-### 2. Escape user input
-
-```php
-$bot->reply($message, 'Hello ' . Formatter::escape($message->from->first_name));
-```
-
-### 3. Rate limiting
-
-```php
-$bot->middleware((new RateLimiter($cache))->middleware(10, 60));
-```
-
-### 4. Secrets
-
-- Keep the bot token in environment variables, never in the repository
-- The download URL returned by `getFileUrl()` contains the token: never show it
-  to users
-- Keep `FileCache` directories and debug logs outside the web root. Debug logs
-  contain request parameters.
-
-### 5. HTTPS only
-
-Telegram requires HTTPS for webhooks. Only disable `Config::$enforceHttps` for a
-local Bot API server on a trusted network.
-
-## Dependencies
-
-TGbotPHP has no runtime dependencies. Version updates for Composer, GitHub
-Actions and Docker are configured in
-[`.github/dependabot.yml`](https://github.com/LightYagami28/TGbotPHP/blob/main/.github/dependabot.yml).
-`composer audit` runs in CI.
-
-Dependabot security updates, the pull requests that fix known vulnerabilities,
-are a repository setting. An administrator enables them under **Settings → Code
-security → Dependabot**: Dependency graph, Dependabot alerts, and Dependabot
-security updates. This file cannot turn that setting on. Once it is on,
-`dependabot.yml` also limits which ecosystems those security updates cover.
+- **Least privilege**: il token bot resta lato server; il secret webhook è obbligatorio salvo esplicita disattivazione per sviluppo locale.
+- **Fail closed**: input non validi, firme errate e `auth_date` assente o futuro vengono rifiutati.
+- **Output encoding**: i testi inviati a Telegram vengono escapati in base al `parse_mode`.
+- **Errori senza leak**: i messaggi di errore non espongono token; `LogRedactor` rimuove i segreti dai log.
+- **Catena di fornitura**: `composer.lock` contiene checksum, le GitHub Action sono pinnate a SHA-256, `composer audit` è eseguito in CI.
+- **Conformità**: le misure seguono OWASP Top 10 2025 (A01, A02, A03, A04, A05, A06, A09, A10), NIST CSF 2.0 e SSDF SP 800-218. Le sezioni LLM/GenAI e Supabase non sono applicabili: la libreria non usa modelli generativi né database.
