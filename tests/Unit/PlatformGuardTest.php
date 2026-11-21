@@ -50,16 +50,33 @@ final class PlatformGuardTest extends TestCase
                 self::assertTrue($guard->restrict($file));
                 self::assertSame(PHP_OS_FAMILY !== 'Windows', $guard->isRestricted($file));
                 self::assertTrue($guard->makeReadOnly($directory));
+                if (PHP_OS_FAMILY !== 'Windows') {
+                    self::assertSame(0500, fileperms($directory) & 0777);
+                }
                 self::assertTrue($guard->restoreWritable($directory));
                 self::assertContains($guard->describe(), [
-                    'Linux POSIX mode 0600 / 0555',
-                    'macOS POSIX mode 0600 / 0555',
+                    'Linux POSIX mode 0600 / 0500',
+                    'macOS POSIX mode 0600 / 0500',
                 ]);
             }
         } finally {
             @chmod($directory, 0700);
             @unlink($file);
             rmdir($directory);
+        }
+    }
+
+    public function testPosixGuardsNeverRestrictAFileAsADirectory(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'tgbotphp-posix-file-');
+        self::assertIsString($file);
+
+        try {
+            foreach ([new LinuxPrivateFileGuard(), new MacOSPrivateFileGuard()] as $guard) {
+                self::assertFalse($guard->makeReadOnly($file));
+            }
+        } finally {
+            @unlink($file);
         }
     }
 

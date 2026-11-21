@@ -7,7 +7,7 @@ namespace TGbotPHP\Support\Platform;
 /**
  * Cross-platform contract for owner-only files and read-only directories.
  *
- * POSIX (Linux/macOS) uses modes 0600 and 0555. Windows uses NTFS ACLs via
+ * POSIX (Linux/macOS) uses modes 0600 and 0500. Windows uses NTFS ACLs via
  * icacls, because chmod() is a no-op on NTFS.
  */
 interface PrivateFileGuard
@@ -18,7 +18,7 @@ interface PrivateFileGuard
     /** True when $path is restricted to the current owner. */
     public function isRestricted(string $path): bool;
 
-    /** Make $directory non-writable (POSIX 0555 / Windows icacls deny). */
+    /** Make $directory non-writable (POSIX 0500, owner-only / Windows icacls deny). */
     public function makeReadOnly(string $directory): bool;
 
     /** Restore $directory to writable (POSIX 0700 / Windows icacls grant). */
