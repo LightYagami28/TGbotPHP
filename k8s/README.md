@@ -13,7 +13,8 @@ Manifests in this directory deploy two modes of the bot:
 - `deployment.yaml` — Deployments for polling and webhook modes
 - `service.yaml` — ClusterIP Service for the webhook (port 80 -> 8000)
 - `ingress.yaml` — Ingress with mandatory HTTPS/TLS via cert-manager (webhook mode)
-- `networkpolicy.yaml` — default-deny ingress/egress plus DNS, HTTPS egress and webhook ingress
+- `networkpolicy.yaml` — default-deny ingress/egress plus DNS, HTTPS egress and
+  webhook ingress
 
 ## Prerequisites
 

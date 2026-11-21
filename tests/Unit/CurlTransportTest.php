@@ -141,6 +141,34 @@ final class CurlTransportTest extends TestCase
         new CurlTransport()->get('file:///etc/passwd', 1);
     }
 
+    public function testLoopbackHostsAreAllowedOverPlainHttp(): void
+    {
+        foreach (['http://localhost:1/', 'http://[::1]:1/'] as $url) {
+            try {
+                new CurlTransport()->get($url, 1);
+                self::fail("Expected a connection error for $url");
+            } catch (NetworkException $exception) {
+                self::assertStringNotContainsString('Invalid HTTP transport URL', $exception->getMessage());
+            }
+        }
+    }
+
+    public function testPlainHttpIsRejectedForNonLoopbackHost(): void
+    {
+        $this->expectException(NetworkException::class);
+        $this->expectExceptionMessage('Invalid HTTP transport URL');
+
+        new CurlTransport()->get('http://192.0.2.1/', 1);
+    }
+
+    public function testHttpsUrlIsAccepted(): void
+    {
+        $this->expectException(NetworkException::class);
+        $this->expectExceptionMessage('cURL error');
+
+        new CurlTransport()->get('https://127.0.0.1:1/', 1);
+    }
+
     public function testQuerySeparatorDoesNotDependOnIni(): void
     {
         $previous = ini_set('arg_separator.output', ';');

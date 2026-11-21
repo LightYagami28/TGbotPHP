@@ -34,6 +34,11 @@ Solo l'ultima versione pubblicata riceve correzioni di sicurezza. La dipendenza 
 - **Fail closed**: input non validi, firme errate e `auth_date` assente o futuro vengono rifiutati.
 - **Output encoding**: i testi inviati a Telegram vengono escapati in base al `parse_mode`.
 - **Errori senza leak**: i messaggi di errore non espongono token; `LogRedactor` rimuove i segreti dai log.
-- **Catena di fornitura**: `composer.lock` contiene checksum, le GitHub Action sono pinnate a SHA-256, `composer audit` è eseguito in CI. Ogni build pubblica SBOM SPDX e CycloneDX e un'attestazione di provenance SLSA firmata con Sigstore; le immagini Docker pinnano le basi per digest.
-- **Verifica degli artefatti**: scaricare archivio, checksum e SBOM dalla release e verificare l'attestazione con `gh attestation verify <file> --repo LightYagami28/TGbotPHP`.
+- **Catena di fornitura**: `composer.lock` contiene checksum. Le GitHub Action
+  sono pinnate a SHA-256 e `composer audit` gira in CI. Ogni build pubblica
+  SBOM SPDX, CycloneDX e un'attestazione SLSA firmata con Sigstore. Le immagini
+  Docker pinnano le basi per digest.
+- **Verifica degli artefatti**: scaricare archivio, checksum e SBOM dalla
+  release e verificare l'attestazione con
+  `gh attestation verify <file> --repo LightYagami28/TGbotPHP`.
 - **Conformità**: le misure seguono OWASP Top 10 2025 (A01, A02, A03, A04, A05, A06, A09, A10), NIST CSF 2.0 e SSDF SP 800-218. Le sezioni LLM/GenAI e Supabase non sono applicabili: la libreria non usa modelli generativi né database.

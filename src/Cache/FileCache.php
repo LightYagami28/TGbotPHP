@@ -48,7 +48,8 @@ class FileCache implements CacheInterface
      */
     public function __construct(string $directory)
     {
-        if (!is_dir($directory)
+        if (
+            !is_dir($directory)
             && GuardedCall::run(static fn(): bool => mkdir($directory, 0700, true)) !== true
             && !is_dir($directory)
         ) {
@@ -245,7 +246,8 @@ class FileCache implements CacheInterface
         $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
 
         // Owner-only on every platform (POSIX 0600 / Windows NTFS ACL)
-        if (GuardedCall::run(static fn(): int|false => file_put_contents($tmp, $payload, LOCK_EX)) === false
+        if (
+            GuardedCall::run(static fn(): int|false => file_put_contents($tmp, $payload, LOCK_EX)) === false
             || !PlatformGuard::current()->restrict($tmp)
             || GuardedCall::run(static fn(): bool => rename($tmp, $path)) !== true
         ) {

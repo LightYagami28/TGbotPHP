@@ -87,7 +87,8 @@ server in `--local` mode, `downloadFile()` copies files from its disk.
 
 Requests go through `Http\TransportInterface`. The default `CurlTransport`:
 
-- verifies TLS certificates and requires HTTPS (plain HTTP only for loopback test servers);
+- verifies TLS certificates and requires HTTPS (plain HTTP only for loopback
+  test servers);
 - never follows redirects;
 - reuses its connection between requests, which saves a TLS handshake per API
   call;

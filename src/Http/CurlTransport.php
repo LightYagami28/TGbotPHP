@@ -214,14 +214,41 @@ final class CurlTransport implements TransportInterface
      */
     private static function isAllowedHost(array $parts): bool
     {
-        $host = $parts['host'] ?? '';
-        $scheme = $parts['scheme'] ?? '';
-
-        if (!is_string($host) || $host === '' || isset($parts['user']) || isset($parts['pass'])) {
+        if (!self::hasUsableHost($parts)) {
             return false;
         }
 
-        return $scheme === 'https' || ($scheme === 'http' && self::isLoopbackHost($host));
+        return self::isAllowedScheme($parts);
+    }
+
+    /**
+     * A string host is required, with no embedded credentials.
+     *
+     * @param array<string, mixed> $parts Components returned by parse_url()
+     */
+    private static function hasUsableHost(array $parts): bool
+    {
+        $host = $parts['host'] ?? '';
+
+        return is_string($host) && $host !== '' && !isset($parts['user']) && !isset($parts['pass']);
+    }
+
+    /**
+     * HTTPS anywhere; plain HTTP only for a loopback test server.
+     *
+     * @param array<string, mixed> $parts Components returned by parse_url()
+     */
+    private static function isAllowedScheme(array $parts): bool
+    {
+        $scheme = $parts['scheme'] ?? '';
+
+        if ($scheme === 'https') {
+            return true;
+        }
+
+        $host = $parts['host'] ?? '';
+
+        return $scheme === 'http' && is_string($host) && self::isLoopbackHost($host);
     }
 
     /** Whether the URL is the plain-HTTP loopback server used by the tests. */
@@ -242,12 +269,15 @@ final class CurlTransport implements TransportInterface
             return true;
         }
 
-        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
-            return str_starts_with($host, '127.');
+        // parse_url() keeps IPv6 brackets in the host component.
+        $address = trim($host, '[]');
+
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+            return str_starts_with($address, '127.');
         }
 
-        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
-            return strcasecmp($host, '::1') === 0;
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
+            return strcasecmp($address, '::1') === 0;
         }
 
         return false;
