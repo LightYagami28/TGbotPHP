@@ -17,11 +17,14 @@ use TGbotPHP\Plugin\BotPluginInterface;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\HandlerFailure;
+use TGbotPHP\Tests\Support\NullLogTrait;
 use TGbotPHP\Tests\Support\Updates;
 use TGbotPHP\Utilities\BotBuilder;
 
 final class BotTest extends TestCase
 {
+    use NullLogTrait;
+
     private FakeTransport $transport;
     private Bot $bot;
 
@@ -30,6 +33,13 @@ final class BotTest extends TestCase
     {
         $this->transport = new FakeTransport();
         $this->bot = new Bot(Updates::TOKEN, transport: $this->transport);
+    }
+
+    #[\Override]
+    protected function tearDown(): void
+    {
+        ini_restore('error_log');
+        self::cleanNullLog();
     }
 
     public function testInvalidTokenThrows(): void
@@ -595,7 +605,7 @@ final class BotTest extends TestCase
             throw new HandlerFailure('boom');
         });
 
-        $previous = ini_set('error_log', '/dev/null');
+        $previous = ini_set('error_log', self::nullLog());
         try {
             self::assertTrue($bot->handle(Updates::json(Updates::message('/boom')), null));
         } finally {
@@ -878,7 +888,7 @@ final class BotTest extends TestCase
         $bot->command('boom', static function (): void {
             throw new HandlerFailure('boom');
         });
-        $previous = ini_set('error_log', '/dev/null');
+        $previous = ini_set('error_log', self::nullLog());
 
         try {
             self::assertFalse($bot->handle(Updates::json(Updates::message('/boom')), null));
@@ -916,7 +926,7 @@ final class BotTest extends TestCase
             throw new HandlerFailure('boom');
         });
         $body = Updates::json(Updates::message('/boom'));
-        $previous = ini_set('error_log', '/dev/null');
+        $previous = ini_set('error_log', self::nullLog());
 
         try {
             self::assertFalse($bot->handle($body, null));
@@ -942,7 +952,7 @@ final class BotTest extends TestCase
         $bot->command('start', static function (stdClass $message, Bot $bot): void {
             $bot->sendMessage(1, 'hi');
         });
-        $previous = ini_set('error_log', '/dev/null');
+        $previous = ini_set('error_log', self::nullLog());
 
         try {
             $transport->queueRaw('down', 503);

@@ -15,10 +15,13 @@ use TGbotPHP\Framework\Runner\LongPolling;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\HandlerFailure;
+use TGbotPHP\Tests\Support\NullLogTrait;
 use TGbotPHP\Tests\Support\Updates;
 
 final class LongPollingTest extends TestCase
 {
+    use NullLogTrait;
+
     private FakeTransport $transport;
     private Bot $bot;
     private LongPolling $polling;
@@ -34,6 +37,13 @@ final class LongPollingTest extends TestCase
         $this->polling = new LongPolling($this->bot, function (int $seconds): void {
             $this->waits[] = $seconds;
         });
+    }
+
+    #[\Override]
+    protected function tearDown(): void
+    {
+        ini_restore('error_log');
+        self::cleanNullLog();
     }
 
     public function testDefaultSleeperWaitsForRetryAfter(): void
@@ -121,7 +131,7 @@ final class LongPollingTest extends TestCase
 
         $this->transport->queueResult([Updates::message('boom'), Updates::message('after')]);
 
-        $log = ini_set('error_log', '/dev/null');
+        $log = ini_set('error_log', self::nullLog());
         try {
             $this->polling->run(timeout: 0, maxIterations: 1);
         } finally {
