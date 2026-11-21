@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Exceptions;
 
 /**
- * A file or cache entry could not be written or created
+ * Raised when a file, cache entry or downloaded payload cannot be written or
+ * created, or when an in-memory size limit would be exceeded.
  */
 class StorageException extends TelegramException {}

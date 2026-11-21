@@ -7,17 +7,25 @@ namespace TGbotPHP\Exceptions;
 use TGbotPHP\Support\Value;
 
 /**
- * Exception for Telegram API failures
+ * Raised when Telegram answers a method call with an error, or when a
+ * successful response cannot be decoded into the expected result type.
+ *
+ * The raw decoded response is kept so callers can inspect Telegram specific
+ * fields such as `parameters` without losing information.
  */
 class ApiException extends TelegramException
 {
-    /** @var array<string, mixed> */
+    /** @var array<string, mixed> Raw decoded response returned by the API */
     private array $apiResponse;
 
+    /** Name of the method whose call failed */
     private string $apiMethod;
 
     /**
-     * @param array<string, mixed> $apiResponse
+     * @param string $message Error description returned by Telegram
+     * @param int $code Telegram error code or HTTP status
+     * @param array<string, mixed> $apiResponse Raw decoded response body
+     * @param string $apiMethod Name of the API method that was called
      */
     public function __construct(
         string $message,
@@ -31,7 +39,8 @@ class ApiException extends TelegramException
     }
 
     /**
-     * Raw decoded API response
+     * Raw decoded response, including the `ok`, `description` and
+     * `parameters` fields when Telegram provided them.
      *
      * @return array<string, mixed>
      */
@@ -41,7 +50,7 @@ class ApiException extends TelegramException
     }
 
     /**
-     * Name of the API method that failed
+     * Name of the API method that failed, or an empty string when unknown.
      */
     public function getApiMethod(): string
     {
@@ -49,7 +58,8 @@ class ApiException extends TelegramException
     }
 
     /**
-     * ResponseParameters object (retry_after, migrate_to_chat_id)
+     * Telegram `parameters` object with fields such as `retry_after` and
+     * `migrate_to_chat_id`, normalised to an empty array when absent.
      *
      * @return array<string, mixed>
      */
@@ -59,9 +69,8 @@ class ApiException extends TelegramException
     }
 
     /**
-     * Whether an edit failed only because the new content equals the current one
-     *
-     * Typical when a user presses the button of the page already shown.
+     * Whether an edit failed only because the new content is identical to the
+     * current one, which happens when a user presses a button twice.
      */
     public function isMessageNotModified(): bool
     {
@@ -69,7 +78,7 @@ class ApiException extends TelegramException
     }
 
     /**
-     * Supergroup id to use when a group has been migrated
+     * Supergroup identifier a group was migrated to, when provided.
      */
     public function getMigrateToChatId(): ?int
     {
