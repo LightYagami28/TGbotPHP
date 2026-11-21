@@ -173,6 +173,21 @@ final class CurlTransportTest extends TestCase
         new CurlTransport()->get('https://127.0.0.1:1/', 1);
     }
 
+    public function testIpv4LoopbackIsAcceptedAndOtherIpv6IsRejected(): void
+    {
+        try {
+            new CurlTransport()->get('http://127.42.0.1:1/', 1);
+            self::fail('Expected a connection error for 127.42.0.1');
+        } catch (NetworkException $exception) {
+            self::assertStringNotContainsString('Invalid HTTP transport URL', $exception->getMessage());
+        }
+
+        $this->expectException(NetworkException::class);
+        $this->expectExceptionMessage('Invalid HTTP transport URL');
+
+        new CurlTransport()->get('http://[2001:db8::1]:1/', 1);
+    }
+
     public function testQuerySeparatorDoesNotDependOnIni(): void
     {
         $previous = ini_set('arg_separator.output', ';');

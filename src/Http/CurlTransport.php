@@ -271,16 +271,15 @@ final class CurlTransport implements TransportInterface
 
         // parse_url() keeps IPv6 brackets in the host component.
         $address = trim($host, '[]');
+        $loopback = false;
 
         if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
-            return str_starts_with($address, '127.');
+            $loopback = str_starts_with($address, '127.');
+        } elseif (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
+            $loopback = strcasecmp($address, '::1') === 0;
         }
 
-        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
-            return strcasecmp($address, '::1') === 0;
-        }
-
-        return false;
+        return $loopback;
     }
 
     /** Build a safe error message from the last cURL error. */
