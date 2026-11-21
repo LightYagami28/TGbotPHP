@@ -65,7 +65,10 @@ jobs:
         persist-credentials: false
 
     - name: Login a GHCR
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      env:
+        REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REGISTRY_USER: ${{ github.actor }}
+      run: echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
 
     - name: Build e push immagine
       env:

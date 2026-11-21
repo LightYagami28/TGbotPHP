@@ -29,4 +29,20 @@ $coverage = $statements > 0 ? 100 * $covered / $statements : 0.0;
 
 printf("Line coverage: %.2f%% (%d/%d), minimum %s%%\n", $coverage, $covered, $statements, $minimum);
 
-exit($coverage < (float) $minimum ? 1 : 0);
+if ($coverage >= (float) $minimum) {
+    exit(0);
+}
+
+fwrite(STDERR, "Uncovered executable lines:\n");
+
+foreach ($xml->project->file ?? [] as $sourceFile) {
+    $name = (string) $sourceFile['name'];
+
+    foreach ($sourceFile->line as $line) {
+        if ((int) $line['count'] === 0 && (string) $line['type'] === 'stmt') {
+            fwrite(STDERR, "  $name:" . (string) $line['num'] . "\n");
+        }
+    }
+}
+
+exit(1);
