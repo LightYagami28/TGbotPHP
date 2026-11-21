@@ -18,13 +18,13 @@ switch ($path) {
             }
         }
 
-        echo json_encode([
+        echo strip_tags(json_encode([
             'method' => $_SERVER['REQUEST_METHOD'],
             'content_type' => $_SERVER['CONTENT_TYPE'] ?? null,
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
             'post' => $_POST,
             'files' => $files,
-        ]);
+        ], JSON_THROW_ON_ERROR));
         break;
 
     case '/redirect':

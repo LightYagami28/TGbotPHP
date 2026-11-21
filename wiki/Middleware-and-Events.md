@@ -74,7 +74,7 @@ $bot->on('update.processed', fn(stdClass $update) => $metrics->increment('update
 ```
 
 | Event | Arguments | When |
-|---|---|---|
+| --- | --- | --- |
 | `update.received` | `stdClass $update` | Before middleware |
 | `update.processed` | `stdClass $update` | After routing, unless a middleware dropped the update |
 | `error` | `Throwable $e, ?stdClass $update, Bot $bot` | A handler, a middleware or long polling failed |

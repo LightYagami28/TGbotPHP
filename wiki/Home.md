@@ -38,7 +38,7 @@ $bot->poll();
 ## Guide
 
 | Page | Covers |
-|---|---|
+| --- | --- |
 | [Getting Started](Getting-Started) | Installation, your first bot with long polling and with a webhook |
 | [Handling Updates](Handling-Updates) | Commands, text patterns, callbacks, inline queries, other update types |
 | [API Reference](API-Reference) | Calling API methods, options, files, errors, every method group |

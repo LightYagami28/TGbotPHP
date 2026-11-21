@@ -11,6 +11,7 @@ use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Http\CurlTransport;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\RuntimeControls;
+use TGbotPHP\Tests\Support\TestProcesses;
 
 /**
  * Runs against PHP's built-in server, started for this test class
@@ -25,28 +26,30 @@ final class CurlTransportTest extends TestCase
     #[\Override]
     public static function setUpBeforeClass(): void
     {
-        $port = self::freePort();
-        self::$baseUrl = "http://127.0.0.1:$port";
-
-        $server = proc_open(
-            [PHP_BINARY, '-S', "127.0.0.1:$port", dirname(__DIR__) . '/Support/Server/router.php'],
-            [1 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'w'], 2 => ['file',
-                PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'w']],
-            $pipes,
-        );
+        [$server, $pipes] = TestProcesses::startServer(dirname(__DIR__, 2));
         self::assertIsResource($server);
         self::$server = $server;
 
-        for ($i = 0; $i < 100; $i++) {
-            $socket = @fsockopen('127.0.0.1', $port);
-            if ($socket !== false) {
-                fclose($socket);
-                return;
+        $port = self::readServerPort($pipes[2]);
+        self::$baseUrl = "http://127.0.0.1:$port";
+    }
+
+    /**
+     * @param resource $output
+     */
+    private static function readServerPort($output): int
+    {
+        stream_set_blocking($output, false);
+
+        for ($i = 0; $i < 200; $i++) {
+            $line = fgets($output);
+            if (is_string($line) && preg_match('~http://127\.0\.0\.1:(\d+)~', $line, $matches) === 1) {
+                return (int) $matches[1];
             }
             usleep(50_000);
         }
 
-        self::fail('The test server did not start');
+        self::fail('The test server did not report a port');
     }
 
     #[\Override]

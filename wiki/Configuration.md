@@ -27,7 +27,7 @@ $bot = new Bot(new Config(
 ```
 
 | Option | Default | Meaning |
-|---|---|---|
+| --- | --- | --- |
 | `token` | required | The token from @BotFather. A malformed token throws `InvalidArgumentException` |
 | `secretToken` | `false` | Secret that Telegram sends with every webhook request. 1–256 characters: `A-Z a-z 0-9 _ -`. Required for `handle()` unless the next option is true |
 | `withUnauthenticatedWebhook()` | `false` | Accept requests with no secret |

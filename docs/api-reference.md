@@ -24,7 +24,7 @@ Every handler receives the update payload (`stdClass`) first, then the `Bot`,
 then data specific to the route.
 
 | Method | Handler signature | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `command('start', $h)` | `fn(stdClass $message, Bot $bot, string $args)` | `start`, `/start`, `START` are the same. `$args` holds the deep-link payload. |
 | `hears($pattern, $h)` | `fn(stdClass $message, Bot $bot, array $matches)` | Checks the text or the caption |
 | `callback($pattern, $h)` | `fn(stdClass $callbackQuery, Bot $bot, array $matches)` | Call `$bot->answer($callbackQuery)` |
@@ -199,7 +199,7 @@ checks each one against the official documentation: method name, required
 parameters, parameter names and result type.
 
 | Group | Methods |
-|---|---|
+| --- | --- |
 | Updates | `getUpdates`, `setWebhook`, `deleteWebhook`, `getWebhookInfo` |
 | Bot, users & files | `getMe`, `logOut`, `close`, `getUserProfilePhotos`, `getUserChatBoosts`, `getFile`, `getFileUrl`, `downloadFile`, `getUserProfileAudios`, `setPassportDataErrors`, `setUserEmojiStatus` |
 | Messages | `sendMessage`, `forwardMessage`, `forwardMessages`, `copyMessage`, `copyMessages`, `sendPhoto`, `sendAudio`, `sendDocument`, `sendVideo`, `editMessageText`, `editMessageCaption`, `editMessageMedia`, `editMessageReplyMarkup`, `deleteMessage`, `deleteMessages`, `sendChatAction`, `approveSuggestedPost`, `declineSuggestedPost`, `editMessageChecklist`, `getUserPersonalChatMessages`, `sendChecklist`, `sendMessageDraft`, `sendRichMessage`, `sendRichMessageDraft` |
@@ -233,7 +233,7 @@ by its type (`'all_private_chats'`).
 ## Exceptions
 
 | Exception | When |
-|---|---|
+| --- | --- |
 | `InvalidTokenException` | Malformed token or configuration passed to `Bot` |
 | `ApiException` | Telegram returned `ok: false`. See `getCode()`, `getApiMethod()`, `getApiResponse()`, `getMigrateToChatId()` |
 | `TooManyRequestsException` | 429 flood control after the retries ran out. See `getRetryAfter()` |

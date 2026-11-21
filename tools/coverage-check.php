@@ -15,7 +15,15 @@ if (!is_array($arguments)) {
 $file = isset($arguments[1]) && is_string($arguments[1]) ? $arguments[1] : 'coverage.xml';
 $minimum = isset($arguments[2]) && is_string($arguments[2]) ? $arguments[2] : '90';
 
-$xml = @simplexml_load_file($file);
+$root = realpath(dirname(__DIR__));
+$resolved = realpath($file);
+
+if ($root === false || $resolved === false || !str_starts_with($resolved, $root . DIRECTORY_SEPARATOR)) {
+    fwrite(STDERR, "Report must be a file inside the project directory\n");
+    exit(1);
+}
+
+$xml = @simplexml_load_file($resolved);
 $project = $xml === false ? null : $xml->project;
 $metrics = $project?->metrics;
 

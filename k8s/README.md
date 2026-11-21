@@ -61,7 +61,7 @@ Or apply the whole folder at once:
 kubectl apply -f k8s/
 ```
 
-3. Register the webhook with Telegram (replace host):
+1. Register the webhook with Telegram (replace host):
 
 ```bash
 TELEGRAM_BOT_TOKEN=... vendor/bin/tgbot webhook:set \
@@ -69,7 +69,7 @@ TELEGRAM_BOT_TOKEN=... vendor/bin/tgbot webhook:set \
   --secret="$TELEGRAM_SECRET_TOKEN"
 ```
 
-4. Verify:
+1. Verify:
 
 ```bash
 kubectl -n tgbotphp get pods,svc,ingress

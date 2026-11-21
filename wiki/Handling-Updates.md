@@ -14,7 +14,7 @@ care about, and the bot calls it.
 Every handler receives the update payload, the bot, then data from the route:
 
 | Registered with | Handler signature |
-|---|---|
+| --- | --- |
 | `command()` | `fn(stdClass $message, Bot $bot, string $args)` |
 | `hears()` | `fn(stdClass $message, Bot $bot, array $matches)` |
 | `callback()` | `fn(stdClass $callbackQuery, Bot $bot, array $matches)` |
@@ -213,7 +213,7 @@ correctly.
 ## Receiving updates
 
 | | Long polling | Webhook |
-|---|---|---|
+| --- | --- | --- |
 | Start | `$bot->poll()` | `$bot->handle()` in your web entry point |
 | Needs a public HTTPS URL | No | Yes |
 | Process | One long-running PHP process | One PHP request per update |

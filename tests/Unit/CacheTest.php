@@ -18,6 +18,7 @@ use TGbotPHP\Session\SessionManager;
 use TGbotPHP\Support\Platform\PlatformGuard;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\RuntimeControls;
+use TGbotPHP\Tests\Support\TestProcesses;
 use TGbotPHP\Tests\Support\Updates;
 
 final class CacheTest extends TestCase
@@ -117,16 +118,9 @@ final class CacheTest extends TestCase
         $cache = new FileCache(self::$directory);
         $cache->forget('shared-counter');
 
-        $script = sprintf(
-            'require %s; $c = new TGbotPHP\Cache\FileCache(%s); '
-            . 'for ($i = 0; $i < 50; $i++) { $c->update("shared-counter", fn($v) => (int) $v + 1); }',
-            var_export(dirname(__DIR__, 2) . '/vendor/autoload.php', true),
-            var_export(self::$directory, true),
-        );
-
         $processes = [];
         for ($i = 0; $i < 4; $i++) {
-            $process = proc_open([PHP_BINARY, '-r', $script], [], $pipes);
+            $process = TestProcesses::startCacheWorker(dirname(__DIR__, 2), self::$directory);
             self::assertIsResource($process);
             $processes[] = $process;
         }
@@ -365,17 +359,15 @@ final class CacheTest extends TestCase
 
         // Hold the same stripe lock FileCache uses, then replace the expired
         // entry. get() must wait and re-read instead of unlinking the new value.
-        $script = sprintf(
-            '$dir = %s; $ready = %s; $hash = hash("sha256", "race");'
-            . ' $lock = fopen($dir . "/" . substr($hash, 0, 2) . ".lock", "c");'
-            . ' if ($lock === false || !flock($lock, LOCK_EX)) { exit(1); }'
-            . ' file_put_contents($ready, "1"); sleep(1);'
-            . ' file_put_contents($dir . "/$hash.cache", json_encode(["v" => 1, "expires" => time() + 60, "value" => "new"]));'
-            . ' flock($lock, LOCK_UN); fclose($lock);',
-            var_export(self::$directory, true),
-            var_export($ready, true),
-        );
-        $process = proc_open([PHP_BINARY, '-r', $script], [], $pipes);
+        $hash = hash('sha256', 'race');
+        $payload = json_encode(['v' => 1, 'expires' => time() + 60, 'value' => 'new'], JSON_THROW_ON_ERROR);
+        $process = TestProcesses::startLockWorker(dirname(__DIR__, 2), [
+            'TGBOTP_LOCK_FILE' => self::$directory . '/' . substr($hash, 0, 2) . '.lock',
+            'TGBOTP_READY_FILE' => $ready,
+            'TGBOTP_ACTION' => 'write',
+            'TGBOTP_TARGET_FILE' => self::$directory . '/' . $hash . '.cache',
+            'TGBOTP_PAYLOAD' => $payload,
+        ]);
         self::assertIsResource($process);
 
         $deadline = time() + 5;
@@ -486,14 +478,12 @@ final class CacheTest extends TestCase
         $ready = $directory . '/prune-ready';
         @unlink($ready);
 
-        $script = sprintf(
-            '$lock = fopen(%s, "c"); if ($lock === false || !flock($lock, LOCK_EX)) { exit(1); }'
-            . ' file_put_contents(%s, "1"); sleep(1); unlink(%s); flock($lock, LOCK_UN); fclose($lock);',
-            var_export($directory . '/' . substr($hash, 0, 2) . '.lock', true),
-            var_export($ready, true),
-            var_export($file, true),
-        );
-        $process = proc_open([PHP_BINARY, '-r', $script], [], $pipes);
+        $process = TestProcesses::startLockWorker(dirname(__DIR__, 2), [
+            'TGBOTP_LOCK_FILE' => $directory . '/' . substr($hash, 0, 2) . '.lock',
+            'TGBOTP_READY_FILE' => $ready,
+            'TGBOTP_ACTION' => 'unlink',
+            'TGBOTP_TARGET_FILE' => $file,
+        ]);
         self::assertIsResource($process);
         $deadline = time() + 5;
         while (!is_file($ready) && time() < $deadline) {
@@ -521,14 +511,12 @@ final class CacheTest extends TestCase
         $ready = $directory . '/expire-ready';
         @unlink($ready);
 
-        $script = sprintf(
-            '$lock = fopen(%s, "c"); if ($lock === false || !flock($lock, LOCK_EX)) { exit(1); }'
-            . ' file_put_contents(%s, "1"); sleep(1); unlink(%s); flock($lock, LOCK_UN); fclose($lock);',
-            var_export($directory . '/' . substr($hash, 0, 2) . '.lock', true),
-            var_export($ready, true),
-            var_export($file, true),
-        );
-        $process = proc_open([PHP_BINARY, '-r', $script], [], $pipes);
+        $process = TestProcesses::startLockWorker(dirname(__DIR__, 2), [
+            'TGBOTP_LOCK_FILE' => $directory . '/' . substr($hash, 0, 2) . '.lock',
+            'TGBOTP_READY_FILE' => $ready,
+            'TGBOTP_ACTION' => 'unlink',
+            'TGBOTP_TARGET_FILE' => $file,
+        ]);
         self::assertIsResource($process);
         $deadline = time() + 5;
         while (!is_file($ready) && time() < $deadline) {

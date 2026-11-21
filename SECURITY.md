@@ -2,7 +2,7 @@
 
 ## Segnalare una vulnerabilità
 
-Non aprire una issue pubblica. Usa [GitHub Security Advisories](https://github.com/LightYagami28/TGbotPHP/security/advisories/new) oppure scrivi a **ceo@retechrevive.it**. Non includere token, segreti o dati personali nella segnalazione.
+Non aprire una issue pubblica. Usa [GitHub Security Advisories](https://github.com/LightYagami28/TGbotPHP/security/advisories/new) oppure scrivi a **<ceo@retechrevive.it>**. Non includere token, segreti o dati personali nella segnalazione.
 
 ## Versioni supportate
 
@@ -11,7 +11,7 @@ Solo l'ultima versione pubblicata riceve correzioni di sicurezza. La dipendenza 
 ## Protezioni integrate
 
 | Protezione | Dove |
-|---|---|
+| --- | --- |
 | Webhook senza secret rifiutati (403) per impostazione predefinita | `Bot::handle()` |
 | Secret token confrontato a tempo costante | `WebhookValidator::validate()` |
 | Validazione del formato del token (no path injection negli URL) | `Config` |
