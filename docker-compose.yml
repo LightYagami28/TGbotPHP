@@ -1,38 +1,53 @@
 services:
   bot:
     build: .
+    image: tgbotphp:2.0.0
     restart: unless-stopped
     cap_drop: [ALL]
     security_opt:
       - no-new-privileges:true
     read_only: true
     tmpfs:
-      - /tmp
+      - /tmp:size=64m,mode=1777
     pids_limit: 100
+    cpus: 0.25
+    mem_reservation: 128m
+    mem_limit: 256m
     environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
     command: php examples/polling.php
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # Webhook mode: put an HTTPS reverse proxy in front of this service
   webhook:
     build: .
+    image: tgbotphp:2.0.0
     profiles: ["webhook"]
     cap_drop: [ALL]
     security_opt:
       - no-new-privileges:true
     read_only: true
     tmpfs:
-      - /tmp
+      - /tmp:size=64m,mode=1777
     pids_limit: 100
+    cpus: 0.25
+    mem_reservation: 128m
+    mem_limit: 256m
     environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_SECRET_TOKEN=${TELEGRAM_SECRET_TOKEN}
-      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
+      TELEGRAM_SECRET_TOKEN: ${TELEGRAM_SECRET_TOKEN:?TELEGRAM_SECRET_TOKEN is required}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     command: php -S 0.0.0.0:8000 examples/webhook.php
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 8000) ? 0 : 1);"]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 10s
