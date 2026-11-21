@@ -7,7 +7,7 @@ namespace TGbotPHP\Plugin;
 use TGbotPHP\Framework\Bot;
 
 /**
- * Plugin that registers handlers, middleware or listeners on a bot
+ * Plugin that registers handlers, middleware or listeners on a bot.
  *
  *     final class PingPlugin implements BotPluginInterface
  *     {
@@ -22,5 +22,6 @@ use TGbotPHP\Framework\Bot;
  */
 interface BotPluginInterface extends PluginInterface
 {
+    /** Register handlers and middleware on the bot being configured. */
     public function boot(Bot $bot): void;
 }

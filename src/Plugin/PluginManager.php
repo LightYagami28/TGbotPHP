@@ -8,25 +8,30 @@ use TGbotPHP\Exceptions\PluginException;
 use Throwable;
 
 /**
- * Plugin registry and priority-ordered hooks
+ * Plugin registry and priority-ordered hooks.
  *
- * activate() runs before the plugin is stored. If it throws, the plugin is
- * not registered and hooks it added are removed. unregister() removes the
+ * activate() runs before the plugin is stored. If it throws, the plugin is not
+ * registered and the hooks it added are removed. unregister() removes the
  * hooks that plugin added during activate().
  */
 class PluginManager
 {
-    /** @var array<string, PluginInterface> */
+    /** @var array<string, PluginInterface> Plugins by name */
     private array $plugins = [];
 
     /**
+     * Callbacks grouped by hook name and priority (lower priorities run first).
+     *
      * @var array<string, array<int, list<array{callback: callable, owner: ?string}>>>
      */
     private array $hooks = [];
 
-    /** Name of the plugin whose activate() is running, so its hooks can be tracked */
+    /** Name of the plugin whose activate() is running, so its hooks can be tracked. */
     private ?string $activating = null;
 
+    /**
+     * @throws PluginException When a plugin with the same name is already registered
+     */
     public function register(string $name, PluginInterface $plugin): void
     {
         if (isset($this->plugins[$name])) {
@@ -47,6 +52,7 @@ class PluginManager
         $this->plugins[$name] = $plugin;
     }
 
+    /** Deactivate and remove a plugin, together with the hooks it added. */
     public function unregister(string $name): void
     {
         if (!isset($this->plugins[$name])) {
@@ -58,13 +64,14 @@ class PluginManager
         unset($this->plugins[$name]);
     }
 
+    /** Look up a registered plugin. */
     public function get(string $name): ?PluginInterface
     {
         return $this->plugins[$name] ?? null;
     }
 
     /**
-     * @return array<string, PluginInterface>
+     * @return array<string, PluginInterface> All registered plugins by name
      */
     public function all(): array
     {
@@ -73,6 +80,7 @@ class PluginManager
 
     /**
      * Add a hook callback; lower priorities run first.
+     *
      * A hook added while a plugin is activating is removed with that plugin.
      */
     public function addHook(string $hook, callable $callback, int $priority = 10): void
@@ -84,9 +92,7 @@ class PluginManager
         ksort($this->hooks[$hook]);
     }
 
-    /**
-     * Pass a value through every callback of a hook
-     */
+    /** Pass a value through every callback of a hook, in priority order. */
     public function executeHook(string $hook, mixed $value = null): mixed
     {
         foreach ($this->hooks[$hook] ?? [] as $callbacks) {
@@ -98,11 +104,13 @@ class PluginManager
         return $value;
     }
 
+    /** Whether a plugin with the given name is registered. */
     public function isActive(string $name): bool
     {
         return isset($this->plugins[$name]);
     }
 
+    /** Remove every hook owned by a plugin. */
     private function dropOwnedHooks(string $name): void
     {
         foreach ($this->hooks as $hook => $priorities) {
