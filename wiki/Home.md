@@ -1,6 +1,7 @@
 ---
 title: "TGbotPHP"
-description: "What TGbotPHP is, why it exists, the requirements and the map of the guide."
+description: "What TGbotPHP is, why it exists, the requirements and the map of
+the guide."
 icon: house
 ---
 

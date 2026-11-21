@@ -1,6 +1,7 @@
 ---
 title: "Deployment"
-description: "Install and configure a webhook with Nginx, PHP-FPM or Apache, run long polling with systemd or Docker, and the production checklist."
+description: "Install and configure a webhook with Nginx, PHP-FPM or Apache, run
+long polling with systemd or Docker, and the production checklist."
 icon: server
 ---
 

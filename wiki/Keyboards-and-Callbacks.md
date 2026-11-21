@@ -1,6 +1,7 @@
 ---
 title: "Keyboards and callbacks"
-description: "Build inline keyboards, handle button presses, reply keyboards and format the messages they send."
+description: "Build inline keyboards, handle button presses, reply keyboards and
+format the messages they send."
 icon: keyboard
 ---
 

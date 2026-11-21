@@ -1,6 +1,7 @@
 ---
 title: "Security guide"
-description: "The bot token, webhook secrets, user input, Mini Apps, storage and how to report a vulnerability."
+description: "The bot token, webhook secrets, user input, Mini Apps, storage and
+how to report a vulnerability."
 icon: lock
 ---
 

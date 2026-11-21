@@ -1,6 +1,8 @@
 ---
 title: "FAQ"
-description: "The questions that come up most often: PHP version, dependencies, webhook or polling, Bot API support, update types, return values and sending messages on your own."
+description: "The questions that come up most often: PHP version, dependencies,
+webhook or polling, Bot API support, update types, return values and sending
+messages on your own."
 icon: circle-question
 ---
 

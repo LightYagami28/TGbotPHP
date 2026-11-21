@@ -1,6 +1,7 @@
 ---
 title: "API reference"
-description: "How to call the Telegram Bot API methods: parameters, results, formatting, file downloads and errors."
+description: "How to call the Telegram Bot API methods: parameters, results,
+formatting, file downloads and errors."
 icon: code
 ---
 

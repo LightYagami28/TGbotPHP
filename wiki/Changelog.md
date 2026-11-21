@@ -11,8 +11,13 @@ page](https://github.com/LightYagami28/TGbotPHP/releases).
 
 ## Unreleased
 
-- **Telegram Bot API 10.4**: 193 methods and 29 update types, including HTML Widgets (`sendWidget`, `answerWidgetQuery`, `editMessageWidgetData`, `editSharedWidgetData`) and new business account gifts and chat share backdrop methods.
-- **Hardening**: CRLF log sanitization in webhook and long polling runners (`LogRedactor::safeExceptionMessage`); Windows NTFS path resolution and permission compatibility fixes.
+- **Telegram Bot API 10.4**: 193 methods and 29 update types, including HTML
+Widgets (`sendWidget`, `answerWidgetQuery`, `editMessageWidgetData`,
+`editSharedWidgetData`) and new business account gifts and chat share backdrop
+methods.
+- **Hardening**: CRLF log sanitization in webhook and long polling runners
+(`LogRedactor::safeExceptionMessage`); Windows NTFS path resolution and
+permission compatibility fixes.
 - **PHP 8.5** or later. PHP 8.4 is no longer supported.
 - **Security**: `handle()` answers 403 unless a webhook secret is configured
   (`TELEGRAM_SECRET_TOKEN`, `openssl rand -hex 32`). Call

@@ -1,6 +1,7 @@
 ---
 title: "Architecture"
-description: "The layers of TGbotPHP, the directory structure, the outgoing request and incoming update lifecycles, and the design choices behind them."
+description: "The layers of TGbotPHP, the directory structure, the outgoing
+request and incoming update lifecycles, and the design choices behind them."
 icon: diagram-project
 ---
 

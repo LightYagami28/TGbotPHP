@@ -1,6 +1,7 @@
 ---
 title: "Upgrading from 2.x"
-description: "What changes in the constructor, the handlers, the files, the methods and the errors when you move from 2.x to 3.x."
+description: "What changes in the constructor, the handlers, the files, the
+methods and the errors when you move from 2.x to 3.x."
 icon: arrow-up-right-dots
 ---
 

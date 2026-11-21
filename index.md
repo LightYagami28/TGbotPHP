@@ -99,7 +99,10 @@ vendor/bin/tgbot webhook:set --url=https://example.com/webhook.php --secret="$TE
   policy](https://github.com/LightYagami28/TGbotPHP/blob/main/SECURITY.md):
   how to report a vulnerability
 - [Changelog](wiki/Changelog.md): the releases and the migration notes
-- [Contributing](https://github.com/LightYagami28/TGbotPHP/blob/main/CONTRIBUTING.md):
+-
+
+[Contributing](https://github.com/LightYagami28/TGbotPHP/blob/main/CONTRIBUTING.md):
   how to propose a change
+
 - [Support](https://github.com/LightYagami28/TGbotPHP/blob/main/SUPPORT.md):
   where to ask questions

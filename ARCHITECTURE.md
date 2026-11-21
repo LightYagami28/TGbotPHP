@@ -1,13 +1,17 @@
 ---
 title: "Architecture"
-description: "Modules, the request and update flow, and the design choices of TGbotPHP."
+description: "Modules, the request and update flow, and the design choices of
+TGbotPHP."
 ---
 
-# Architettura
+## Architettura
 
-> L'indice della documentazione è in [docs/architecture.md](docs/architecture.md), il piano di lavoro in [ROADMAP.md](ROADMAP.md).
+> L'indice della documentazione è in
+[docs/architecture.md](docs/architecture.md), il piano di lavoro in
+[ROADMAP.md](ROADMAP.md).
 
-`TGbotPHP` è una libreria modulare orientata agli oggetti per l'interazione con le API Bot di Telegram.
+`TGbotPHP` è una libreria modulare orientata agli oggetti per l'interazione con
+le API Bot di Telegram.
 
 ```text
                            +----------------------+

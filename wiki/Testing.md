@@ -1,6 +1,7 @@
 ---
 title: "Testing"
-description: "BotTester, FakeUpdate, Telegram's answers, conversations and time, and the end-to-end tests against the real API."
+description: "BotTester, FakeUpdate, Telegram's answers, conversations and time,
+and the end-to-end tests against the real API."
 icon: vial
 ---
 

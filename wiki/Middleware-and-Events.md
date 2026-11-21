@@ -1,6 +1,7 @@
 ---
 title: "Middleware and events"
-description: "Run code around every update, handle errors and listen to the lifecycle events of the bot."
+description: "Run code around every update, handle errors and listen to the
+lifecycle events of the bot."
 icon: filter
 ---
 

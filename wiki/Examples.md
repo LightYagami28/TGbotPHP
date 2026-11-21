@@ -1,6 +1,7 @@
 ---
 title: "Examples"
-description: "Complete bots: a menu with pages, a feedback form, group moderation, inline search, selling with Telegram Stars and streaming an answer."
+description: "Complete bots: a menu with pages, a feedback form, group
+moderation, inline search, selling with Telegram Stars and streaming an answer."
 icon: list
 ---
 

@@ -1,6 +1,7 @@
 ---
 title: "Deployment"
-description: "Run TGbotPHP behind a webhook with Nginx and PHP-FPM, with systemd long polling or with Docker, and scale the state."
+description: "Run TGbotPHP behind a webhook with Nginx and PHP-FPM, with systemd
+long polling or with Docker, and scale the state."
 icon: server
 ---
 
