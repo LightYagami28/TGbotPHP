@@ -29,10 +29,12 @@ use TGbotPHP\Methods\WidgetMethods;
 use TGbotPHP\Traits\HttpClientTrait;
 
 /**
- * Complete Telegram Bot API client
+ * Complete Telegram Bot API client.
  *
- * Composes all method traits. Any method without a dedicated wrapper can be
- * invoked with call().
+ * The concrete API methods come from the method traits; any method without a
+ * dedicated wrapper can still be invoked with call(). Transport concerns are
+ * delegated to HttpClientTrait, so the same client works with the real cURL
+ * transport and with the fake transport used in tests.
  */
 class ApiClient
 {
@@ -59,13 +61,19 @@ class ApiClient
     use WidgetMethods;
     use HttpClientTrait;
 
+    /** Library version reported in the User-Agent header. */
     public const string VERSION = '3.0.0';
 
-    /** Bot API version whose methods are all implemented */
+    /** Bot API version whose methods are all implemented. */
     public const string BOT_API_VERSION = '10.4';
 
+    /** Validated configuration shared with every method trait. */
     protected readonly Config $config;
 
+    /**
+     * @param Config $config Validated bot configuration
+     * @param TransportInterface|null $transport Transport to use; the cURL transport when omitted
+     */
     public function __construct(Config $config, ?TransportInterface $transport = null)
     {
         $this->config = $config;
@@ -75,20 +83,21 @@ class ApiClient
         }
     }
 
-    /**
-     * Get bot configuration
-     */
+    /** Get bot configuration. */
     public function getConfig(): Config
     {
         return $this->config;
     }
 
     /**
-     * Call any API method directly
+     * Call any API method directly.
      *
-     * Supports methods not yet implemented as specific functions.
+     * Supports methods not yet implemented as specific functions, which keeps
+     * the client usable as soon as Telegram ships a new Bot API method.
      *
-     * @param array<string, mixed> $parameters
+     * @param string $method Bot API method name
+     * @param array<string, mixed> $parameters Parameters sent as form fields
+     *
      * @see https://core.telegram.org/bots/api
      */
     public function call(string $method, array $parameters = []): mixed
@@ -97,22 +106,22 @@ class ApiClient
     }
 
     /**
-     * Get Telegram API base URL (contains the token: keep it private)
+     * Get Telegram API base URL (contains the token: keep it private).
+     *
+     * The token must not be logged or exposed in error messages.
      */
     public function getApiUrl(): string
     {
         return $this->config->apiBaseUrl . '/bot' . $this->config->token;
     }
 
+    /** The configured bot token. */
     public function getToken(): string
     {
         return $this->config->getToken();
     }
 
-
-    /**
-     * Check if configuration is valid
-     */
+    /** Check if configuration is valid. */
     public function isValid(): bool
     {
         return Config::isValidToken($this->config->token);
