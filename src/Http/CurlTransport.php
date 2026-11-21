@@ -11,19 +11,26 @@ use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Security\LogRedactor;
 
 /**
- * cURL based transport
+ * cURL based HTTP transport.
  *
- * Responses read into memory are capped at MAX_RESPONSE_BYTES so a download
- * cannot grow without a limit when file_size is missing. download() streams
- * to disk and is not subject to that cap.
+ * Responses read into memory are capped so a download without a `file_size`
+ * cannot grow without a limit. The download() method streams directly to disk
+ * and is not subject to that cap.
  */
 final class CurlTransport implements TransportInterface
 {
-    /** Same ceiling as UserMethods::MAX_MEMORY_DOWNLOAD */
+    /** Same ceiling as the in-memory download limit of the API client. */
     public const int MAX_RESPONSE_BYTES = 20 * 1024 * 1024;
 
+    /** Reused handle: consecutive requests keep the connection and TLS session open. */
     private ?CurlHandle $handle = null;
 
+    /**
+     * @param int $connectTimeout Seconds allowed for the TCP connection
+     * @param int $maxResponseBytes Maximum size of a response read into memory
+     *
+     * @throws InvalidArgumentException When a limit is not positive
+     */
     public function __construct(
         private readonly int $connectTimeout = 5,
         private readonly int $maxResponseBytes = self::MAX_RESPONSE_BYTES,
@@ -33,6 +40,15 @@ final class CurlTransport implements TransportInterface
         }
     }
 
+    /**
+     * Send a POST request as a form or as multipart/form-data.
+     *
+     * @param array<string, mixed> $fields Already prepared request fields
+     * @param bool $multipart Whether files require a multipart body
+     * @param int $timeout Request timeout in seconds
+     *
+     * @throws NetworkException When the URL is invalid or the request fails
+     */
     #[\Override]
     public function post(string $url, array $fields, bool $multipart, int $timeout): HttpResponse
     {
@@ -42,7 +58,7 @@ final class CurlTransport implements TransportInterface
         ];
 
         if ($multipart) {
-            // Passing an array makes cURL build a multipart/form-data body with the proper boundary
+            // Passing an array makes cURL build the boundary and each file part
             $options[CURLOPT_POSTFIELDS] = $fields;
 
             return $this->execute($url, $options);
@@ -55,6 +71,11 @@ final class CurlTransport implements TransportInterface
         return $this->execute($url, $options);
     }
 
+    /**
+     * Send a GET request and return the raw response.
+     *
+     * @throws NetworkException When the URL is invalid or the request fails
+     */
     #[\Override]
     public function get(string $url, int $timeout): HttpResponse
     {
@@ -64,6 +85,11 @@ final class CurlTransport implements TransportInterface
         ]);
     }
 
+    /**
+     * Stream a GET response to a file, leaving partial files behind on failure.
+     *
+     * @throws NetworkException When the destination cannot be opened or the request fails
+     */
     #[\Override]
     public function download(string $url, string $destination, int $timeout): int
     {
@@ -91,7 +117,11 @@ final class CurlTransport implements TransportInterface
     }
 
     /**
-     * @param array<int, mixed> $options
+     * Execute a request and collect its body in memory up to the configured cap.
+     *
+     * @param array<int, mixed> $options cURL options for this request
+     *
+     * @throws NetworkException When the response is too large or the request fails
      */
     private function execute(string $url, array $options): HttpResponse
     {
@@ -123,9 +153,14 @@ final class CurlTransport implements TransportInterface
     }
 
     /**
-     * The handle is reused, so consecutive requests keep the connection (and the TLS session) open
+     * Reset and configure the shared handle with safe defaults.
      *
-     * @param array<int, mixed> $options
+     * Redirects are disabled and protocols restricted to HTTP(S) so a server
+     * response cannot make the transport read a local file.
+     *
+     * @param array<int, mixed> $options cURL options for this request
+     *
+     * @throws NetworkException When the URL is invalid or cURL cannot be initialised
      */
     private function prepare(string $url, array $options): CurlHandle
     {
@@ -149,7 +184,6 @@ final class CurlTransport implements TransportInterface
             CURLOPT_CONNECTTIMEOUT => $this->connectTimeout,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
-            // Never follow redirects or switch to another protocol (file://, gopher://, ...)
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
             CURLOPT_USERAGENT => 'TGbotPHP/' . ApiClient::VERSION,
@@ -158,9 +192,7 @@ final class CurlTransport implements TransportInterface
         return $this->handle;
     }
 
-    /**
-     * Only plain http(s) URLs, without credentials or control characters
-     */
+    /** Only plain http(s) URLs, without credentials or control characters. */
     private static function isValidUrl(string $url): bool
     {
         $parts = parse_url($url);
@@ -169,7 +201,7 @@ final class CurlTransport implements TransportInterface
     }
 
     /**
-     * @param array<string, mixed> $parts
+     * @param array<string, mixed> $parts Components returned by parse_url()
      */
     private static function isPlainHttpHost(array $parts): bool
     {
@@ -178,6 +210,7 @@ final class CurlTransport implements TransportInterface
             && !isset($parts['user']) && !isset($parts['pass']);
     }
 
+    /** Build a safe error message from the last cURL error. */
     private static function curlFailure(CurlHandle $curl): string
     {
         return 'cURL error: ' . LogRedactor::text(curl_error($curl));
