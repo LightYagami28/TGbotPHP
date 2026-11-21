@@ -13,6 +13,7 @@ use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\NetworkException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Exceptions\TooManyRequestsException;
+use TGbotPHP\Support\Platform\PlatformGuard;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Testing\FakeTransport;
 use TGbotPHP\Tests\Support\ParseMode;
@@ -70,15 +71,15 @@ final class ApiClientTest extends TestCase
 
     public function testDebugLogIsCreatedPrivate(): void
     {
-        if (PHP_OS_FAMILY === 'Windows') {
-            self::markTestSkipped('POSIX permissions are not Windows ACLs');
-        }
         $log = sys_get_temp_dir() . '/tgbotphp-debug-' . bin2hex(random_bytes(4)) . '.log';
 
         try {
             new ApiClient(new Config(Updates::TOKEN, debug: $log), $this->transport)->getMe();
 
-            self::assertSame('0600', substr(sprintf('%o', fileperms($log)), -4));
+            self::assertTrue(
+                PlatformGuard::current()->isRestricted($log),
+                'Debug log must be owner-only on every platform: ' . PlatformGuard::current()->describe(),
+            );
         } finally {
             @unlink($log);
         }

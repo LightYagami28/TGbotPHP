@@ -15,6 +15,7 @@ use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Rate\RateLimiter;
 use TGbotPHP\Session\ConversationManager;
 use TGbotPHP\Session\SessionManager;
+use TGbotPHP\Support\Platform\PlatformGuard;
 use TGbotPHP\Support\Value;
 use TGbotPHP\Tests\Support\RuntimeControls;
 use TGbotPHP\Tests\Support\Updates;
@@ -187,10 +188,6 @@ final class CacheTest extends TestCase
 
     public function testFileCacheFilesAreOnlyReadableByTheOwner(): void
     {
-        if (PHP_OS_FAMILY === 'Windows') {
-            self::markTestSkipped('POSIX permissions are not Windows ACLs');
-        }
-        // A directory created by someone else, with the default permissions
         $directory = self::$directory . '-perm';
         @mkdir($directory);
         $cache = new FileCache($directory);
@@ -202,9 +199,16 @@ final class CacheTest extends TestCase
         self::assertIsArray($files);
         self::assertNotEmpty($files);
 
+        $guard = PlatformGuard::current();
         foreach ($files as $file) {
-            self::assertSame('0600', substr(sprintf('%o', fileperms($file)), -4), basename($file));
+            if (str_ends_with($file, '.lock')) {
+                continue; // lock files are handled by their own test
+            }
+            self::assertTrue($guard->isRestricted($file), basename($file) . ' must be owner-only on ' . $guard->describe());
             unlink($file);
+        }
+        foreach (glob("$directory/*.lock") ?: [] as $lock) {
+            unlink($lock);
         }
         rmdir($directory);
     }
@@ -443,16 +447,11 @@ final class CacheTest extends TestCase
 
     public function testPutReportsADirectoryThatCannotCreateFiles(): void
     {
-        if (PHP_OS_FAMILY === 'Windows') {
-            self::markTestSkipped('POSIX directory permissions (chmod 0555) not supported on Windows NTFS');
-        }
-
+        $guard = PlatformGuard::current();
         $cache = new FileCache(self::$directory);
         $cache->put('locked-stripe', 'v');
-        $stripe = substr(hash('sha256', 'locked-stripe'), 0, 2);
-        $lock = self::$directory . '/' . $stripe . '.lock';
-        chmod($lock, 0666);
-        chmod(self::$directory, 0555);
+
+        self::assertTrue($guard->makeReadOnly(self::$directory), $guard->describe());
 
         try {
             $cache->put('locked-stripe', 'next');
@@ -460,7 +459,7 @@ final class CacheTest extends TestCase
         } catch (StorageException $e) {
             self::assertStringContainsString('Unable to write cache entry', $e->getMessage());
         } finally {
-            chmod(self::$directory, 0700);
+            self::assertTrue($guard->restoreWritable(self::$directory));
         }
     }
 
@@ -545,13 +544,11 @@ final class CacheTest extends TestCase
 
     public function testOpeningALockInAReadOnlyDirectoryIsReported(): void
     {
-        if (PHP_OS_FAMILY === 'Windows') {
-            self::markTestSkipped('POSIX directory permissions (chmod 0555) not supported on Windows NTFS');
-        }
-
+        $guard = PlatformGuard::current();
         $directory = sys_get_temp_dir() . '/tgbotphp-lockro-' . bin2hex(random_bytes(3));
         $cache = new FileCache($directory);
-        chmod($directory, 0555);
+
+        self::assertTrue($guard->makeReadOnly($directory), $guard->describe());
 
         try {
             $cache->put('new-key', 'v');
@@ -559,7 +556,7 @@ final class CacheTest extends TestCase
         } catch (StorageException $e) {
             self::assertStringContainsString('Unable to open cache lock', $e->getMessage());
         } finally {
-            chmod($directory, 0700);
+            self::assertTrue($guard->restoreWritable($directory));
             $cache->flush();
             rmdir($directory);
         }

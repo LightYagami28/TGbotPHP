@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Cache;
 
 use TGbotPHP\Exceptions\StorageException;
+use TGbotPHP\Support\Platform\PlatformGuard;
 use TGbotPHP\Support\Value;
 
 /**
@@ -215,8 +216,8 @@ class FileCache implements CacheInterface
         $path = $this->path($key);
         $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
 
-        // Readable by the bot only, whatever the umask and the directory permissions
-        if (@file_put_contents($tmp, $payload, LOCK_EX) === false || !@chmod($tmp, 0600) || !@rename($tmp, $path)) {
+        // Owner-only on every platform (POSIX 0600 / Windows NTFS ACL)
+        if (@file_put_contents($tmp, $payload, LOCK_EX) === false || !PlatformGuard::current()->restrict($tmp) || !@rename($tmp, $path)) {
             @unlink($tmp);
             throw new StorageException("Unable to write cache entry: $key");
         }
@@ -301,7 +302,7 @@ class FileCache implements CacheInterface
             throw new StorageException("Unable to open cache lock: $path");
         }
 
-        @chmod($path, 0600);
+        PlatformGuard::current()->restrict($path);
 
         if (!flock($handle, LOCK_EX)) {
             fclose($handle);

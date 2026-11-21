@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Support;
 
+use TGbotPHP\Support\Platform\PlatformGuard;
+
 /**
- * Creates a file that is readable by its owner only
+ * Creates a file that is readable by its owner only.
+ *
+ * Cross-platform: mode 0600 on POSIX (Linux/macOS), owner-only NTFS ACL on
+ * Windows. The exclusive create (`fopen` mode `x`) closes the window between
+ * "does it exist?" and "create it". Stream wrappers (php://, file://) are
+ * ignored: the caller writes those itself.
  */
 final class PrivateFile
 {
@@ -14,13 +21,6 @@ final class PrivateFile
         // Static helpers only
     }
 
-    /**
-     * Create an empty file with mode 0600.
-     *
-     * An existing file is left untouched. Stream wrappers (php://, file://)
-     * are ignored: the caller writes those itself. The exclusive create
-     * (`fopen` mode `x`) closes the window between "does it exist?" and "create it".
-     */
     public static function create(string $path): void
     {
         if (str_contains($path, '://') || is_file($path)) {
@@ -37,7 +37,7 @@ final class PrivateFile
 
         if ($handle !== false) {
             fclose($handle);
-            @chmod($path, 0600);
+            PlatformGuard::current()->restrict($path);
         }
     }
 }
