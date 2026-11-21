@@ -13,6 +13,7 @@ Manifests in this directory deploy two modes of the bot:
 - `deployment.yaml` — Deployments for polling and webhook modes
 - `service.yaml` — ClusterIP Service for the webhook (port 80 -> 8000)
 - `ingress.yaml` — Ingress with mandatory HTTPS/TLS via cert-manager (webhook mode)
+- `networkpolicy.yaml` — default-deny ingress/egress plus DNS, HTTPS egress and webhook ingress
 
 ## Prerequisites
 
@@ -37,6 +38,9 @@ Manifests in this directory deploy two modes of the bot:
 - The Secret is mounted read-only at `/run/secrets` instead of being copied
   into environment variables; `Value::env()` falls back to those files only
   when the matching environment variable is absent.
+- NetworkPolicy denies all traffic by default; only cluster DNS, HTTPS (443) to
+  public addresses and port 8000 from the `ingress-nginx` namespace are allowed.
+  The polling pod has no ingress at all.
 
 ## Deploy
 
@@ -53,6 +57,7 @@ kubectl apply -f k8s/secret.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 kubectl apply -f k8s/ingress.yaml
+kubectl apply -f k8s/networkpolicy.yaml
 ```
 
 Or apply the whole folder at once:
