@@ -136,14 +136,14 @@ final class Router
             return false;
         }
 
-        return $this->dispatchTyped($type, $payload, $update, [$state, $stateData])
+        return $this->dispatchTyped($type, $payload, [$state, $stateData])
             || $this->runUpdateHandlers($type, $payload, $update);
     }
 
     /**
      * @param array{?string, array<string, mixed>} $conversation Conversation state and its data
      */
-    private function dispatchTyped(string $type, stdClass $payload, stdClass $update, array $conversation): bool
+    private function dispatchTyped(string $type, stdClass $payload, array $conversation): bool
     {
         return match ($type) {
             'message' => $this->handleMessage($payload, $conversation[0], $conversation[1]),
