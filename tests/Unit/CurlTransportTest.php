@@ -155,10 +155,14 @@ final class CurlTransportTest extends TestCase
 
     public function testPlainHttpIsRejectedForNonLoopbackHost(): void
     {
-        $this->expectException(NetworkException::class);
-        $this->expectExceptionMessage('Invalid HTTP transport URL');
-
-        new CurlTransport()->get('http://192.0.2.1/', 1);
+        foreach (['http://192.0.2.1/', 'http://example.com/'] as $url) {
+            try {
+                new CurlTransport()->get($url, 1);
+                self::fail("Expected an invalid URL error for $url");
+            } catch (NetworkException $exception) {
+                self::assertSame('Invalid HTTP transport URL', $exception->getMessage());
+            }
+        }
     }
 
     public function testHttpsUrlIsAccepted(): void

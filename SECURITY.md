@@ -35,9 +35,10 @@ Solo l'ultima versione pubblicata riceve correzioni di sicurezza. La dipendenza 
 - **Output encoding**: i testi inviati a Telegram vengono escapati in base al `parse_mode`.
 - **Errori senza leak**: i messaggi di errore non espongono token; `LogRedactor` rimuove i segreti dai log.
 - **Catena di fornitura**: `composer.lock` contiene checksum. Le GitHub Action
-  sono pinnate a SHA-256 e `composer audit` gira in CI. Ogni build pubblica
-  SBOM SPDX, CycloneDX e un'attestazione SLSA firmata con Sigstore. Le immagini
-  Docker pinnano le basi per digest.
+  sono pinnate tramite impronta Secure Hash Algorithm (SHA-256) e `composer
+  audit` gira in CI. Ogni build pubblica un Software Bill of Materials (SBOM)
+  in formato SPDX e CycloneDX. Pubblica anche un'attestazione SLSA firmata con
+  Sigstore. Le immagini Docker pinnano le basi per digest.
 - **Verifica degli artefatti**: scaricare archivio, checksum e SBOM dalla
   release e verificare l'attestazione con
   `gh attestation verify <file> --repo LightYagami28/TGbotPHP`.
