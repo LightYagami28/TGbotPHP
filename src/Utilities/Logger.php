@@ -9,10 +9,11 @@ use TGbotPHP\Security\LogRedactor;
 use TGbotPHP\Support\PrivateFile;
 
 /**
- * Minimal file logger with level threshold
+ * Minimal file logger with a level threshold and credential redaction.
  */
 class Logger
 {
+    /** Numeric ordering of the supported levels. */
     private const array LEVELS = ['DEBUG' => 0, 'INFO' => 1, 'WARNING' => 2, 'ERROR' => 3];
 
     private string $logFile;
@@ -22,6 +23,8 @@ class Logger
     /**
      * @param string $logFile A file path or a stream such as php://stderr (the default,
      *     collected by Docker and systemd)
+     * @param bool $enabled Whether logging is active
+     * @param string $minLevel Lowest level to emit: DEBUG, INFO, WARNING or ERROR
      */
     public function __construct(string $logFile = 'php://stderr', bool $enabled = true, string $minLevel = 'DEBUG')
     {
@@ -31,7 +34,7 @@ class Logger
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param array<string, mixed> $context Values replace {placeholders} in the message
      */
     public function info(string $message, array $context = []): void
     {
@@ -39,7 +42,7 @@ class Logger
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param array<string, mixed> $context Values replace {placeholders} in the message
      */
     public function warning(string $message, array $context = []): void
     {
@@ -47,7 +50,7 @@ class Logger
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param array<string, mixed> $context Values replace {placeholders} in the message
      */
     public function error(string $message, array $context = []): void
     {
@@ -55,7 +58,7 @@ class Logger
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param array<string, mixed> $context Values replace {placeholders} in the message
      */
     public function debug(string $message, array $context = []): void
     {
@@ -63,6 +66,8 @@ class Logger
     }
 
     /**
+     * Write a redacted, single-line log entry when the level passes the threshold.
+     *
      * @param array<string, mixed> $context Values replace {placeholders} in the message
      */
     public function log(string $level, string $message, array $context = []): void

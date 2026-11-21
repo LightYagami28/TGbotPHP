@@ -8,7 +8,7 @@ use TGbotPHP\Framework\Bot;
 use TGbotPHP\Plugin\PluginInterface;
 
 /**
- * Handler registration of BotBuilder: collected here, replayed on the Bot by build()
+ * Handler registration of BotBuilder: collected here, replayed on the Bot by build().
  */
 trait CollectsHandlers
 {
@@ -42,66 +42,87 @@ trait CollectsHandlers
     /** @var PluginInterface[] */
     private array $plugins = [];
 
+    /** Register a /command handler. */
     public function addCommand(string $command, callable $handler): self
     {
         $this->commands[$command] = $handler;
+
         return $this;
     }
 
+    /** Register a callback query handler. */
     public function addCallback(string $data, callable $handler): self
     {
         $this->callbacks[$data] = $handler;
+
         return $this;
     }
 
+    /** Register a message pattern handler. */
     public function addText(string $pattern, callable $handler): self
     {
         $this->texts[$pattern] = $handler;
+
         return $this;
     }
 
+    /** Register an inline query pattern handler. */
     public function addInlineQuery(string $pattern, callable $handler): self
     {
         $this->inlineQueries[$pattern] = $handler;
+
         return $this;
     }
 
+    /** Register a conversation state handler. */
     public function addState(string $state, callable $handler): self
     {
         $this->states[$state] = $handler;
+
         return $this;
     }
 
+    /** Register a handler for an arbitrary update type. */
     public function addUpdateHandler(string $type, callable $handler): self
     {
         $this->updates[] = [$type, $handler];
+
         return $this;
     }
 
+    /** Register the handler called when no other handler matched. */
     public function setFallback(callable $handler): self
     {
         $this->fallback = $handler;
+
         return $this;
     }
 
+    /** Register middleware wrapping every handler. */
     public function addMiddleware(callable $handler): self
     {
         $this->middleware[] = $handler;
+
         return $this;
     }
 
+    /** Register a listener for a bot event. */
     public function addEventListener(string $event, callable $handler): self
     {
         $this->events[$event][] = $handler;
+
         return $this;
     }
 
+    /** Register a plugin to boot on the bot. */
     public function addPlugin(PluginInterface $plugin): self
     {
         $this->plugins[] = $plugin;
+
         return $this;
     }
 
+    /** Replay every collected registration on the built bot. */
     private function registerHandlers(Bot $bot): void
     {
         $this->registerKeyed($bot);
@@ -110,6 +131,7 @@ trait CollectsHandlers
         $this->registerExtras($bot);
     }
 
+    /** Register commands, callbacks and text patterns. */
     private function registerKeyed(Bot $bot): void
     {
         foreach ($this->commands as $command => $handler) {
@@ -125,6 +147,7 @@ trait CollectsHandlers
         }
     }
 
+    /** Register inline queries, conversation states and update handlers. */
     private function registerUpdates(Bot $bot): void
     {
         foreach ($this->inlineQueries as $pattern => $handler) {
@@ -149,6 +172,7 @@ trait CollectsHandlers
         }
     }
 
+    /** Register the fallback, middleware and plugins. */
     private function registerExtras(Bot $bot): void
     {
         if ($this->fallback !== null) {

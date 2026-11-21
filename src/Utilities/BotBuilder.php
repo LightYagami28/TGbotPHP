@@ -11,7 +11,7 @@ use TGbotPHP\Framework\Bot;
 use TGbotPHP\Http\TransportInterface;
 
 /**
- * Fluent bot factory
+ * Fluent bot factory.
  *
  *     $bot = (new BotBuilder(getenv('TELEGRAM_BOT_TOKEN')))
  *         ->withSecretToken(getenv('TELEGRAM_SECRET_TOKEN'))
@@ -39,6 +39,7 @@ class BotBuilder
     private ?CacheInterface $conversationCache = null;
     private int $conversationTtl = 3600;
 
+    /** @param string $token Bot token issued by @BotFather */
     public function __construct(string $token)
     {
         $this->token = $token;
@@ -46,19 +47,20 @@ class BotBuilder
     }
 
     /**
-     * Log every request and response: true for the PHP error log, or a file path
-     *
+     * Log every request and response: true for the PHP error log, or a file path.
      * The log contains message contents: keep it private.
      */
     public function withDebug(bool|string $log = true): self
     {
         $this->debug = $log;
+
         return $this;
     }
 
     public function withSecretToken(string $token): self
     {
         $this->secretToken = $token;
+
         return $this;
     }
 
@@ -71,15 +73,15 @@ class BotBuilder
     public function allowUnauthenticatedWebhook(bool $allow = true): self
     {
         $this->allowUnauthenticatedWebhook = $allow;
+
         return $this;
     }
 
-    /**
-     * Reject webhook bodies larger than this many bytes with HTTP 413
-     */
+    /** Reject webhook bodies larger than this many bytes with HTTP 413. */
     public function withMaxWebhookBody(int $bytes): self
     {
         $this->maxWebhookBodyBytes = $bytes;
+
         return $this;
     }
 
@@ -90,61 +92,61 @@ class BotBuilder
     public function acknowledgeHandlerErrors(bool $acknowledge = true): self
     {
         $this->acknowledgeHandlerErrors = $acknowledge;
+
         return $this;
     }
 
-    /**
-     * Directory a local Bot API server may read absolute file paths from
-     */
+    /** Directory a local Bot API server may read absolute file paths from. */
     public function withLocalFileRoot(string $directory): self
     {
         $this->localFileRoot = $directory;
+
         return $this;
     }
 
-    /**
-     * Skip a webhook delivery whose update_id was already accepted
-     */
+    /** Skip a webhook delivery whose update_id was already accepted. */
     public function deduplicateUpdates(CacheInterface $cache): self
     {
         $this->updateDedup = $cache;
+
         return $this;
     }
 
     public function withUsername(string $username): self
     {
         $this->username = $username;
+
         return $this;
     }
 
-    /**
-     * Use a local Bot API server (https is not required when $enforceHttps is false)
-     */
+    /** Use a local Bot API server (https is not required when $enforceHttps is false). */
     public function withApiServer(string $baseUrl, bool $enforceHttps = true): self
     {
         $this->apiBaseUrl = $baseUrl;
         $this->enforceHttps = $enforceHttps;
+
         return $this;
     }
 
     public function withTimeout(int $seconds): self
     {
         $this->timeout = $seconds;
+
         return $this;
     }
 
-    /**
-     * How requests answered with 429 Too Many Requests are retried
-     */
+    /** How requests answered with 429 Too Many Requests are retried. */
     public function withRetry(RetryPolicy $retry): self
     {
         $this->retry = $retry;
+
         return $this;
     }
 
     public function withTransport(TransportInterface $transport): self
     {
         $this->transport = $transport;
+
         return $this;
     }
 
@@ -152,9 +154,11 @@ class BotBuilder
     {
         $this->conversationCache = $cache;
         $this->conversationTtl = $ttl;
+
         return $this;
     }
 
+    /** Build the configured bot and register every collected handler. */
     public function build(): Bot
     {
         $config = new Config(

@@ -7,7 +7,7 @@ namespace TGbotPHP\Utilities;
 use InvalidArgumentException;
 
 /**
- * Reply markup helpers
+ * Reply markup helpers.
  *
  * Static helpers build complete markups from "text => callback data" maps.
  * For mixed buttons use the fluent builder:
@@ -20,7 +20,7 @@ use InvalidArgumentException;
 class Keyboard
 {
     /**
-     * Single row of callback buttons
+     * Single row of callback buttons.
      *
      * @param array<int|string, string> $buttons text => callback data
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
@@ -31,7 +31,7 @@ class Keyboard
     }
 
     /**
-     * Single row of URL buttons
+     * Single row of URL buttons.
      *
      * @param array<int|string, string> $links text => URL
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
@@ -56,7 +56,7 @@ class Keyboard
     }
 
     /**
-     * Callback buttons laid out in a grid
+     * Callback buttons laid out in a grid.
      *
      * @param array<int|string, string> $buttons text => callback data
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
@@ -81,7 +81,7 @@ class Keyboard
     }
 
     /**
-     * Inline keyboard with previous/next navigation for paginated content
+     * Inline keyboard with previous/next navigation for paginated content.
      *
      * @param string $callbackPrefix Buttons send "$callbackPrefix$page"
      * @return array{inline_keyboard: array<int, array<int, array<string, string>>>}
@@ -104,7 +104,7 @@ class Keyboard
     }
 
     /**
-     * Custom reply keyboard
+     * Custom reply keyboard.
      *
      * @param array<int, array<int, string|array<string, mixed>>> $rows Rows of button texts or KeyboardButton objects
      * @return array<string, mixed>
@@ -133,13 +133,14 @@ class Keyboard
         ], static fn(mixed $value): bool => $value !== null);
     }
 
+    /** Return true only for enabled flags, so Telegram receives no false values. */
     private static function flag(bool $enabled): ?bool
     {
         return $enabled ? true : null;
     }
 
     /**
-     * Remove the custom reply keyboard
+     * Remove the custom reply keyboard.
      *
      * @return array<string, bool>
      */
@@ -149,7 +150,7 @@ class Keyboard
     }
 
     /**
-     * Force the user to reply to the bot's message
+     * Force the user to reply to the bot's message.
      *
      * @return array<string, mixed>
      */
@@ -164,6 +165,8 @@ class Keyboard
 
     /**
      * @return array<string, string>
+     *
+     * @throws InvalidArgumentException When callback_data is empty or longer than 64 bytes
      */
     public static function button(string $text, string $callbackData): array
     {
@@ -190,9 +193,7 @@ class Keyboard
         return ['text' => $text, 'web_app' => ['url' => $url]];
     }
 
-    /**
-     * Fluent inline keyboard builder
-     */
+    /** Fluent inline keyboard builder. */
     public static function inlineBuilder(): InlineKeyboard
     {
         return new InlineKeyboard();

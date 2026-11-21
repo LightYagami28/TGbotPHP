@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TGbotPHP\Utilities;
 
 /**
- * Safe text formatting for the HTML and MarkdownV2 parse modes
+ * Safe text formatting for the HTML and MarkdownV2 parse modes.
  *
  * Always escape user supplied text before embedding it in formatted messages.
  *
@@ -14,7 +14,7 @@ namespace TGbotPHP\Utilities;
 final class Formatter
 {
     /**
-     * Escape text for parse_mode HTML
+     * Escape text for parse_mode HTML.
      *
      * Telegram only understands the &lt; &gt; &amp; &quot; named entities and
      * numeric ones, so quotes are escaped as &quot; and &#039; (never &apos;).
@@ -24,44 +24,49 @@ final class Formatter
         return htmlspecialchars($text, ENT_QUOTES | ENT_HTML401 | ENT_SUBSTITUTE, 'UTF-8');
     }
 
-    /**
-     * Escape text for parse_mode MarkdownV2
-     */
+    /** Escape text for parse_mode MarkdownV2. */
     public static function escapeMarkdownV2(string $text): string
     {
         return (string) preg_replace('/([_*\[\]()~`>#+\-=|{}.!\\\\])/', '\\\\$1', $text);
     }
 
+    /** Wrap escaped text in a bold tag. */
     public static function bold(string $text): string
     {
         return '<b>' . self::escape($text) . '</b>';
     }
 
+    /** Wrap escaped text in an italic tag. */
     public static function italic(string $text): string
     {
         return '<i>' . self::escape($text) . '</i>';
     }
 
+    /** Wrap escaped text in an underline tag. */
     public static function underline(string $text): string
     {
         return '<u>' . self::escape($text) . '</u>';
     }
 
+    /** Wrap escaped text in a strikethrough tag. */
     public static function strike(string $text): string
     {
         return '<s>' . self::escape($text) . '</s>';
     }
 
+    /** Wrap escaped text in a spoiler tag. */
     public static function spoiler(string $text): string
     {
         return '<tg-spoiler>' . self::escape($text) . '</tg-spoiler>';
     }
 
+    /** Wrap escaped text in an inline code tag. */
     public static function code(string $text): string
     {
         return '<code>' . self::escape($text) . '</code>';
     }
 
+    /** Wrap escaped text in a preformatted block, optionally with a language. */
     public static function pre(string $text, ?string $language = null): string
     {
         if ($language === null || $language === '') {
@@ -71,19 +76,19 @@ final class Formatter
         return '<pre><code class="language-' . self::escape($language) . '">' . self::escape($text) . '</code></pre>';
     }
 
+    /** Wrap escaped text in a blockquote. */
     public static function quote(string $text, bool $expandable = false): string
     {
         return '<blockquote' . ($expandable ? ' expandable' : '') . '>' . self::escape($text) . '</blockquote>';
     }
 
+    /** Build an HTML link with escaped text and URL. */
     public static function link(string $text, string $url): string
     {
         return '<a href="' . self::escape($url) . '">' . self::escape($text) . '</a>';
     }
 
-    /**
-     * Mention a user by id (works for users without a username)
-     */
+    /** Mention a user by id (works for users without a username). */
     public static function mention(int $userId, string $name): string
     {
         return self::link($name, 'tg://user?id=' . $userId);

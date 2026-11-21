@@ -8,10 +8,13 @@ use stdClass;
 use TGbotPHP\Framework\Routing\Command;
 use TGbotPHP\Support\Value;
 
+/**
+ * Helpers for parsing commands, arguments and entities out of message text.
+ */
 class MessageParser
 {
     /**
-     * Parse "/command@bot arguments"
+     * Parse "/command@bot arguments".
      *
      * @return array{command: string, args: string, username: ?string}|null
      */
@@ -31,7 +34,7 @@ class MessageParser
     }
 
     /**
-     * Split command arguments on whitespace, honouring "double quoted" values
+     * Split command arguments on whitespace, honouring "double quoted" values.
      *
      * @return string[]
      */
@@ -49,7 +52,7 @@ class MessageParser
     }
 
     /**
-     * Text of the entities of a type ("mention", "hashtag", "url", "bot_command"...) in a message
+     * Text of the entities of a type ("mention", "hashtag", "url", "bot_command"...) in a message.
      *
      * Reads the entities Telegram detected, from `entities` or `caption_entities`.
      * Their offsets count UTF-16 code units, so emoji and other characters
@@ -143,6 +146,7 @@ class MessageParser
         if (preg_match_all('/(?<![\w@])@(\w{5,32})/', $text, $matches) > 0) {
             return $matches[1];
         }
+
         return [];
     }
 
@@ -154,6 +158,7 @@ class MessageParser
         if (preg_match_all('/(?<!\w)#(\w+)/u', $text, $matches) > 0) {
             return $matches[1];
         }
+
         return [];
     }
 
@@ -165,6 +170,7 @@ class MessageParser
         if (preg_match_all('/https?:\/\/[^\s<>"]+/u', $text, $matches) > 0) {
             return array_map(static fn(string $url): string => rtrim($url, '.,;:!?)'), $matches[0]);
         }
+
         return [];
     }
 
@@ -176,9 +182,11 @@ class MessageParser
         if (preg_match_all('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $text, $matches) > 0) {
             return $matches[0];
         }
+
         return [];
     }
 
+    /** Remove common Markdown emphasis markers from text. */
     public static function stripMarkdown(string $text): string
     {
         $patterns = [
