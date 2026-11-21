@@ -163,7 +163,7 @@ final class CacheTest extends TestCase
     public function testFileCacheIgnoresUnexpectedContents(): void
     {
         $cache = new FileCache(self::$directory);
-        file_put_contents(self::$directory . '/' . hash('sha256', 'scalar') . '.cache', serialize('no envelope'));
+        file_put_contents(self::$directory . '/' . hash('sha256', 'scalar') . '.cache', json_encode('no envelope'));
         file_put_contents(self::$directory . '/' . hash('sha256', 'empty') . '.cache', '');
 
         self::assertFalse($cache->has('scalar'));
@@ -219,7 +219,9 @@ final class CacheTest extends TestCase
         $cache = new FileCache(self::$directory);
         $cache->put('object', new \ArrayObject([1]));
 
-        self::assertInstanceOf(\__PHP_Incomplete_Class::class, $cache->get('object'));
+        $value = $cache->get('object');
+        self::assertIsArray($value);
+        self::assertSame([1], $value);
     }
 
     public function testRateLimiterUsesFixedWindow(): void
@@ -358,7 +360,7 @@ final class CacheTest extends TestCase
             . ' $lock = fopen($dir . "/" . substr($hash, 0, 2) . ".lock", "c");'
             . ' if ($lock === false || !flock($lock, LOCK_EX)) { exit(1); }'
             . ' file_put_contents($ready, "1"); sleep(1);'
-            . ' file_put_contents($dir . "/$hash.cache", serialize(["expires" => time() + 60, "value" => "new"]));'
+            . ' file_put_contents($dir . "/$hash.cache", json_encode(["v" => 1, "expires" => time() + 60, "value" => "new"]));'
             . ' flock($lock, LOCK_UN); fclose($lock);',
             var_export(self::$directory, true),
             var_export($ready, true),

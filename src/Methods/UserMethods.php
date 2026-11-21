@@ -9,6 +9,7 @@ use TGbotPHP\Core\Config;
 use TGbotPHP\Exceptions\ApiException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Http\TransportInterface;
+use TGbotPHP\Support\SafeFileRemover;
 use TGbotPHP\Support\Value;
 
 /**
@@ -216,9 +217,7 @@ trait UserMethods
                 throw new StorageException("Unable to write file: $destination");
             }
         } finally {
-            if (is_file($tmp)) {
-                @unlink($tmp);
-            }
+            SafeFileRemover::remove([$tmp], dirname($destination));
         }
 
         return $destination;

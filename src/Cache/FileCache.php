@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Cache;
 
+use JsonException;
 use TGbotPHP\Exceptions\StorageException;
 use TGbotPHP\Support\Platform\PlatformGuard;
+use TGbotPHP\Support\SafeFileRemover;
 use TGbotPHP\Support\Value;
 
 /**
  * Filesystem cache that persists between requests.
  *
- * Values are serialized without allowing objects to be restored, so only
- * scalars and arrays round-trip. Keep the directory outside the web root.
+ * Entries are stored as JSON with an explicit envelope: no PHP object is ever
+ * reconstructed from the file, so a tampered entry cannot execute code.
+ * Keep the directory outside the web root.
  *
  * put(), forget(), the removal of an expired entry and prune() all take the
  * same per-key lock that update() holds. Otherwise a read could unlink a file
@@ -20,8 +23,11 @@ use TGbotPHP\Support\Value;
  */
 class FileCache implements CacheInterface
 {
-    /** Suffix of the files holding serialized entries. */
+    /** Suffix of the files holding JSON entries. */
     private const string ENTRY_SUFFIX = '.cache';
+
+    /** Version of the on-disk JSON envelope. */
+    private const int FORMAT = 1;
 
     /** Absolute path of the cache directory. */
     private string $directory;
@@ -104,11 +110,7 @@ class FileCache implements CacheInterface
         $this->lock($key);
 
         try {
-            $path = $this->path($key);
-
-            if (is_file($path)) {
-                @unlink($path);
-            }
+            SafeFileRemover::remove([$this->path($key)], $this->directory);
         } finally {
             $this->unlock($key);
         }
@@ -117,9 +119,10 @@ class FileCache implements CacheInterface
     #[\Override]
     public function flush(): void
     {
-        foreach ([...$this->files(self::ENTRY_SUFFIX), ...$this->files('.lock'), ...$this->files('.tmp')] as $file) {
-            @unlink($file);
-        }
+        SafeFileRemover::remove(
+            [...$this->files(self::ENTRY_SUFFIX), ...$this->files('.lock'), ...$this->files('.tmp')],
+            $this->directory,
+        );
     }
 
     #[\Override]
@@ -154,7 +157,7 @@ class FileCache implements CacheInterface
                 $entry = $this->decode((string) @file_get_contents($file));
 
                 if ($entry === null || self::isExpired($entry)) {
-                    @unlink($file);
+                    SafeFileRemover::remove([$file], $this->directory);
                     $removed++;
                 }
             } finally {
@@ -207,7 +210,7 @@ class FileCache implements CacheInterface
                 return $entry;
             }
 
-            @unlink($path);
+            SafeFileRemover::remove([$path], $this->directory);
 
             return null;
         } finally {
@@ -222,10 +225,15 @@ class FileCache implements CacheInterface
      */
     private function store(string $key, mixed $value, ?int $ttl): void
     {
-        $payload = serialize([
-            'expires' => $ttl !== null ? time() + $ttl : null,
-            'value' => $value,
-        ]);
+        try {
+            $payload = json_encode([
+                'v' => self::FORMAT,
+                'expires' => $ttl !== null ? time() + $ttl : null,
+                'value' => $value,
+            ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (JsonException $e) {
+            throw new StorageException("Unable to encode cache entry: $key", 0, $e);
+        }
 
         $path = $this->path($key);
         $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
@@ -235,13 +243,16 @@ class FileCache implements CacheInterface
             || !PlatformGuard::current()->restrict($tmp)
             || !@rename($tmp, $path)
         ) {
-            @unlink($tmp);
+            SafeFileRemover::remove([$tmp], $this->directory);
             throw new StorageException("Unable to write cache entry: $key");
         }
     }
 
     /**
-     * Decode an entry without allowing object instantiation.
+     * Decode a JSON envelope with an explicit schema.
+     *
+     * Only the known keys are read and no PHP type is reconstructed from the
+     * file, so a tampered entry can never instantiate an object.
      *
      * @return array{expires: ?int, value: mixed}|null
      */
@@ -251,14 +262,22 @@ class FileCache implements CacheInterface
             return null;
         }
 
-        $entry = @unserialize($contents, ['allowed_classes' => false]);
+        try {
+            $entry = json_decode($contents, true, 32, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return null;
+        }
 
-        if (!is_array($entry) || !array_key_exists('value', $entry)) {
+        if (!is_array($entry)
+            || ($entry['v'] ?? null) !== self::FORMAT
+            || !array_key_exists('expires', $entry)
+            || !array_key_exists('value', $entry)
+        ) {
             return null;
         }
 
         return [
-            'expires' => Value::nullableInt($entry['expires'] ?? null),
+            'expires' => Value::nullableInt($entry['expires']),
             'value' => $entry['value'],
         ];
     }
