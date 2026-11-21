@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Rate;
 
+use Closure;
 use InvalidArgumentException;
 use stdClass;
 use TGbotPHP\Cache\CacheInterface;
@@ -11,14 +12,26 @@ use TGbotPHP\Core\UpdateParser;
 use TGbotPHP\Support\Value;
 
 /**
- * Fixed-window rate limiter
+ * Fixed-window rate limiter backed by a cache.
+ *
+ * The current window is stored under a prefixed key, so the limiter works
+ * across requests when a persistent cache is used.
  */
 class RateLimiter
 {
+    /**
+     * @param CacheInterface $cache Cache holding the current windows
+     */
     public function __construct(private CacheInterface $cache) {}
 
     /**
-     * Register a hit; returns false when the limit for the current window is reached
+     * Register a hit and return whether it is allowed in the current window.
+     *
+     * @param string $key Identifier of the caller, e.g. "user:42"
+     * @param int $maxRequests Maximum hits allowed per window
+     * @param int $windowSeconds Length of a window in seconds
+     *
+     * @throws InvalidArgumentException When the limits are not positive
      */
     public function limit(string $key, int $maxRequests, int $windowSeconds): bool
     {
@@ -48,11 +61,13 @@ class RateLimiter
         return $allowed;
     }
 
+    /** Discard the current window for a key. */
     public function reset(string $key): void
     {
         $this->cache->forget($this->cacheKey($key));
     }
 
+    /** Number of hits still allowed in the current window. */
     public function remaining(string $key, int $maxRequests): int
     {
         $window = $this->window($key);
@@ -64,9 +79,7 @@ class RateLimiter
         return max(0, $maxRequests - $window['count']);
     }
 
-    /**
-     * Seconds until the current window resets
-     */
+    /** Seconds until the current window resets. */
     public function availableIn(string $key): int
     {
         $window = $this->window($key);
@@ -75,14 +88,16 @@ class RateLimiter
     }
 
     /**
-     * Middleware limiting each user to $maxRequests updates per $windowSeconds
+     * Middleware limiting each user to $maxRequests updates per $windowSeconds.
      *
      *     $bot->middleware($limiter->middleware(5, 10, fn($update, $bot) => ...));
      *
      * @param (callable(stdClass, mixed...): mixed)|null $onLimited Called for dropped updates
-     * @return \Closure(stdClass, mixed...): bool
+     * @return Closure(stdClass, mixed...): bool
+     *
+     * @throws InvalidArgumentException When the limits are not positive
      */
-    public function middleware(int $maxRequests, int $windowSeconds, ?callable $onLimited = null): \Closure
+    public function middleware(int $maxRequests, int $windowSeconds, ?callable $onLimited = null): Closure
     {
         self::assertWindow($maxRequests, $windowSeconds);
 
@@ -116,6 +131,8 @@ class RateLimiter
     }
 
     /**
+     * Normalise a stored window, rejecting malformed or partial values.
+     *
      * @return array{count: int, reset_at: int}|null
      */
     private static function decode(mixed $window): ?array
@@ -130,11 +147,15 @@ class RateLimiter
         return $count !== null && $resetAt !== null ? ['count' => $count, 'reset_at' => $resetAt] : null;
     }
 
+    /** Prefix a caller key to avoid collisions with other cache users. */
     private function cacheKey(string $key): string
     {
         return 'rate:' . $key;
     }
 
+    /**
+     * @throws InvalidArgumentException When the limits are not positive
+     */
     private static function assertWindow(int $maxRequests, int $windowSeconds): void
     {
         if ($maxRequests <= 0 || $windowSeconds <= 0) {
