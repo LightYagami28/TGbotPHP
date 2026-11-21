@@ -22,14 +22,25 @@ final class PlatformGuard
     public static function current(): PrivateFileGuard
     {
         if (self::$instance === null) {
-            self::$instance = match (PHP_OS_FAMILY) {
-                'Windows' => new WindowsPrivateFileGuard(),
-                'Darwin' => new MacOSPrivateFileGuard(),
-                default => new LinuxPrivateFileGuard(),
-            };
+            self::$instance = self::forFamily(PHP_OS_FAMILY);
         }
 
         return self::$instance;
+    }
+
+    /**
+     * Build the guard for an explicit OS family.
+     *
+     * The dispatch is kept injectable so every platform branch can be
+     * exercised on a single host; current() still uses PHP_OS_FAMILY.
+     */
+    public static function forFamily(string $family): PrivateFileGuard
+    {
+        return match ($family) {
+            'Windows' => new WindowsPrivateFileGuard(),
+            'Darwin' => new MacOSPrivateFileGuard(),
+            default => new LinuxPrivateFileGuard(),
+        };
     }
 
     /** Test helper: inject a specific guard to exercise all three platforms. */
