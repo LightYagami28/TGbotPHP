@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TGbotPHP\Support\Platform\Windows;
 
+use Override;
 use TGbotPHP\Support\Platform\PrivateFileGuard;
 
 /**
@@ -21,6 +22,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
         $this->user = ($domain !== false && $domain !== '' ? $domain . '\\' : '') . ($name !== false ? $name : '');
     }
 
+    #[Override]
     public function restrict(string $path): bool
     {
         if ($this->user === '') {
@@ -32,6 +34,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
         return $code === 0;
     }
 
+    #[Override]
     public function isRestricted(string $path): bool
     {
         if ($this->user === '') {
@@ -51,6 +54,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
         return $granted && !$others;
     }
 
+    #[Override]
     public function makeReadOnly(string $directory): bool
     {
         if ($this->user === '') {
@@ -63,6 +67,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
         return $code === 0;
     }
 
+    #[Override]
     public function restoreWritable(string $directory): bool
     {
         if ($this->user === '') {
@@ -74,6 +79,7 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
         return $code === 0;
     }
 
+    #[Override]
     public function describe(): string
     {
         return 'Windows NTFS ACL (icacls owner-only)';

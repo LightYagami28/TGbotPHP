@@ -207,7 +207,8 @@ final class CacheTest extends TestCase
             self::assertTrue($guard->isRestricted($file), basename($file) . ' must be owner-only on ' . $guard->describe());
             unlink($file);
         }
-        foreach (glob("$directory/*.lock") ?: [] as $lock) {
+        $locks = glob("$directory/*.lock");
+        foreach ($locks === false ? [] : $locks as $lock) {
             unlink($lock);
         }
         rmdir($directory);
