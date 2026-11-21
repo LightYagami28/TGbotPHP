@@ -48,3 +48,12 @@ jobs:
     - name: Minimum coverage
       if: matrix.coverage != 'none'
       run: php tools/coverage-check.php coverage.xml 100
+    - name: Carica report di copertura
+      if: always() && matrix.coverage != 'none'
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: coverage-php-${{ matrix.php-version }}
+        path: |
+          coverage.xml
+          coverage.txt
+        if-no-files-found: error
