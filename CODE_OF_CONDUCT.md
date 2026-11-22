@@ -30,8 +30,9 @@ accogliente, diversa, inclusiva e sana.
 ## Ambito e applicazione
 
 Il codice si applica a tutti gli spazi del progetto e a chi lo rappresenta
-ufficialmente. Le segnalazioni vanno inviate a [@LightYagami28](https://t.me/lightyagami28): saranno esaminate
-prontamente ed equamente, rispettando la privacy di chi segnala.
+ufficialmente. Le segnalazioni vanno inviate a
+[@LightYagami28](https://t.me/lightyagami28): saranno esaminate prontamente
+ed equamente, rispettando la privacy di chi segnala.
 
 Le conseguenze, in ordine di gravità, sono: correzione privata, avviso,
 sospensione temporanea, sospensione definitiva.
