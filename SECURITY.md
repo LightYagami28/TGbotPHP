@@ -2,8 +2,8 @@
 
 ## Segnalare una vulnerabilità
 
-Non aprire una issue pubblica. Usa
-[GitHub Security Advisories](<https://github.com/LightYagami28/TGbotPHP/security/advisories/new>)
+Non aprire una issue pubblica. Usa GitHub Security Advisories:
+<https://github.com/LightYagami28/TGbotPHP/security/advisories/new>
 oppure scrivi a **ceo@retechrevive.it**.
 Non includere token, segreti o dati personali nella segnalazione.
 
