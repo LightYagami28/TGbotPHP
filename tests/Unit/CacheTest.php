@@ -204,7 +204,10 @@ final class CacheTest extends TestCase
             if (str_ends_with($file, '.lock')) {
                 continue; // lock files are handled by their own test
             }
-            self::assertTrue($guard->isRestricted($file), basename($file) . ' must be owner-only on ' . $guard->describe());
+            self::assertTrue(
+                $guard->isRestricted($file),
+                basename($file) . ' must be owner-only on ' . $guard->describe(),
+            );
             unlink($file);
         }
         $locks = glob("$directory/*.lock");
@@ -370,7 +373,8 @@ final class CacheTest extends TestCase
             . ' $lock = fopen($dir . "/" . substr($hash, 0, 2) . ".lock", "c");'
             . ' if ($lock === false || !flock($lock, LOCK_EX)) { exit(1); }'
             . ' file_put_contents($ready, "1"); sleep(1);'
-            . ' file_put_contents($dir . "/$hash.cache", json_encode(["v" => 1, "expires" => time() + 60, "value" => "new"]));'
+            . ' file_put_contents($dir . "/$hash.cache",'
+            . ' json_encode(["v" => 1, "expires" => time() + 60, "value" => "new"]));'
             . ' flock($lock, LOCK_UN); fclose($lock);',
             var_export(self::$directory, true),
             var_export($ready, true),

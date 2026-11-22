@@ -31,7 +31,10 @@ use Throwable;
  */
 final readonly class WebhookHandler
 {
-    public function __construct(private Bot $bot) {}
+    public function __construct(private Bot $bot)
+    {
+        // Dependency promoted to property.
+    }
 
     /**
      * @param string|null $body Request body (default: php://input, read up to the configured limit)

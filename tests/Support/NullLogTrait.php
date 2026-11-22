@@ -17,7 +17,9 @@ trait NullLogTrait
     {
         if (self::$nullLogPath === null) {
             $path = tempnam(sys_get_temp_dir(), 'tgbotphp-null-log-');
-            self::$nullLogPath = $path === false ? sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'tgbotphp-null-log' : $path;
+            self::$nullLogPath = $path === false
+                ? sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'tgbotphp-null-log'
+                : $path;
         }
 
         return self::$nullLogPath;
