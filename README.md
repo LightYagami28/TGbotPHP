@@ -1,6 +1,8 @@
 # TGbotPHP
 
-Libreria PHP per la [Telegram Bot API](https://core.telegram.org/bots/api), con routing, middleware e conversazioni per costruire bot.
+Libreria PHP per la [Telegram Bot API](https://core.telegram.org/bots/api),
+con routing, middleware e conversazioni per costruire
+bot.
 
 [![Tests](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/tests.yml)
 [![Code Analysis](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml/badge.svg)](https://github.com/LightYagami28/TGbotPHP/actions/workflows/analysis.yml)
@@ -36,7 +38,9 @@ $bot->command('/start', fn ($update, $bot) => $bot->sendMessage(
 $bot->handle();
 ```
 
-Per il polling locale usa `LongPolling`; per i test usa `BotTester` e `FakeTransport`. La documentazione completa è in [`docs/`](docs/README.md) e nel [`wiki/`](wiki/Home.md).
+Per il polling locale usa `LongPolling`; per i test usa `BotTester` e
+`FakeTransport`. La documentazione completa è in [`docs/`](docs/README.md)
+e nel [`wiki/`](wiki/Home.md).
 
 ## Sicurezza
 
@@ -57,7 +61,8 @@ php -l src/Core/Config.php
 composer audit
 ```
 
-`composer check` esegue PHPUnit e PHPStan livello 10: entrambi devono terminare senza errori e senza warning.
+`composer check` esegue PHPUnit e PHPStan livello 10: entrambi devono terminare
+senza errori e senza warning.
 
 ## Licenza
 
@@ -65,4 +70,8 @@ Apache License 2.0. Vedi [LICENSE](LICENSE) e [NOTICE.md](NOTICE.md).
 
 ## Altri documenti
 
-[ROADMAP.md](ROADMAP.md), [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), [SPEC.md](SPEC.md), [ARCHITECTURE.md](ARCHITECTURE.md), [OBSERVABILITY.md](OBSERVABILITY.md), [FAQ.md](FAQ.md), [SUPPORT.md](SUPPORT.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [CITATION.cff](CITATION.cff).
+[ROADMAP.md](ROADMAP.md), [CONTRIBUTING.md](CONTRIBUTING.md),
+[CHANGELOG.md](CHANGELOG.md), [SPEC.md](SPEC.md),
+[ARCHITECTURE.md](ARCHITECTURE.md), [OBSERVABILITY.md](OBSERVABILITY.md),
+[FAQ.md](FAQ.md), [SUPPORT.md](SUPPORT.md),
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [CITATION.cff](CITATION.cff).
