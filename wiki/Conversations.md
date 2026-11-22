@@ -47,7 +47,7 @@ $bot->command('cancel', function (stdClass $message, Bot $bot): void {
 ```
 
 | Method | Does |
-|---|---|
+| --- | --- |
 | `useConversations($cache, $ttl)` | Enables conversations. The state expires after `$ttl` seconds without answers |
 | `state($name, $handler)` | Handles the messages of users in that state. The handler receives the data saved with the state |
 | `setState($payload, $state, $data)` | Moves the user to a state, replacing its data |
@@ -63,7 +63,7 @@ that user in that chat. In a group, each member has their own state.
 States live in a cache that implements `CacheInterface`:
 
 | Cache | Use it for |
-|---|---|
+| --- | --- |
 | `ArrayCache` | Long polling and tests. Lost when the process ends |
 | `FileCache` | Webhooks on one server. Persists between requests |
 | Your own `CacheInterface` | Several servers: Redis, Memcached, a database |

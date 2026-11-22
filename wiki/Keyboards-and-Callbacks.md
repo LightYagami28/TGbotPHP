@@ -38,7 +38,7 @@ $keyboard = InlineKeyboard::make()
 ```
 
 | Method | Button |
-|---|---|
+| --- | --- |
 | `button($text, $callbackData)` | Sends a callback query with `$callbackData` (at most 64 bytes) |
 | `url($text, $url)` | Opens a URL |
 | `webApp($text, $url)` | Opens a Mini App |
@@ -130,7 +130,7 @@ $text = Formatter::bold('Order #42') . "\n"
 ```
 
 | Method | Result |
-|---|---|
+| --- | --- |
 | `escape($text)` | Text safe to put in an HTML message |
 | `bold()`, `italic()`, `underline()`, `strike()`, `spoiler()`, `code()` | The text in the matching tag, escaped |
 | `pre($text, $language)` | A code block, with syntax highlighting when a language is given |

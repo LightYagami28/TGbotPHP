@@ -20,7 +20,7 @@ PHPStan runs on every push and pull request.
 ## Test layout
 
 | File | Covers |
-|---|---|
+| --- | --- |
 | `tests/Unit/BotApiCoverageTest.php` | Every Bot API method and update type against `tools/bot-api.json`, extracted from the official documentation |
 | `tests/Unit/ApiClientTest.php` | Request encoding, uploads, downloads, errors, 429 retries |
 | `tests/Unit/BotTest.php` | Routing, middleware, events, conversations, replies, webhook handling, plugins |

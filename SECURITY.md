@@ -11,7 +11,7 @@ Solo l'ultima versione pubblicata riceve correzioni di sicurezza. La dipendenza 
 ## Protezioni integrate
 
 | Protezione | Dove |
-|---|---|
+| --- | --- |
 | Webhook senza secret rifiutati (403) per impostazione predefinita | `Bot::handle()` |
 | Secret token confrontato a tempo costante | `WebhookValidator::validate()` |
 | Validazione del formato del token (no path injection negli URL) | `Config` |
