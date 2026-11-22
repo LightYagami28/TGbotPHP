@@ -22,7 +22,9 @@ class RateLimiter
     /**
      * @param CacheInterface $cache Cache holding the current windows
      */
-    public function __construct(private CacheInterface $cache) {}
+    public function __construct(private CacheInterface $cache)
+    {
+    }
 
     /**
      * Register a hit and return whether it is allowed in the current window.

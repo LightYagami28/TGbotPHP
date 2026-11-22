@@ -171,7 +171,8 @@ final class FullCoverageTest extends TestCase
         $bot = new Bot(new Config(Updates::TOKEN)->withUnauthenticatedWebhook(true), $transport);
 
         self::assertNull($bot->getUpdate());
-        $bot->command('start', static function (): void {});
+        $bot->command('start', static function (): void {
+        });
         self::assertSame(['start'], $bot->getRouter()->getCommands());
         self::assertSame([], $bot->getMiddleware()->getMiddleware());
 

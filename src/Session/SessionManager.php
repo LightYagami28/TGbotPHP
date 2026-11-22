@@ -19,7 +19,9 @@ class SessionManager
     /**
      * @param CacheInterface $cache Cache holding the sessions
      */
-    public function __construct(private CacheInterface $cache) {}
+    public function __construct(private CacheInterface $cache)
+    {
+    }
 
     /** Create a new session for a user and return its opaque identifier. */
     public function startSession(int $userId): string

@@ -26,7 +26,9 @@ final readonly class ConversationManager
         private CacheInterface $cache,
         private int $ttl = 3600,
         private string $prefix = 'conversation:',
-    ) {}
+    )
+    {
+    }
 
     /** Name of the state a conversation is currently in, when any. */
     public function getState(int|string $chatId, int|string|null $userId = null): ?string

@@ -11,4 +11,6 @@ namespace TGbotPHP\Exceptions;
  * It is a distinct type so transient errors can be retried without mixing
  * them with errors returned by Telegram itself.
  */
-class NetworkException extends TelegramException {}
+class NetworkException extends TelegramException
+{
+}

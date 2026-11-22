@@ -127,7 +127,11 @@ trait GiftMethods
      *
      * @see https://core.telegram.org/bots/api#deletebusinessaccountgift
      */
-    public function deleteBusinessAccountGift(string $businessConnectionId, string $ownedGiftId, array $options = []): bool
+    public function deleteBusinessAccountGift(
+        string $businessConnectionId,
+        string $ownedGiftId,
+        array $options = [],
+    ): bool
     {
         return $this->apiCallBool('deleteBusinessAccountGift', [
             'business_connection_id' => $businessConnectionId,

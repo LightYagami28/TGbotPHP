@@ -20,7 +20,9 @@ final readonly class Command
         public string $name,
         public ?string $username,
         public string $args,
-    ) {}
+    )
+    {
+    }
 
     /** Parse a message into a command, or null when it is not a command. */
     public static function parse(string $text): ?self

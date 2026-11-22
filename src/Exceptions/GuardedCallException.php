@@ -12,4 +12,6 @@ use ErrorException;
  * Extends ErrorException to keep the original severity, file and line, while
  * giving the failure a dedicated type instead of a generic exception.
  */
-class GuardedCallException extends ErrorException {}
+class GuardedCallException extends ErrorException
+{
+}

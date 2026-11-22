@@ -57,7 +57,9 @@ final class PluginManagerTest extends TestCase
     {
         $manager = new PluginManager();
         $plugin = new class ($manager) implements PluginInterface {
-            public function __construct(private PluginManager $plugins) {}
+            public function __construct(private PluginManager $plugins)
+            {
+            }
 
             #[\Override]
             public function getName(): string
@@ -79,7 +81,9 @@ final class PluginManagerTest extends TestCase
             }
 
             #[\Override]
-            public function deactivate(): void {}
+            public function deactivate(): void
+            {
+            }
         };
 
         try {
@@ -97,7 +101,9 @@ final class PluginManagerTest extends TestCase
     {
         $manager = new PluginManager();
         $plugin = new class ($manager) implements PluginInterface {
-            public function __construct(private PluginManager $plugins) {}
+            public function __construct(private PluginManager $plugins)
+            {
+            }
 
             #[\Override]
             public function getName(): string
@@ -118,7 +124,9 @@ final class PluginManagerTest extends TestCase
             }
 
             #[\Override]
-            public function deactivate(): void {}
+            public function deactivate(): void
+            {
+            }
         };
 
         $manager->addHook('text', static fn(mixed $value): string => Value::string($value) . '?');
