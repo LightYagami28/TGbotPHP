@@ -51,9 +51,10 @@ minima è PHP (PHP: Hypertext Preprocessor) 8.5.
   `gh attestation verify <file> --repo LightYagami28/TGbotPHP`.
 - **Conformità**: le misure seguono l'Open Web Application Security Project
   (OWASP) Top 10 2025 (A01, A02, A03, A04, A05, A06, A09, A10), il National
-  Institute of Standards and Technology (NIST) CSF 2.0 e SSDF SP 800-218. Le
-  sezioni LLM/GenAI e Supabase non sono applicabili: la libreria non usa modelli
-  generativi né database.
+  Institute of Standards and Technology (NIST) Cybersecurity Framework (CSF)
+  2.0 e il Secure Software Development Framework (SSDF) Special Publication
+  (SP) 800-218. Le sezioni LLM/GenAI e Supabase non sono applicabili: la
+  libreria non usa modelli generativi né database.
 
 ## Glossario
 
