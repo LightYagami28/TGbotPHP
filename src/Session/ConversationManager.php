@@ -26,8 +26,8 @@ final readonly class ConversationManager
         private CacheInterface $cache,
         private int $ttl = 3600,
         private string $prefix = 'conversation:',
-    )
-    {
+    ) {
+        // Value object: no body required.
     }
 
     /** Name of the state a conversation is currently in, when any. */

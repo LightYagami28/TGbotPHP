@@ -131,8 +131,7 @@ trait GiftMethods
         string $businessConnectionId,
         string $ownedGiftId,
         array $options = [],
-    ): bool
-    {
+    ): bool {
         return $this->apiCallBool('deleteBusinessAccountGift', [
             'business_connection_id' => $businessConnectionId,
             'owned_gift_id' => $ownedGiftId,

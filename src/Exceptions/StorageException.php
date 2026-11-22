@@ -10,4 +10,5 @@ namespace TGbotPHP\Exceptions;
  */
 class StorageException extends TelegramException
 {
+    // No additional state.
 }

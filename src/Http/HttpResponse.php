@@ -19,7 +19,7 @@ final class HttpResponse
     public function __construct(
         public readonly int $statusCode,
         public readonly string $body,
-    )
-    {
+    ) {
+        // Value object: no body required.
     }
 }

@@ -172,6 +172,7 @@ final class FullCoverageTest extends TestCase
 
         self::assertNull($bot->getUpdate());
         $bot->command('start', static function (): void {
+            // Nessun effetto: verifica solo la registrazione.
         });
         self::assertSame(['start'], $bot->getRouter()->getCommands());
         self::assertSame([], $bot->getMiddleware()->getMiddleware());

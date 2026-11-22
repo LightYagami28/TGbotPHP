@@ -14,4 +14,5 @@ use ErrorException;
  */
 class GuardedCallException extends ErrorException
 {
+    // No additional state.
 }

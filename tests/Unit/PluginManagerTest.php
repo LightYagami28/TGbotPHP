@@ -59,6 +59,7 @@ final class PluginManagerTest extends TestCase
         $plugin = new class ($manager) implements PluginInterface {
             public function __construct(private PluginManager $plugins)
             {
+                // Dependency promoted to property.
             }
 
             #[\Override]
@@ -83,6 +84,7 @@ final class PluginManagerTest extends TestCase
             #[\Override]
             public function deactivate(): void
             {
+                // Nessuna azione richiesta.
             }
         };
 
@@ -103,6 +105,7 @@ final class PluginManagerTest extends TestCase
         $plugin = new class ($manager) implements PluginInterface {
             public function __construct(private PluginManager $plugins)
             {
+                // Dependency promoted to property.
             }
 
             #[\Override]
@@ -126,6 +129,7 @@ final class PluginManagerTest extends TestCase
             #[\Override]
             public function deactivate(): void
             {
+                // Nessuna azione richiesta.
             }
         };
 

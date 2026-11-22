@@ -21,6 +21,7 @@ class SessionManager
      */
     public function __construct(private CacheInterface $cache)
     {
+        // Dependency promoted to property.
     }
 
     /** Create a new session for a user and return its opaque identifier. */

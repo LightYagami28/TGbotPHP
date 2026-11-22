@@ -24,6 +24,7 @@ class RateLimiter
      */
     public function __construct(private CacheInterface $cache)
     {
+        // Dependency promoted to property.
     }
 
     /**

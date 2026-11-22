@@ -20,8 +20,8 @@ final readonly class Command
         public string $name,
         public ?string $username,
         public string $args,
-    )
-    {
+    ) {
+        // Value object: no body required.
     }
 
     /** Parse a message into a command, or null when it is not a command. */

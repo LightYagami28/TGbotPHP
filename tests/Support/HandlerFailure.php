@@ -9,4 +9,5 @@ namespace TGbotPHP\Tests\Support;
  */
 final class HandlerFailure extends \RuntimeException
 {
+    // No additional state.
 }

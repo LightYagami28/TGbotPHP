@@ -33,6 +33,7 @@ final readonly class WebhookHandler
 {
     public function __construct(private Bot $bot)
     {
+        // Dependency promoted to property.
     }
 
     /**

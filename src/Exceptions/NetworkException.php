@@ -13,4 +13,5 @@ namespace TGbotPHP\Exceptions;
  */
 class NetworkException extends TelegramException
 {
+    // No additional state.
 }
