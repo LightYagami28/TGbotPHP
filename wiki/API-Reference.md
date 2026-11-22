@@ -137,7 +137,7 @@ Every failure throws an exception extending
 `TGbotPHP\Exceptions\TelegramException`:
 
 | Exception | When |
-|---|---|
+| --- | --- |
 | `ApiException` | Telegram answered with an error, or an unexpected result |
 | `TooManyRequestsException` | Flood control (429), after the retries allowed by the [retry policy](Configuration#retries) |
 | `NetworkException` | Telegram could not be reached: DNS, timeout, TLS... |
@@ -175,7 +175,7 @@ checks each one against the official documentation: method name, required
 parameters, parameter names and result type.
 
 | Group | Methods |
-|---|---|
+| --- | --- |
 | Updates | `getUpdates`, `setWebhook`, `deleteWebhook`, `getWebhookInfo` |
 | Bot, users & files | `getMe`, `logOut`, `close`, `getUserProfilePhotos`, `getUserChatBoosts`, `getFile`, `getFileUrl`, `downloadFile`, `getUserProfileAudios`, `setPassportDataErrors`, `setUserEmojiStatus` |
 | Messages | `sendMessage`, `forwardMessage`, `forwardMessages`, `copyMessage`, `copyMessages`, `sendPhoto`, `sendAudio`, `sendDocument`, `sendVideo`, `editMessageText`, `editMessageCaption`, `editMessageMedia`, `editMessageReplyMarkup`, `deleteMessage`, `deleteMessages`, `sendChatAction`, `approveSuggestedPost`, `declineSuggestedPost`, `editMessageChecklist`, `getUserPersonalChatMessages`, `sendChecklist`, `sendMessageDraft`, `sendRichMessage`, `sendRichMessageDraft` |

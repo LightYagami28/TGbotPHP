@@ -96,7 +96,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   dependency graph. Workflow permissions stay read-only except where a job must
   publish.
 
-### Fixed
+### Fixed (test e CI)
 
 - Three Mini App signature tests are skipped with
   `#[RequiresPhpExtension('sodium')]` when the sodium extension is missing, and

@@ -58,7 +58,7 @@ Rarely used optional parameters moved into the trailing `$options` array, with
 Telegram's parameter names:
 
 | Method | Now in `$options` |
-|---|---|
+| --- | --- |
 | `sendLocation`, `editMessageLiveLocation` | `horizontal_accuracy`, `live_period`, `heading`, `proximity_alert_radius` |
 | `sendVenue` | `foursquare_*`, `google_place_*` |
 | `sendPoll` | everything except `type`; the answers argument is named `$answers` |
