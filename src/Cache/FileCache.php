@@ -276,7 +276,8 @@ class FileCache implements CacheInterface
             $entry = null;
         }
 
-        if (!is_array($entry)
+        if (
+            !is_array($entry)
             || ($entry['v'] ?? null) !== self::FORMAT
             || !array_key_exists('expires', $entry)
             || !array_key_exists('value', $entry)

@@ -4,18 +4,17 @@
 
 Non aprire una issue pubblica. Usa GitHub Security Advisories:
 <https://github.com/LightYagami28/TGbotPHP/security/advisories/new>
-oppure scrivi a [ceo@retechrevive.it](mailto:ceo@retechrevive.it).
 Non includere token, segreti o dati personali nella segnalazione.
 
 ## Versioni supportate
 
 Solo l'ultima versione pubblicata riceve correzioni di sicurezza. La dipendenza
-minima è PHP 8.5.
+minima è PHP (PHP: Hypertext Preprocessor) 8.5.
 
 ## Protezioni integrate
 
 | Protezione | Dove |
-|---|---|
+| --- | --- |
 | Webhook senza secret rifiutati (403) per impostazione predefinita | `Bot::handle()` |
 | Secret token confrontato a tempo costante | `WebhookValidator::validate()` |
 | Validazione del formato del token (no path injection negli URL) | `Config` |
@@ -50,10 +49,11 @@ minima è PHP 8.5.
 - **Verifica degli artefatti**: scaricare archivio, checksum e SBOM dalla
   release e verificare l'attestazione con
   `gh attestation verify <file> --repo LightYagami28/TGbotPHP`.
-- **Conformità**: le misure seguono OWASP Top 10 2025 (A01, A02, A03, A04, A05,
-  A06, A09, A10), NIST CSF 2.0 e SSDF SP 800-218. Le sezioni LLM/GenAI e
-  Supabase non sono applicabili: la libreria non usa modelli generativi né
-  database.
+- **Conformità**: le misure seguono l'Open Web Application Security Project
+  (OWASP) Top 10 2025 (A01, A02, A03, A04, A05, A06, A09, A10), il National
+  Institute of Standards and Technology (NIST) CSF 2.0 e SSDF SP 800-218. Le
+  sezioni LLM/GenAI e Supabase non sono applicabili: la libreria non usa modelli
+  generativi né database.
 
 ## Glossario
 

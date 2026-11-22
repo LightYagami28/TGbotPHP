@@ -177,7 +177,7 @@ Mount your own bot script and override the command to run it.
 ## Troubleshooting
 
 | Symptom | Check |
-|---|---|
+| --- | --- |
 | The bot does not answer | `vendor/bin/tgbot bot:info` validates the token |
 | Webhook updates do not arrive | `vendor/bin/tgbot webhook:info` shows the last delivery error |
 | `409 Conflict` when polling | A webhook is still set: `tgbot webhook:delete` |

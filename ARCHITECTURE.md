@@ -33,7 +33,7 @@ le API Bot di Telegram.
 ```
 
 | Componente | File/Namespace | Ruolo |
-|---|---|---|
+| --- | --- | --- |
 | Client | `src/TGbotPHP.php` | Metodi di alto livello (`sendMessage`, `sendPhoto`, `answerCallbackQuery`). |
 | HTTP Engine | `src/HttpClientTrait.php` | Gestione trasporto HTTP/cURL con fail-safe e gestione timeout. |
 | Webhook | `src/WebhookValidator.php` | Convalida crittografica delle richieste in entrata e blocco accessi non autorizzati. |

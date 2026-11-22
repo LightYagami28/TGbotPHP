@@ -38,7 +38,7 @@ you can call from the tests, and the entry point only adds `$bot->poll()` or
 `$bot->handle()`.
 
 | `BotTester` | |
-|---|---|
+| --- | --- |
 | `new BotTester($config, $username)` | A bot with a valid fake token, wired to a `FakeTransport`. The username defaults to `test_bot` |
 | `$tester->bot` | The bot: register your handlers on it |
 | `receive($update)` | Process an update, as if Telegram had sent it |
@@ -59,7 +59,7 @@ self::assertSame('page:2', $markup['inline_keyboard'][0][1]['callback_data']);
 ## FakeUpdate
 
 | | Builds |
-|---|---|
+| --- | --- |
 | `FakeUpdate::message($text, $chatId, $userId, $extra)` | A message. Negative chat ids are supergroups. `$extra` adds fields: `['photo' => [...]]`, `['reply_to_message' => [...]]` |
 | `FakeUpdate::callbackQuery($data, $chatId, $userId, $messageId)` | A button press on a message of the bot |
 | `FakeUpdate::inlineQuery($query, $userId)` | An inline query |

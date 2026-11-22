@@ -87,7 +87,10 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
 
         $acl = implode("\n", $out);
         $granted = str_contains($acl, $this->user . ':(F)') || str_contains($acl, $this->user . ':(M)');
-        $others = preg_match('/BUILTIN\\\\Users|Everyone|Authenticated Users|NT AUTHORITY\\\\Authenticated Users/i', $acl) === 1;
+        $others = preg_match(
+            '/BUILTIN\\\\Users|Everyone|Authenticated Users|NT AUTHORITY\\\\Authenticated Users/i',
+            $acl,
+        ) === 1;
 
         return $granted && !$others;
     }
@@ -148,7 +151,11 @@ final class WindowsPrivateFileGuard implements PrivateFileGuard
     /** Validate the arguments and publish them to the constant command line. */
     private function prepare(string $path): bool
     {
-        if ($this->user === '' || !self::isSafePath($path) || preg_match('/\A[A-Za-z0-9][A-Za-z0-9._-]*(?:\\\\[A-Za-z0-9][A-Za-z0-9._-]*)?\z/', $this->user) !== 1) {
+        if (
+            $this->user === ''
+            || !self::isSafePath($path)
+            || preg_match('/\A[A-Za-z0-9][A-Za-z0-9._-]*(?:\\\\[A-Za-z0-9][A-Za-z0-9._-]*)?\z/', $this->user) !== 1
+        ) {
             return false;
         }
 

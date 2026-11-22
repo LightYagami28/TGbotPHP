@@ -14,7 +14,7 @@ vendor/bin/tgbot webhook:info   # is a webhook set? what was the last delivery e
 ## The bot does not answer
 
 | Check | Fix |
-|---|---|
+| --- | --- |
 | `bot:info` fails with 401 | The token is wrong or was revoked: copy it again from @BotFather |
 | Long polling fails with **409 Conflict** | A webhook is still set: `vendor/bin/tgbot webhook:delete` |
 | `webhook:info` shows a delivery error | See [Webhooks](#webhooks) below |
@@ -26,7 +26,7 @@ vendor/bin/tgbot webhook:info   # is a webhook set? what was the last delivery e
 ## Webhooks
 
 | `webhook:info` says | Cause |
-|---|---|
+| --- | --- |
 | `Wrong response from the webhook: 403 Forbidden` | `TELEGRAM_SECRET_TOKEN` is unset, or it differs from the secret registered with `webhook:set --secret`. `handle()` refuses requests until a secret is configured |
 | `Wrong response from the webhook: 500` | A PHP fatal error: check the web server's error log |
 | `Wrong response from the webhook: 404` | The URL does not reach `webhook.php` |
@@ -46,7 +46,7 @@ each time. Use a `FileCache` or a Redis-backed cache (see
 ## Telegram errors
 
 | Error | Meaning |
-|---|---|
+| --- | --- |
 | `Bad Request: can't parse entities` | The HTML is invalid. Escape user text with `Formatter::escape()` |
 | `Bad Request: message is not modified` | An edit with the same content. `edit()` returns `false` instead of throwing |
 | `Bad Request: chat not found` | Wrong chat id, or the user never started the bot |
@@ -60,7 +60,7 @@ each time. Use a `FileCache` or a Redis-backed cache (see
 ## Uploads and downloads
 
 | Problem | Fix |
-|---|---|
+| --- | --- |
 | A path is sent as text, or Telegram says `wrong file identifier` | Wrap local files: `InputFile::fromPath($path)` |
 | `File not found or not readable` | Check the path and the permissions of the PHP user |
 | `File is too large to load in memory` | Pass a destination: `$bot->downloadFile($fileId, '/path/file')` |

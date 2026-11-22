@@ -59,7 +59,7 @@ $bot->command('cancel', function (stdClass $message, Bot $bot) {
 ## Caching
 
 | Cache | Use |
-|---|---|
+| --- | --- |
 | `ArrayCache` | Long polling, tests: lost when the process ends |
 | `FileCache` | Webhooks on a single server: persists between requests |
 | your own `CacheInterface` | Redis, Memcached, a database... |

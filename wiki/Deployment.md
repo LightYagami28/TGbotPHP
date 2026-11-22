@@ -5,7 +5,7 @@ icon: server
 ---
 
 | | Webhook | Long polling |
-|---|---|---|
+| --- | --- | --- |
 | How | Telegram sends each update to your HTTPS URL | A PHP process asks Telegram for updates in a loop |
 | Needs | A public HTTPS URL | Outbound network access only |
 | Runs on | Any PHP web hosting, PHP-FPM, serverless | A server or container that keeps a process running |

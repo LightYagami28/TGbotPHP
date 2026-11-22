@@ -10,4 +10,7 @@ namespace TGbotPHP\Exceptions;
  * Typical causes are an invalid plugin class, a duplicate name or a
  * registration callback that rejected the plugin.
  */
-class PluginException extends TelegramException {}
+class PluginException extends TelegramException
+{
+    // No additional state.
+}
