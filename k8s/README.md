@@ -7,7 +7,8 @@ Manifests in this directory deploy two modes of the bot:
 
 ## Contents
 
-- `namespace.yaml` — dedicated namespace `tgbotphp` with Pod Security Standards `restricted`
+- `namespace.yaml` — dedicated namespace `tgbotphp` with Pod Security Standards
+  `restricted`
 - `configmap.yaml` — non-sensitive configuration
 - `secret.yaml` — **template** with empty values; never commit real values
 - `deployment.yaml` — Deployments for polling and webhook modes
