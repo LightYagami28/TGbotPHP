@@ -4,7 +4,7 @@
 
 Non aprire una issue pubblica. Usa GitHub Security Advisories:
 <https://github.com/LightYagami28/TGbotPHP/security/advisories/new>
-oppure scrivi a **ceo@retechrevive.it**.
+oppure scrivi a [ceo@retechrevive.it](mailto:ceo@retechrevive.it).
 Non includere token, segreti o dati personali nella segnalazione.
 
 ## Versioni supportate
@@ -54,3 +54,9 @@ minima è PHP 8.5.
   A06, A09, A10), NIST CSF 2.0 e SSDF SP 800-218. Le sezioni LLM/GenAI e
   Supabase non sono applicabili: la libreria non usa modelli generativi né
   database.
+
+## Glossario
+
+- **PHP**: PHP: Hypertext Preprocessor.
+- **OWASP**: Open Web Application Security Project.
+- **NIST**: National Institute of Standards and Technology.
