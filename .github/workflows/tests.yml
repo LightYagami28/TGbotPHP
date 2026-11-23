@@ -50,7 +50,7 @@ jobs:
       run: php tools/coverage-check.php coverage.xml 100
     - name: Carica report di copertura
       if: always() && matrix.coverage != 'none'
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: coverage-php-${{ matrix.php-version }}
         path: |
