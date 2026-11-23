@@ -30,17 +30,18 @@ composer require lightyagami28/tgbotphp
 ```php
 use TGbotPHP\Framework\Bot;
 
-$bot = new Bot($_ENV['BOT_TOKEN'], $_ENV['WEBHOOK_SECRET']);
-$bot->command('/start', fn ($update, $bot) => $bot->sendMessage(
-    chatId: $update->message->chat->id,
+$bot = new Bot(getenv('TELEGRAM_BOT_TOKEN'));
+$bot->command('start', fn ($message, $bot) => $bot->sendMessage(
+    chatId: $message->chat->id,
     text: 'Ciao!',
 ));
-$bot->handle();
+$bot->poll();
 ```
 
-Per il polling locale usa `LongPolling`; per i test usa `BotTester` e
-`FakeTransport`. La documentazione completa è in [`docs/`](docs/README.md)
-e nel [`wiki/`](wiki/Home.md).
+Per i webhook passa un `TGbotPHP\Core\Config` con il secret letto da
+`TELEGRAM_SECRET_TOKEN` e chiama `handle()`; senza secret `handle()` risponde
+403. Per i test usa `BotTester` e `FakeTransport`. La documentazione completa
+è in [`docs/`](docs/README.md) e nel [`wiki/`](wiki/Home.md).
 
 ## Sicurezza
 
