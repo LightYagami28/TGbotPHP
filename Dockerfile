@@ -6,7 +6,7 @@
 # Refresh both together with `docker buildx imagetools inspect <image>:<tag>`.
 
 # Build stage: compilers, git/unzip and composer live here only.
-FROM php:8.5-cli@sha256:f324fcb4dc009ac0470a7d614cd122499dcee3ca47a9bab620fc14c0eb759ba2 AS build
+FROM php:8.6-cli@sha256:d84acf3155d907afaa5afa9b9457c5f12016b6dc7ade84659f40cdc505cc087d AS build
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ COPY examples/ examples/
 RUN composer dump-autoload --no-dev --optimize
 
 # Runtime stage: same pinned PHP base, but without git, unzip or composer.
-FROM php:8.5-cli@sha256:f324fcb4dc009ac0470a7d614cd122499dcee3ca47a9bab620fc14c0eb759ba2
+FROM php:8.6-cli@sha256:d84acf3155d907afaa5afa9b9457c5f12016b6dc7ade84659f40cdc505cc087d
 
 WORKDIR /app
 
