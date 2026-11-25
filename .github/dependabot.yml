@@ -57,6 +57,9 @@ updates:
     open-pull-requests-limit: 20
     commit-message:
       prefix: dipendenze(docker-compose)
+    ignore:
+      # Immagine costruita in locale (build: .), non esiste su Docker Hub.
+      - dependency-name: tgbotphp
     groups:
       minori-e-patch:
         update-types:
