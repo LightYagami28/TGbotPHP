@@ -4,7 +4,6 @@ title: "TGbotPHP"
 abstract: "Libreria PHP per la Telegram Bot API con routing, middleware, conversazioni, webhook e long polling."
 type: software
 version: 2.0.0
-date-released: "2026-11-21"
 license: "Apache-2.0"
 repository-code: "https://github.com/LightYagami28/TGbotPHP"
 authors:
